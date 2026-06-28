@@ -88,9 +88,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-white/10">
-        <div className="flex items-center justify-center w-9 h-9 bg-yellow-400 rounded-xl shrink-0">
-          <Zap className="w-5 h-5 text-[#0d2137]" />
-        </div>
+        <img src="/logo.png" alt="Stoxy" className="w-9 h-9 rounded-xl shrink-0 object-cover" />
         {!collapsed && (
           <div className="flex items-baseline gap-0.5 overflow-hidden">
             <span className="text-xl font-bold tracking-tight text-white">sto</span>
