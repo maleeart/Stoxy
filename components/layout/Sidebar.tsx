@@ -9,19 +9,18 @@ import {
   ArrowLeftRight,
   Undo2,
   ClipboardList,
-  Wrench,
-  Gauge,
   Bell,
   Users,
   Settings,
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Zap,
   FileBarChart,
   ScanLine,
   History,
   ShieldCheck,
+  ShoppingCart,
+  PackageOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -43,22 +42,21 @@ const navItems: NavItem[] = [
   { label: "คลังอุปกรณ์", href: "/inventory", icon: Package, section: "หลัก" },
   { label: "สแกน QR", href: "/scan", icon: ScanLine, section: "หลัก" },
   // Workflow
+  { label: "เบิกของ", href: "/requisition", icon: PackageOpen, section: "ดำเนินการ" },
   { label: "ยืม-คืน", href: "/borrow", icon: ArrowLeftRight, section: "ดำเนินการ" },
   { label: "รับคืน", href: "/return", icon: Undo2, section: "ดำเนินการ" },
-  { label: "ปรับสต็อก", href: "/adjustment", icon: ClipboardList, section: "ดำเนินการ" },
-  { label: "ประวัติเคลื่อนไหว", href: "/movements", icon: History, section: "ดำเนินการ" },
-  // Technical
-  { label: "ซ่อมบำรุง", href: "/maintenance", icon: Wrench, section: "เทคนิค" },
-  { label: "สอบเทียบ", href: "/calibration", icon: Gauge, section: "เทคนิค" },
-  { label: "ตรวจนับ", href: "/audit", icon: ShieldCheck, section: "เทคนิค" },
+  { label: "เติมสต็อก", href: "/adjustment", icon: ClipboardList, section: "ดำเนินการ" },
+  { label: "ต้องสั่งซื้อ", href: "/purchase", icon: ShoppingCart, section: "ดำเนินการ" },
+  { label: "ประวัติ", href: "/movements", icon: History, section: "ดำเนินการ" },
   // System
+  { label: "ตรวจนับ", href: "/audit", icon: ShieldCheck, section: "ระบบ" },
   { label: "รายงาน", href: "/reports", icon: FileBarChart, section: "ระบบ" },
   { label: "แจ้งเตือน", href: "/notifications", icon: Bell, section: "ระบบ" },
   { label: "ผู้ใช้งาน", href: "/users", icon: Users, section: "ระบบ" },
   { label: "ตั้งค่า", href: "/settings", icon: Settings, section: "ระบบ" },
 ];
 
-const sections = ["หลัก", "ดำเนินการ", "เทคนิค", "ระบบ"];
+const sections = ["หลัก", "ดำเนินการ", "ระบบ"];
 
 interface SidebarProps {
   collapsed: boolean;
