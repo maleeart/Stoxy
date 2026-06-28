@@ -86,16 +86,13 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={onClose}
-          />
-
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          onClick={onClose}
+        >
           {/* Dialog */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 16 }}
@@ -103,6 +100,7 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
             exit={{ opacity: 0, scale: 0.95, y: 16 }}
             transition={{ type: "spring", duration: 0.3 }}
             className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col z-10"
+            onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
@@ -390,7 +388,7 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
               </div>
             </form>
           </motion.div>
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>
   );
