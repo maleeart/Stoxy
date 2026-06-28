@@ -283,11 +283,12 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
                       <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                         สถานที่จัดเก็บ *
                       </label>
-                      <input
-                        {...register("locationId")}
-                        className="input-field"
-                        placeholder="เช่น ชั้น 1 ตู้ A / คลังหลัก"
-                      />
+                      <select {...register("locationId")} className="input-field">
+                        <option value="">เลือกสถานที่</option>
+                        <option value="คลังไฟฟ้า">คลังไฟฟ้า</option>
+                        <option value="ตู้เก็บของ 1">ตู้เก็บของ 1</option>
+                        <option value="ตู้เก็บของ 2">ตู้เก็บของ 2</option>
+                      </select>
                       {errors.locationId && (
                         <p className="text-xs text-red-500 mt-1">
                           {errors.locationId.message}
