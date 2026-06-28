@@ -10,6 +10,7 @@ import { useCreateInventoryItem, useInventoryItems } from "@/hooks/useInventory"
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { generateItemCode } from "@/lib/utils";
+import { getLocations, addLocation } from "@/services/locations.service";
 
 const schema = z.object({
   name: z.string().min(2, "กรุณากรอกชื่ออุปกรณ์"),
@@ -45,6 +46,12 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
   const [activeTab, setActiveTab] = useState("basic");
   const createItem = useCreateInventoryItem();
   const { data: items = [] } = useInventoryItems();
+  const [locations, setLocations] = useState<string[]>([]);
+  const [customLocation, setCustomLocation] = useState("");
+
+  useEffect(() => {
+    getLocations().then(setLocations);
+  }, []);
 
   const {
     register,
@@ -73,8 +80,16 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
     setValue("code", generateItemCode(categoryId, existingCodes));
   }, [categoryId, items, setValue]);
 
+  const locationId = watch("locationId");
+
   async function onSubmit(data: FormData) {
     try {
+      // Save new location if user typed one
+      if (data.locationId === "__other__" && customLocation.trim()) {
+        const updated = await addLocation(customLocation.trim());
+        setLocations(updated);
+        data = { ...data, locationId: customLocation.trim() };
+      }
       await createItem.mutateAsync({
         ...data,
         status: "available",
@@ -285,10 +300,20 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
                       </label>
                       <select {...register("locationId")} className="input-field">
                         <option value="">เลือกสถานที่</option>
-                        <option value="คลังไฟฟ้า">คลังไฟฟ้า</option>
-                        <option value="ตู้เก็บของ 1">ตู้เก็บของ 1</option>
-                        <option value="ตู้เก็บของ 2">ตู้เก็บของ 2</option>
+                        {locations.map((l) => (
+                          <option key={l} value={l}>{l}</option>
+                        ))}
+                        <option value="__other__">+ อื่นๆ (ระบุเอง)</option>
                       </select>
+                      {locationId === "__other__" && (
+                        <input
+                          value={customLocation}
+                          onChange={(e) => setCustomLocation(e.target.value)}
+                          className="input-field mt-2"
+                          placeholder="ระบุสถานที่ใหม่..."
+                          autoFocus
+                        />
+                      )}
                       {errors.locationId && (
                         <p className="text-xs text-red-500 mt-1">
                           {errors.locationId.message}
