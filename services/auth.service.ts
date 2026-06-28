@@ -30,6 +30,7 @@ export async function loginWithEmail(email: string, password: string): Promise<U
 
 export async function loginWithGoogle(): Promise<User> {
   const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
   const cred = await signInWithPopup(auth, provider);
   // Create user doc if doesn't exist
   await ensureUserDoc(cred.user);
