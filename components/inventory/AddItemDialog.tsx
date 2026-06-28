@@ -213,7 +213,7 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
                           <option value="cable">สายไฟ & เคเบิ้ล</option>
                           <option value="tools">เครื่องมือช่าง</option>
                           <option value="safety">อุปกรณ์ความปลอดภัย</option>
-                          <option value="switchgear">สวิตช์เกียร์</option>
+                          <option value="spareparts">Spareparts</option>
                           <option value="others">อื่นๆ</option>
                         </select>
                         {errors.categoryId && (
