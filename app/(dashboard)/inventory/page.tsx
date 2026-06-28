@@ -371,9 +371,7 @@ export default function InventoryPage() {
         </div>
       </div>
 
-      {showAddDialog && (
-        <AddItemDialog open={showAddDialog} onClose={() => setShowAddDialog(false)} />
-      )}
+      <AddItemDialog open={showAddDialog} onClose={() => setShowAddDialog(false)} />
     </AppShell>
   );
 }
