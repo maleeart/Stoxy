@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { useInventoryItems } from "@/hooks/useInventory";
@@ -27,7 +27,12 @@ export default function RequisitionPage() {
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
 
   const [showForm, setShowForm] = useState(false);
-  const [tab, setTab] = useState<"mine" | "all">(isAdmin ? "all" : "mine");
+  const [tab, setTab] = useState<"mine" | "all">("mine");
+
+  // Set correct default tab once auth loads
+  useEffect(() => {
+    if (stoxyUser) setTab(isAdmin ? "all" : "mine");
+  }, [stoxyUser]);
   const [rejectId, setRejectId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
 

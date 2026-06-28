@@ -41,6 +41,24 @@ const tabs = [
   { id: "technical", label: "เทคนิค" },
 ];
 
+const CATEGORY_LABEL: Record<string, string> = {
+  meter: "เครื่องมือวัด",
+  cable: "สายไฟ & เคเบิ้ล",
+  tools: "เครื่องมือช่าง",
+  safety: "อุปกรณ์ความปลอดภัย",
+  spareparts: "Spareparts",
+  others: "อื่นๆ",
+};
+
+const DEFAULT_VALUES = {
+  code: "",
+  quantity: 1,
+  minStockLevel: 1,
+  condition: "good" as const,
+  requiresCalibration: false,
+  requiresMaintenance: false,
+};
+
 export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
   const { stoxyUser } = useAuth();
   const [activeTab, setActiveTab] = useState("basic");
@@ -48,6 +66,7 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
   const { data: items = [] } = useInventoryItems();
   const [locations, setLocations] = useState<string[]>([]);
   const [customLocation, setCustomLocation] = useState("");
+  const [customLocationError, setCustomLocationError] = useState(false);
 
   useEffect(() => {
     getLocations().then(setLocations);
@@ -58,20 +77,25 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { errors },
   } = useForm<FormData, unknown, FormData>({
     resolver: zodResolver(schema) as any,
-    defaultValues: {
-      code: "",
-      quantity: 1,
-      minStockLevel: 1,
-      condition: "good",
-      requiresCalibration: false,
-      requiresMaintenance: false,
-    },
+    defaultValues: DEFAULT_VALUES,
   });
 
+  // Reset form when dialog opens/closes
+  useEffect(() => {
+    if (open) {
+      reset(DEFAULT_VALUES);
+      setActiveTab("basic");
+      setCustomLocation("");
+      setCustomLocationError(false);
+    }
+  }, [open, reset]);
+
   const categoryId = watch("categoryId");
+  const locationId = watch("locationId");
 
   // Auto-generate code when category changes
   useEffect(() => {
@@ -80,23 +104,26 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
     setValue("code", generateItemCode(categoryId, existingCodes));
   }, [categoryId, items, setValue]);
 
-  const locationId = watch("locationId");
-
   async function onSubmit(data: FormData) {
-    try {
-      // Save new location if user typed one
-      if (data.locationId === "__other__" && customLocation.trim()) {
-        const updated = await addLocation(customLocation.trim());
-        setLocations(updated);
-        data = { ...data, locationId: customLocation.trim() };
+    // Guard: อื่นๆ but no custom text
+    if (data.locationId === "__other__") {
+      if (!customLocation.trim()) {
+        setCustomLocationError(true);
+        return;
       }
+      const updated = await addLocation(customLocation.trim());
+      setLocations(updated);
+      data = { ...data, locationId: customLocation.trim() };
+    }
+
+    try {
       await createItem.mutateAsync({
         ...data,
         status: "available",
         quantityAvailable: data.quantity,
         quantityBorrowed: 0,
         quantityUnderRepair: 0,
-        categoryName: data.categoryId, // In production, resolve from category collection
+        categoryName: CATEGORY_LABEL[data.categoryId] ?? data.categoryId,
         locationName: data.locationId,
         createdBy: stoxyUser?.uid ?? "",
       } as any);
@@ -306,15 +333,20 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
                         <option value="__other__">+ อื่นๆ (ระบุเอง)</option>
                       </select>
                       {locationId === "__other__" && (
-                        <input
-                          value={customLocation}
-                          onChange={(e) => setCustomLocation(e.target.value)}
-                          className="input-field mt-2"
-                          placeholder="ระบุสถานที่ใหม่..."
-                          autoFocus
-                        />
+                        <>
+                          <input
+                            value={customLocation}
+                            onChange={(e) => { setCustomLocation(e.target.value); setCustomLocationError(false); }}
+                            className={`input-field mt-2 ${customLocationError ? "border-red-400" : ""}`}
+                            placeholder="ระบุสถานที่ใหม่..."
+                            autoFocus
+                          />
+                          {customLocationError && (
+                            <p className="text-xs text-red-500 mt-1">กรุณาระบุสถานที่</p>
+                          )}
+                        </>
                       )}
-                      {errors.locationId && (
+                      {errors.locationId && locationId !== "__other__" && (
                         <p className="text-xs text-red-500 mt-1">
                           {errors.locationId.message}
                         </p>
