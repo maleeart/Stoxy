@@ -35,8 +35,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsub = onAuthChange(async (user) => {
       setFirebaseUser(user);
       if (user) {
-        const u = await getStoxyUser(user.uid);
-        setStoxyUser(u);
+        try {
+          const u = await ensureUserDoc(user);
+          setStoxyUser(u);
+        } catch {
+          setStoxyUser(null);
+        }
       } else {
         setStoxyUser(null);
       }
