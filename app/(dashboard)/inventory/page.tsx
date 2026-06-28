@@ -47,14 +47,14 @@ export default function InventoryPage() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
 
-  const { data: items = [], isLoading } = useInventoryItems(
-    statusFilter !== "all" ? { status: statusFilter } : undefined
-  );
+  const { data: items = [], isLoading } = useInventoryItems();
 
   const filtered = useMemo(() => {
-    if (!search) return items;
+    let result = items;
+    if (statusFilter !== "all") result = result.filter((i) => i.status === statusFilter);
+    if (!search) return result;
     const lower = search.toLowerCase();
-    return items.filter(
+    return result.filter(
       (i) =>
         i.name.toLowerCase().includes(lower) ||
         i.code.toLowerCase().includes(lower) ||
