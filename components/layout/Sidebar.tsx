@@ -1,0 +1,196 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+import {
+  LayoutDashboard,
+  Package,
+  ArrowLeftRight,
+  Undo2,
+  ClipboardList,
+  Wrench,
+  Gauge,
+  Bell,
+  Users,
+  Settings,
+  LogOut,
+  ChevronLeft,
+  ChevronRight,
+  Zap,
+  FileBarChart,
+  ScanLine,
+  History,
+  ShieldCheck,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { logout } from "@/services/auth.service";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+
+interface NavItem {
+  label: string;
+  href: string;
+  icon: React.ElementType;
+  badge?: number;
+  section?: string;
+}
+
+const navItems: NavItem[] = [
+  // Main
+  { label: "แดชบอร์ด", href: "/dashboard", icon: LayoutDashboard, section: "หลัก" },
+  { label: "คลังอุปกรณ์", href: "/inventory", icon: Package, section: "หลัก" },
+  { label: "สแกน QR", href: "/scan", icon: ScanLine, section: "หลัก" },
+  // Workflow
+  { label: "ยืม-คืน", href: "/borrow", icon: ArrowLeftRight, section: "ดำเนินการ" },
+  { label: "รับคืน", href: "/return", icon: Undo2, section: "ดำเนินการ" },
+  { label: "ปรับสต็อก", href: "/adjustment", icon: ClipboardList, section: "ดำเนินการ" },
+  { label: "ประวัติเคลื่อนไหว", href: "/movements", icon: History, section: "ดำเนินการ" },
+  // Technical
+  { label: "ซ่อมบำรุง", href: "/maintenance", icon: Wrench, section: "เทคนิค" },
+  { label: "สอบเทียบ", href: "/calibration", icon: Gauge, section: "เทคนิค" },
+  { label: "ตรวจนับ", href: "/audit", icon: ShieldCheck, section: "เทคนิค" },
+  // System
+  { label: "รายงาน", href: "/reports", icon: FileBarChart, section: "ระบบ" },
+  { label: "แจ้งเตือน", href: "/notifications", icon: Bell, section: "ระบบ" },
+  { label: "ผู้ใช้งาน", href: "/users", icon: Users, section: "ระบบ" },
+  { label: "ตั้งค่า", href: "/settings", icon: Settings, section: "ระบบ" },
+];
+
+const sections = ["หลัก", "ดำเนินการ", "เทคนิค", "ระบบ"];
+
+interface SidebarProps {
+  collapsed: boolean;
+  onToggle: () => void;
+}
+
+export function Sidebar({ collapsed, onToggle }: SidebarProps) {
+  const pathname = usePathname();
+  const { stoxyUser } = useAuth();
+  const router = useRouter();
+
+  async function handleLogout() {
+    try {
+      await logout();
+      router.push("/login");
+    } catch {
+      toast.error("ออกจากระบบไม่สำเร็จ");
+    }
+  }
+
+  return (
+    <aside
+      className={cn(
+        "flex flex-col h-screen bg-[#0d2137] text-white transition-all duration-300 relative shrink-0",
+        collapsed ? "w-16" : "w-64"
+      )}
+    >
+      {/* Logo */}
+      <div className="flex items-center gap-3 px-4 py-5 border-b border-white/10">
+        <div className="flex items-center justify-center w-9 h-9 bg-yellow-400 rounded-xl shrink-0">
+          <Zap className="w-5 h-5 text-[#0d2137]" />
+        </div>
+        {!collapsed && (
+          <div className="flex items-baseline gap-0.5 overflow-hidden">
+            <span className="text-xl font-bold tracking-tight text-white">sto</span>
+            <span className="text-xl font-bold tracking-tight text-yellow-400">xy</span>
+          </div>
+        )}
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1 scrollbar-none">
+        {sections.map((section) => {
+          const items = navItems.filter((i) => i.section === section);
+          return (
+            <div key={section}>
+              {!collapsed && (
+                <p className="px-3 py-1.5 text-xs font-semibold text-white/40 uppercase tracking-widest">
+                  {section}
+                </p>
+              )}
+              {items.map((item) => {
+                const isActive =
+                  pathname === item.href ||
+                  (item.href !== "/dashboard" && pathname.startsWith(item.href));
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    title={collapsed ? item.label : undefined}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group relative",
+                      isActive
+                        ? "bg-yellow-400 text-[#0d2137] shadow-lg shadow-yellow-400/20"
+                        : "text-white/70 hover:bg-white/10 hover:text-white"
+                    )}
+                  >
+                    <item.icon
+                      className={cn(
+                        "shrink-0 transition-none",
+                        collapsed ? "w-5 h-5 mx-auto" : "w-4 h-4",
+                        isActive ? "text-[#0d2137]" : ""
+                      )}
+                    />
+                    {!collapsed && <span className="truncate">{item.label}</span>}
+                    {item.badge && !collapsed && (
+                      <span className="ml-auto bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                        {item.badge}
+                      </span>
+                    )}
+                    {/* Tooltip on collapse */}
+                    {collapsed && (
+                      <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none z-50 transition-opacity">
+                        {item.label}
+                      </div>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          );
+        })}
+      </nav>
+
+      {/* User + Logout */}
+      <div className="border-t border-white/10 p-3 space-y-1">
+        {!collapsed && stoxyUser && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl">
+            <div className="w-7 h-7 rounded-full bg-yellow-400 flex items-center justify-center text-[#0d2137] font-bold text-sm shrink-0">
+              {stoxyUser.displayName.charAt(0).toUpperCase()}
+            </div>
+            <div className="overflow-hidden">
+              <p className="text-xs font-semibold text-white truncate">
+                {stoxyUser.displayName}
+              </p>
+              <p className="text-xs text-white/50 truncate">{stoxyUser.department}</p>
+            </div>
+          </div>
+        )}
+        <button
+          onClick={handleLogout}
+          className={cn(
+            "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/60 hover:bg-white/10 hover:text-white transition-all",
+            collapsed && "justify-center"
+          )}
+        >
+          <LogOut className="w-4 h-4 shrink-0" />
+          {!collapsed && "ออกจากระบบ"}
+        </button>
+      </div>
+
+      {/* Collapse Toggle */}
+      <button
+        onClick={onToggle}
+        className="absolute -right-3 top-8 w-6 h-6 bg-[#0d2137] border border-white/20 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors z-50"
+      >
+        {collapsed ? (
+          <ChevronRight className="w-3 h-3 text-white/60" />
+        ) : (
+          <ChevronLeft className="w-3 h-3 text-white/60" />
+        )}
+      </button>
+    </aside>
+  );
+}

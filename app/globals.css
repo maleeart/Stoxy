@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: hsl(0 0% 100%);
+  --color-foreground: hsl(222 47% 11%);
+  --color-primary: hsl(215 70% 25%);
+  --color-primary-foreground: hsl(0 0% 100%);
+  --color-secondary: hsl(45 95% 50%);
+  --color-muted: hsl(210 40% 96%);
+  --color-muted-foreground: hsl(215 16% 47%);
+  --color-border: hsl(214 32% 91%);
+  --color-input: hsl(214 32% 91%);
+  --color-accent: hsl(45 95% 50%);
+  --color-destructive: hsl(0 84% 60%);
+  /* Stoxy brand */
+  --color-stoxy-navy: #0d2137;
+  --color-stoxy-blue: #1a3a5c;
+  --color-stoxy-yellow: #f5a623;
+}
+
+* {
+  box-sizing: border-box;
+  border-color: hsl(214 32% 91%);
+}
+
+body {
+  background-color: hsl(210 40% 98%);
+  color: hsl(222 47% 11%);
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+.dark body {
+  background-color: hsl(222 47% 7%);
+  color: hsl(210 40% 98%);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: hsl(210 40% 96%); }
+::-webkit-scrollbar-thumb { background: hsl(214 32% 80%); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(215 16% 47%); }
+
+/* Input field utility */
+.input-field {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  background-color: white;
+  border: 1px solid hsl(214 32% 91%);
+  border-radius: 0.75rem;
+  transition: all 0.15s;
+  outline: none;
+}
+.input-field:focus {
+  ring: 2px;
+  ring-offset: 0;
+  border-color: hsl(215 70% 55%);
+  box-shadow: 0 0 0 3px hsl(215 70% 55% / 0.15);
+}
+.dark .input-field {
+  background-color: hsl(222 47% 10%);
+  border-color: hsl(217 33% 20%);
+  color: hsl(210 40% 98%);
+}

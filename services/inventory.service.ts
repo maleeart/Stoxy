@@ -1,0 +1,196 @@
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  limit,
+  startAfter,
+  Timestamp,
+  writeBatch,
+  increment,
+  DocumentSnapshot,
+  QueryConstraint,
+  onSnapshot,
+  Query,
+  DocumentData,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import type {
+  InventoryItem,
+  StockMovement,
+  FilterState,
+  MovementType,
+} from "@/types";
+
+const ITEMS_COLLECTION = "inventory_items";
+const MOVEMENTS_COLLECTION = "stock_movements";
+
+// ── Get Items ─────────────────────────────────────────────────
+export async function getInventoryItems(
+  filter?: FilterState,
+  pageSize = 20,
+  lastDoc?: DocumentSnapshot
+): Promise<{ items: InventoryItem[]; lastDoc: DocumentSnapshot | null }> {
+  const constraints: QueryConstraint[] = [orderBy("updatedAt", "desc")];
+
+  if (filter?.categoryId) {
+    constraints.push(where("categoryId", "==", filter.categoryId));
+  }
+  if (filter?.locationId) {
+    constraints.push(where("locationId", "==", filter.locationId));
+  }
+  if (filter?.status) {
+    constraints.push(where("status", "==", filter.status));
+  }
+
+  constraints.push(limit(pageSize));
+  if (lastDoc) constraints.push(startAfter(lastDoc));
+
+  const q = query(collection(db, ITEMS_COLLECTION), ...constraints);
+  const snap = await getDocs(q);
+
+  const items = snap.docs.map((d) => ({ id: d.id, ...d.data() } as InventoryItem));
+  const newLastDoc = snap.docs[snap.docs.length - 1] ?? null;
+
+  return { items, lastDoc: newLastDoc };
+}
+
+// ── Get Single Item ───────────────────────────────────────────
+export async function getInventoryItem(id: string): Promise<InventoryItem | null> {
+  const snap = await getDoc(doc(db, ITEMS_COLLECTION, id));
+  if (!snap.exists()) return null;
+  return { id: snap.id, ...snap.data() } as InventoryItem;
+}
+
+// ── Create Item ───────────────────────────────────────────────
+export async function createInventoryItem(
+  data: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">
+): Promise<string> {
+  const now = Timestamp.now();
+  const ref = await addDoc(collection(db, ITEMS_COLLECTION), {
+    ...data,
+    quantityAvailable: data.quantity,
+    quantityBorrowed: 0,
+    quantityUnderRepair: 0,
+    createdAt: now,
+    updatedAt: now,
+  });
+  return ref.id;
+}
+
+// ── Update Item ───────────────────────────────────────────────
+export async function updateInventoryItem(
+  id: string,
+  data: Partial<InventoryItem>
+): Promise<void> {
+  await updateDoc(doc(db, ITEMS_COLLECTION, id), {
+    ...data,
+    updatedAt: Timestamp.now(),
+  });
+}
+
+// ── Delete Item ───────────────────────────────────────────────
+export async function deleteInventoryItem(id: string): Promise<void> {
+  await deleteDoc(doc(db, ITEMS_COLLECTION, id));
+}
+
+// ── Stock Movement ────────────────────────────────────────────
+export async function recordStockMovement(
+  data: Omit<StockMovement, "id" | "createdAt">
+): Promise<string> {
+  const ref = await addDoc(collection(db, MOVEMENTS_COLLECTION), {
+    ...data,
+    createdAt: Timestamp.now(),
+  });
+  return ref.id;
+}
+
+export async function getItemMovements(itemId: string): Promise<StockMovement[]> {
+  const q = query(
+    collection(db, MOVEMENTS_COLLECTION),
+    where("itemId", "==", itemId),
+    orderBy("createdAt", "desc"),
+    limit(50)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as StockMovement));
+}
+
+export async function getRecentMovements(count = 10): Promise<StockMovement[]> {
+  const q = query(
+    collection(db, MOVEMENTS_COLLECTION),
+    orderBy("createdAt", "desc"),
+    limit(count)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as StockMovement));
+}
+
+// ── Dashboard Stats ───────────────────────────────────────────
+export async function getDashboardStats() {
+  const snap = await getDocs(collection(db, ITEMS_COLLECTION));
+  const items = snap.docs.map((d) => d.data() as InventoryItem);
+
+  const today = new Date();
+  const soon = new Date();
+  soon.setDate(soon.getDate() + 30);
+
+  return {
+    totalItems: items.length,
+    totalQuantity: items.reduce((s, i) => s + i.quantity, 0),
+    availableQuantity: items.reduce((s, i) => s + i.quantityAvailable, 0),
+    borrowedQuantity: items.reduce((s, i) => s + i.quantityBorrowed, 0),
+    underRepairQuantity: items.reduce((s, i) => s + i.quantityUnderRepair, 0),
+    lowStockCount: items.filter((i) => i.quantityAvailable <= i.minStockLevel).length,
+    calibrationDueCount: items.filter((i) => {
+      if (!i.calibration?.nextDate) return false;
+      const d = i.calibration.nextDate.toDate();
+      return d <= soon;
+    }).length,
+    maintenanceDueCount: items.filter((i) => {
+      if (!i.maintenance?.nextDate) return false;
+      const d = i.maintenance.nextDate.toDate();
+      return d <= soon;
+    }).length,
+    pendingApprovalsCount: 0,
+    overdueCount: 0,
+  };
+}
+
+// ── Real-time listener ────────────────────────────────────────
+export function subscribeToLowStock(
+  callback: (items: InventoryItem[]) => void
+): () => void {
+  const q = query(
+    collection(db, ITEMS_COLLECTION),
+    where("status", "==", "available")
+  );
+  return onSnapshot(q, (snap) => {
+    const items = snap.docs
+      .map((d) => ({ id: d.id, ...d.data() } as InventoryItem))
+      .filter((i) => i.quantityAvailable <= i.minStockLevel);
+    callback(items);
+  });
+}
+
+// ── Search Items (client-side filter) ─────────────────────────
+export async function searchInventoryItems(searchText: string): Promise<InventoryItem[]> {
+  const snap = await getDocs(
+    query(collection(db, ITEMS_COLLECTION), orderBy("name"), limit(200))
+  );
+  const all = snap.docs.map((d) => ({ id: d.id, ...d.data() } as InventoryItem));
+  const lower = searchText.toLowerCase();
+  return all.filter(
+    (i) =>
+      i.name.toLowerCase().includes(lower) ||
+      i.code.toLowerCase().includes(lower) ||
+      i.serialNumber?.toLowerCase().includes(lower) ||
+      i.brand?.toLowerCase().includes(lower)
+  );
+}
