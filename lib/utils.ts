@@ -57,11 +57,24 @@ export function formatNumber(n: number): string {
 }
 
 // ── String Utilities ──────────────────────────────────────────
-export function generateItemCode(prefix = "ITEM"): string {
-  const num = Math.floor(Math.random() * 100000)
-    .toString()
-    .padStart(5, "0");
-  return `${prefix}-${num}`;
+const CATEGORY_PREFIX: Record<string, string> = {
+  meter: "MTR",
+  cable: "CBL",
+  tools: "TLS",
+  safety: "SFT",
+  spareparts: "SPR",
+  others: "OTH",
+};
+
+export function getCategoryPrefix(categoryId: string): string {
+  return CATEGORY_PREFIX[categoryId] ?? "ITEM";
+}
+
+export function generateItemCode(categoryId: string, existingCodes: string[]): string {
+  const prefix = getCategoryPrefix(categoryId);
+  const same = existingCodes.filter((c) => c.startsWith(prefix + "-"));
+  const next = same.length + 1;
+  return `${prefix}-${next.toString().padStart(4, "0")}`;
 }
 
 export function truncate(str: string, length = 50): string {

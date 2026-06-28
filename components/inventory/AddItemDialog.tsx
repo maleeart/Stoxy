@@ -1,14 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { X, Package, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useCreateInventoryItem } from "@/hooks/useInventory";
+import { useCreateInventoryItem, useInventoryItems } from "@/hooks/useInventory";
 import { useAuth } from "@/hooks/useAuth";
-import { Timestamp } from "firebase/firestore";
 import { toast } from "sonner";
 import { generateItemCode } from "@/lib/utils";
 
@@ -45,6 +44,7 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
   const { stoxyUser } = useAuth();
   const [activeTab, setActiveTab] = useState("basic");
   const createItem = useCreateInventoryItem();
+  const { data: items = [] } = useInventoryItems();
 
   const {
     register,
@@ -55,7 +55,7 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
   } = useForm<FormData, unknown, FormData>({
     resolver: zodResolver(schema) as any,
     defaultValues: {
-      code: generateItemCode("ELEC"),
+      code: "",
       quantity: 1,
       minStockLevel: 1,
       condition: "good",
@@ -63,6 +63,15 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
       requiresMaintenance: false,
     },
   });
+
+  const categoryId = watch("categoryId");
+
+  // Auto-generate code when category changes
+  useEffect(() => {
+    if (!categoryId) return;
+    const existingCodes = items.map((i) => i.code);
+    setValue("code", generateItemCode(categoryId, existingCodes));
+  }, [categoryId, items, setValue]);
 
   async function onSubmit(data: FormData) {
     try {
