@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { getBorrowRecords, returnItem } from "@/services/borrow.service";
@@ -19,6 +20,7 @@ const conditions: { value: ItemCondition; label: string }[] = [
 ];
 
 export default function ReturnPage() {
+  const { stoxyUser } = useAuth();
   const qc = useQueryClient();
   const [selected, setSelected] = useState<BorrowRecord | null>(null);
   const [condition, setCondition] = useState<ItemCondition>("good");
@@ -31,7 +33,7 @@ export default function ReturnPage() {
 
   const returnMut = useMutation({
     mutationFn: () =>
-      returnItem(selected!.id, { condition, notes, returnedBy: "current_user" }),
+      returnItem(selected!.id, { condition, notes, returnedBy: stoxyUser?.uid ?? "" }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["borrows_active"] });
       toast.success("รับคืนสำเร็จ");

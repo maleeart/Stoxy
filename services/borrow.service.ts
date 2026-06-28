@@ -6,11 +6,11 @@ import {
   addDoc,
   updateDoc,
   query,
-  where,
   orderBy,
   limit,
   Timestamp,
   writeBatch,
+  increment,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { recordStockMovement } from "./inventory.service";
@@ -18,7 +18,6 @@ import type { BorrowRecord, BorrowStatus, ItemCondition } from "@/types";
 
 const BORROWS_COLLECTION = "borrow_records";
 
-// ── Create Borrow Request ─────────────────────────────────────
 export async function createBorrowRequest(
   data: Omit<BorrowRecord, "id" | "createdAt" | "updatedAt">
 ): Promise<string> {
@@ -32,20 +31,12 @@ export async function createBorrowRequest(
   return ref.id;
 }
 
-// ── Get Borrow Records ────────────────────────────────────────
-export async function getBorrowRecords(
-  status?: BorrowStatus,
-  userId?: string
-): Promise<BorrowRecord[]> {
-  const constraints = [];
-  if (status) constraints.push(where("status", "==", status));
-  if (userId) constraints.push(where("borrowerId", "==", userId));
-  constraints.push(orderBy("createdAt", "desc"));
-  constraints.push(limit(100));
-
-  const q = query(collection(db, BORROWS_COLLECTION), ...constraints);
+// ponytail: client-side filter to avoid composite index requirements
+export async function getBorrowRecords(status?: BorrowStatus): Promise<BorrowRecord[]> {
+  const q = query(collection(db, BORROWS_COLLECTION), orderBy("createdAt", "desc"), limit(200));
   const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as BorrowRecord));
+  const all = snap.docs.map((d) => ({ id: d.id, ...d.data() } as BorrowRecord));
+  return status ? all.filter((r) => r.status === status) : all;
 }
 
 export async function getBorrowRecord(id: string): Promise<BorrowRecord | null> {
@@ -54,31 +45,24 @@ export async function getBorrowRecord(id: string): Promise<BorrowRecord | null> 
   return { id: snap.id, ...snap.data() } as BorrowRecord;
 }
 
-export async function getItemBorrowHistory(itemId: string): Promise<BorrowRecord[]> {
-  const q = query(
-    collection(db, BORROWS_COLLECTION),
-    where("itemId", "==", itemId),
-    orderBy("createdAt", "desc"),
-    limit(50)
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as BorrowRecord));
-}
-
-// ── Approve / Reject ──────────────────────────────────────────
-export async function approveBorrowRequest(
-  borrowId: string,
-  approverId: string
-): Promise<void> {
-  const batch = writeBatch(db);
+export async function approveBorrowRequest(borrowId: string, approverId: string): Promise<void> {
   const borrowRef = doc(db, BORROWS_COLLECTION, borrowId);
   const borrowSnap = await getDoc(borrowRef);
-  if (!borrowSnap.exists()) throw new Error("Borrow record not found");
+  if (!borrowSnap.exists()) throw new Error("ไม่พบรายการ");
 
   const borrow = borrowSnap.data() as BorrowRecord;
-  const now = Timestamp.now();
 
-  // Update borrow record
+  // Read current inventory first so we can record movement correctly
+  const itemRef = doc(db, "inventory_items", borrow.itemId);
+  const itemSnap = await getDoc(itemRef);
+  if (!itemSnap.exists()) throw new Error("ไม่พบอุปกรณ์");
+  const item = itemSnap.data();
+
+  if (item.quantityAvailable < borrow.quantity) throw new Error("สต็อกไม่เพียงพอ");
+
+  const now = Timestamp.now();
+  const batch = writeBatch(db);
+
   batch.update(borrowRef, {
     status: "borrowed",
     approvedBy: approverId,
@@ -87,36 +71,28 @@ export async function approveBorrowRequest(
     updatedAt: now,
   });
 
-  // Update inventory
-  const itemRef = doc(db, "inventory_items", borrow.itemId);
   batch.update(itemRef, {
-    quantityAvailable: -borrow.quantity, // will be incremented properly
-    quantityBorrowed: borrow.quantity,
-    status: "borrowed",
+    quantityAvailable: increment(-borrow.quantity),
+    quantityBorrowed: increment(borrow.quantity),
     updatedAt: now,
   });
 
   await batch.commit();
 
-  // Record movement
-  const itemSnap = await getDoc(itemRef);
-  const item = itemSnap.data();
-  if (item) {
-    await recordStockMovement({
-      itemId: borrow.itemId,
-      itemCode: borrow.itemCode,
-      itemName: borrow.itemName,
-      type: "borrow",
-      quantityBefore: item.quantityAvailable + borrow.quantity,
-      quantityChange: -borrow.quantity,
-      quantityAfter: item.quantityAvailable,
-      referenceId: borrowId,
-      referenceType: "borrow",
-      reason: borrow.purpose,
-      performedBy: approverId,
-      performedByName: approverId,
-    });
-  }
+  await recordStockMovement({
+    itemId: borrow.itemId,
+    itemCode: borrow.itemCode,
+    itemName: borrow.itemName,
+    type: "borrow",
+    quantityBefore: item.quantityAvailable,
+    quantityChange: -borrow.quantity,
+    quantityAfter: item.quantityAvailable - borrow.quantity,
+    referenceId: borrowId,
+    referenceType: "borrow",
+    reason: borrow.purpose,
+    performedBy: approverId,
+    performedByName: approverId,
+  });
 }
 
 export async function rejectBorrowRequest(
@@ -133,66 +109,37 @@ export async function rejectBorrowRequest(
   });
 }
 
-// ── Return Item ───────────────────────────────────────────────
 export async function returnItem(
   borrowId: string,
-  returnData: {
-    condition: ItemCondition;
-    notes?: string;
-    photos?: string[];
-    returnedBy: string;
-  }
+  returnData: { condition: ItemCondition; notes?: string; returnedBy: string }
 ): Promise<void> {
-  const batch = writeBatch(db);
   const borrowRef = doc(db, BORROWS_COLLECTION, borrowId);
   const borrowSnap = await getDoc(borrowRef);
-  if (!borrowSnap.exists()) throw new Error("Borrow record not found");
+  if (!borrowSnap.exists()) throw new Error("ไม่พบรายการ");
 
   const borrow = borrowSnap.data() as BorrowRecord;
   const now = Timestamp.now();
+  const batch = writeBatch(db);
 
   batch.update(borrowRef, {
     status: "returned" as BorrowStatus,
     actualReturnDate: now,
     returnCondition: returnData.condition,
-    returnNotes: returnData.notes,
-    returnPhotos: returnData.photos ?? [],
+    returnNotes: returnData.notes ?? "",
     updatedAt: now,
   });
 
-  const itemRef = doc(db, "inventory_items", borrow.itemId);
-  batch.update(itemRef, {
-    status: "available",
+  batch.update(doc(db, "inventory_items", borrow.itemId), {
+    quantityAvailable: increment(borrow.quantity),
+    quantityBorrowed: increment(-borrow.quantity),
     condition: returnData.condition,
-    quantityAvailable: borrow.quantity,
-    quantityBorrowed: 0,
     updatedAt: now,
   });
 
   await batch.commit();
 }
 
-// ── Get Overdue Borrows ───────────────────────────────────────
-export async function getOverdueBorrows(): Promise<BorrowRecord[]> {
-  const q = query(
-    collection(db, BORROWS_COLLECTION),
-    where("status", "==", "borrowed"),
-    orderBy("expectedReturnDate", "asc")
-  );
-  const snap = await getDocs(q);
-  const now = new Date();
-  return snap.docs
-    .map((d) => ({ id: d.id, ...d.data() } as BorrowRecord))
-    .filter((b) => b.expectedReturnDate.toDate() < now);
-}
-
-// ── Get Pending Approvals ─────────────────────────────────────
 export async function getPendingApprovals(): Promise<BorrowRecord[]> {
-  const q = query(
-    collection(db, BORROWS_COLLECTION),
-    where("status", "==", "pending_approval"),
-    orderBy("createdAt", "asc")
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as BorrowRecord));
+  const all = await getBorrowRecords();
+  return all.filter((r) => r.status === "pending_approval");
 }
