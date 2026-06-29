@@ -3,17 +3,33 @@ import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import type { InventoryItem, BorrowRecord, StockMovement } from "@/types";
 
+// Load & register Sarabun (Thai) font into a jsPDF instance
+async function createDocWithThaiFont(orientation: "portrait" | "landscape" = "portrait"): Promise<jsPDF> {
+  const doc = new jsPDF({ orientation });
+  try {
+    const res = await fetch("/fonts/Sarabun-Regular.ttf");
+    const buf = await res.arrayBuffer();
+    const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+    doc.addFileToVFS("Sarabun-Regular.ttf", b64);
+    doc.addFont("Sarabun-Regular.ttf", "Sarabun", "normal");
+    doc.setFont("Sarabun");
+  } catch {
+    // fallback to helvetica if font fails to load
+  }
+  return doc;
+}
+
 // ── PDF ───────────────────────────────────────────────────────
-export function exportInventoryPDF(items: InventoryItem[]) {
-  const doc = new jsPDF({ orientation: "landscape" });
+export async function exportInventoryPDF(items: InventoryItem[]) {
+  const doc = await createDocWithThaiFont("landscape");
   doc.setFontSize(16);
-  doc.text("Electrical Equipment Inventory - Stoxy", 14, 15);
+  doc.text("รายงานคลังอุปกรณ์ไฟฟ้า - Stoxy", 14, 15);
   doc.setFontSize(10);
-  doc.text(`Printed: ${new Date().toLocaleDateString("en-GB")}`, 14, 22);
+  doc.text(`วันที่พิมพ์: ${new Date().toLocaleDateString("th-TH")}`, 14, 22);
 
   autoTable(doc, {
     startY: 28,
-    head: [["Code", "Name", "Brand", "Category", "Available/Total", "Status", "Condition", "Location"]],
+    head: [["รหัส", "ชื่ออุปกรณ์", "ยี่ห้อ", "หมวดหมู่", "คงเหลือ/ทั้งหมด", "สถานะ", "สภาพ", "สถานที่"]],
     body: items.map((i) => [
       i.code,
       i.name,
@@ -24,33 +40,34 @@ export function exportInventoryPDF(items: InventoryItem[]) {
       conditionLabel[i.condition] ?? i.condition,
       i.locationName ?? "-",
     ]),
-    styles: { font: "helvetica", fontSize: 9 },
-    headStyles: { fillColor: [13, 33, 55] },
+    styles: { font: "Sarabun", fontSize: 10 },
+    headStyles: { fillColor: [13, 33, 55], font: "Sarabun" },
   });
 
   doc.save(`stoxy-inventory-${dateStr()}.pdf`);
 }
 
-export function exportBorrowsPDF(records: BorrowRecord[]) {
-  const doc = new jsPDF({ orientation: "landscape" });
+export async function exportBorrowsPDF(records: BorrowRecord[]) {
+  const doc = await createDocWithThaiFont("landscape");
   doc.setFontSize(16);
-  doc.text("Borrow/Return Records - Stoxy", 14, 15);
+  doc.text("รายงานการยืม-คืนอุปกรณ์ - Stoxy", 14, 15);
   doc.setFontSize(10);
-  doc.text(`Printed: ${new Date().toLocaleDateString("en-GB")}`, 14, 22);
+  doc.text(`วันที่พิมพ์: ${new Date().toLocaleDateString("th-TH")}`, 14, 22);
 
   autoTable(doc, {
     startY: 28,
-    head: [["Item Code", "Item Name", "Borrower", "Borrow Date", "Due Date", "Status"]],
+    head: [["รหัสอุปกรณ์", "ชื่ออุปกรณ์", "ผู้ยืม", "แผนก", "วันที่ยืม", "กำหนดคืน", "สถานะ"]],
     body: records.map((r) => [
       r.itemCode,
       r.itemName,
       r.borrowerName,
-      r.borrowDate?.toDate().toLocaleDateString("en-GB") ?? "-",
-      r.expectedReturnDate?.toDate().toLocaleDateString("en-GB") ?? "-",
+      r.borrowerDepartment ?? "-",
+      r.borrowDate?.toDate().toLocaleDateString("th-TH") ?? "-",
+      r.expectedReturnDate?.toDate().toLocaleDateString("th-TH") ?? "-",
       borrowStatusLabel[r.status] ?? r.status,
     ]),
-    styles: { font: "helvetica", fontSize: 9 },
-    headStyles: { fillColor: [13, 33, 55] },
+    styles: { font: "Sarabun", fontSize: 10 },
+    headStyles: { fillColor: [13, 33, 55], font: "Sarabun" },
   });
 
   doc.save(`stoxy-borrows-${dateStr()}.pdf`);
@@ -59,19 +76,19 @@ export function exportBorrowsPDF(records: BorrowRecord[]) {
 // ── Excel ─────────────────────────────────────────────────────
 export function exportInventoryExcel(items: InventoryItem[]) {
   const rows = items.map((i) => ({
-    Code: i.code,
-    Name: i.name,
-    Brand: i.brand ?? "",
-    Model: i.model ?? "",
-    Category: i.categoryName ?? "",
-    "Total Qty": i.quantity,
-    Available: i.quantityAvailable,
-    Borrowed: i.quantityBorrowed,
-    Status: statusLabel[i.status] ?? i.status,
-    Condition: conditionLabel[i.condition] ?? i.condition,
-    Location: i.locationName ?? "",
-    "Purchase Price": i.purchasePrice ?? "",
-    Notes: i.notes ?? "",
+    รหัส: i.code,
+    ชื่ออุปกรณ์: i.name,
+    ยี่ห้อ: i.brand ?? "",
+    รุ่น: i.model ?? "",
+    หมวดหมู่: i.categoryName ?? "",
+    จำนวนทั้งหมด: i.quantity,
+    คงเหลือ: i.quantityAvailable,
+    ถูกยืม: i.quantityBorrowed,
+    สถานะ: statusLabel[i.status] ?? i.status,
+    สภาพ: conditionLabel[i.condition] ?? i.condition,
+    สถานที่: i.locationName ?? "",
+    ราคาซื้อ: i.purchasePrice ?? "",
+    หมายเหตุ: i.notes ?? "",
   }));
 
   const ws = XLSX.utils.json_to_sheet(rows);
@@ -82,15 +99,15 @@ export function exportInventoryExcel(items: InventoryItem[]) {
 
 export function exportMovementsExcel(movements: StockMovement[]) {
   const rows = movements.map((m) => ({
-    Date: m.createdAt?.toDate().toLocaleDateString("en-GB") ?? "",
-    "Item Code": m.itemCode,
-    "Item Name": m.itemName,
-    Type: m.type,
-    Before: m.quantityBefore,
-    Change: m.quantityChange,
-    After: m.quantityAfter,
-    Reason: m.reason ?? "",
-    "Performed By": m.performedByName,
+    วันที่: m.createdAt?.toDate().toLocaleDateString("th-TH") ?? "",
+    รหัสอุปกรณ์: m.itemCode,
+    ชื่ออุปกรณ์: m.itemName,
+    ประเภท: m.type,
+    ก่อน: m.quantityBefore,
+    เปลี่ยนแปลง: m.quantityChange,
+    หลัง: m.quantityAfter,
+    เหตุผล: m.reason ?? "",
+    ผู้ดำเนินการ: m.performedByName,
   }));
 
   const ws = XLSX.utils.json_to_sheet(rows);
@@ -101,31 +118,31 @@ export function exportMovementsExcel(movements: StockMovement[]) {
 
 // ── Helpers ───────────────────────────────────────────────────
 const statusLabel: Record<string, string> = {
-  available: "Available",
-  borrowed: "Borrowed",
-  under_repair: "Under Repair",
-  calibrating: "Calibrating",
-  disposed: "Disposed",
-  lost: "Lost",
+  available: "พร้อมใช้งาน",
+  borrowed: "ถูกยืม",
+  under_repair: "ซ่อมแซม",
+  calibrating: "สอบเทียบ",
+  disposed: "จำหน่ายออก",
+  lost: "สูญหาย",
 };
 
 const conditionLabel: Record<string, string> = {
-  excellent: "Excellent",
-  good: "Good",
-  fair: "Fair",
-  poor: "Poor",
-  broken: "Broken",
+  excellent: "ดีมาก",
+  good: "ดี",
+  fair: "พอใช้",
+  poor: "แย่",
+  broken: "เสีย",
 };
 
 const borrowStatusLabel: Record<string, string> = {
-  pending_approval: "Pending Approval",
-  approved: "Approved",
-  borrowed: "Borrowed",
-  return_pending: "Return Pending",
-  returned: "Returned",
-  rejected: "Rejected",
-  overdue: "Overdue",
-  lost: "Lost",
+  pending_approval: "รออนุมัติ",
+  approved: "อนุมัติแล้ว",
+  borrowed: "ยืมอยู่",
+  return_pending: "รอรับทราบ",
+  returned: "คืนแล้ว",
+  rejected: "ปฏิเสธ",
+  overdue: "เกินกำหนด",
+  lost: "สูญหาย",
 };
 
 function dateStr() {
