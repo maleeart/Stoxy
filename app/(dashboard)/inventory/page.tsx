@@ -27,7 +27,7 @@ import {
 } from "@tanstack/react-table";
 import { AppShell } from "@/components/layout/AppShell";
 import { useInventoryItems } from "@/hooks/useInventory";
-import { statusConfig, conditionConfig, formatDate, cn } from "@/lib/utils";
+import { statusConfig, formatDate, cn } from "@/lib/utils";
 import type { InventoryItem, ItemStatus } from "@/types";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -159,19 +159,6 @@ export default function InventoryPage() {
         cell: ({ getValue }) => {
           const s = getValue() as keyof typeof statusConfig;
           const cfg = statusConfig[s] ?? { badge: "bg-gray-100 text-gray-600", label: s };
-          return (
-            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${cfg.badge}`}>
-              {cfg.label}
-            </span>
-          );
-        },
-      },
-      {
-        accessorKey: "condition",
-        header: "สภาพ",
-        cell: ({ getValue }) => {
-          const c = getValue() as keyof typeof conditionConfig;
-          const cfg = conditionConfig[c];
           return (
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${cfg.badge}`}>
               {cfg.label}

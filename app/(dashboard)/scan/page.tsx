@@ -6,7 +6,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { searchInventoryItems } from "@/services/inventory.service";
 import type { InventoryItem } from "@/types";
 import { ScanLine, CheckCircle, AlertCircle, Package } from "lucide-react";
-import { statusConfig, conditionConfig } from "@/lib/utils";
+import { statusConfig } from "@/lib/utils";
 
 type ScanState = "idle" | "scanning" | "found" | "not_found";
 

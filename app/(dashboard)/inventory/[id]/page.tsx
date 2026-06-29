@@ -4,7 +4,7 @@ import { use } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { useInventoryItem } from "@/hooks/useInventory";
-import { statusConfig, conditionConfig, formatDate, formatCurrency } from "@/lib/utils";
+import { statusConfig, formatDate, formatCurrency } from "@/lib/utils";
 import {
   ArrowLeft, Package, MapPin, Tag, Calendar, Wrench,
   Gauge, QrCode, FileText, Edit, AlertTriangle,
@@ -44,7 +44,6 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
   }
 
   const statusCfg = statusConfig[item.status];
-  const condCfg = conditionConfig[item.condition];
   const pct = item.quantity > 0 ? (item.quantityAvailable / item.quantity) * 100 : 0;
 
   return (
@@ -98,9 +97,6 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
                 </span>
                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusCfg.badge}`}>
                   {statusCfg.label}
-                </span>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${condCfg.badge}`}>
-                  {condCfg.label}
                 </span>
               </div>
               <h1 className="text-xl font-bold text-gray-900 dark:text-white mt-1">{item.name}</h1>
