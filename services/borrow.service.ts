@@ -212,3 +212,50 @@ export async function acknowledgeReturn(borrowId: string, adminId: string): Prom
     performedByName: adminId,
   });
 }
+
+// Admin รับของคืนโดยตรง (สำหรับ guest หรือกรณีที่ไม่ได้แจ้งคืนผ่านแอพ)
+export async function adminReceiveReturn(borrowId: string, adminId: string, notes?: string): Promise<void> {
+  const borrowRef = doc(db, BORROWS_COLLECTION, borrowId);
+  const borrowSnap = await getDoc(borrowRef);
+  if (!borrowSnap.exists()) throw new Error("ไม่พบรายการ");
+  const borrow = borrowSnap.data() as BorrowRecord;
+  if (!["borrowed", "return_pending"].includes(borrow.status)) throw new Error("สถานะไม่ถูกต้อง");
+
+  const itemRef = doc(db, "inventory_items", borrow.itemId);
+  const itemSnap = await getDoc(itemRef);
+  if (!itemSnap.exists()) throw new Error("ไม่พบอุปกรณ์");
+  const item = itemSnap.data();
+
+  const now = Timestamp.now();
+  const batch = writeBatch(db);
+
+  batch.update(borrowRef, {
+    status: "returned" as BorrowStatus,
+    actualReturnDate: now,
+    returnNotes: notes ?? "",
+    updatedAt: now,
+  });
+  batch.update(itemRef, {
+    quantityAvailable: increment(borrow.quantity),
+    quantityBorrowed: increment(-borrow.quantity),
+    status: "available",
+    updatedAt: now,
+  });
+
+  await batch.commit();
+
+  await recordStockMovement({
+    itemId: borrow.itemId,
+    itemCode: borrow.itemCode,
+    itemName: borrow.itemName,
+    type: "return",
+    quantityBefore: item.quantityAvailable,
+    quantityChange: borrow.quantity,
+    quantityAfter: item.quantityAvailable + borrow.quantity,
+    referenceId: borrowId,
+    referenceType: "borrow",
+    reason: `รับคืนโดย admin${notes ? ` (${notes})` : ""}`,
+    performedBy: adminId,
+    performedByName: adminId,
+  });
+}

@@ -6,7 +6,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/hooks/useAuth";
 import { useInventoryItems } from "@/hooks/useInventory";
 import { useRealtimeBorrows } from "@/hooks/useRealtimeBorrows";
-import { approveBorrowRequest, rejectBorrowRequest, acknowledgeReturn } from "@/services/borrow.service";
+import { approveBorrowRequest, rejectBorrowRequest, acknowledgeReturn, adminReceiveReturn } from "@/services/borrow.service";
 import { getRequisitions, approveRequisition, rejectRequisition } from "@/services/requisition.service";
 import { adjustStock } from "@/services/inventory.service";
 import { formatDate } from "@/lib/utils";
@@ -163,6 +163,7 @@ export default function OperationsPage() {
 
   const pendingBorrows = borrows.filter(b => b.status === "pending_approval");
   const returnPending = borrows.filter(b => b.status === "return_pending");
+  const activeBorrows = borrows.filter(b => b.status === "borrowed");
   const pendingReqs = requisitions.filter(r => r.status === "pending");
 
   const filteredItems = items.filter(i =>
@@ -191,6 +192,12 @@ export default function OperationsPage() {
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
   });
 
+  const adminReceive = useMutation({
+    mutationFn: (id: string) => adminReceiveReturn(id, stoxyUser?.uid ?? ""),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["borrows"] }); toast.success("รับของคืนเรียบร้อย"); },
+    onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
+  });
+
   const approveReq = useMutation({
     mutationFn: (id: string) => approveRequisition(id, stoxyUser?.uid ?? ""),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["requisitions"] }); toast.success("อนุมัติการเบิกแล้ว"); },
@@ -205,7 +212,7 @@ export default function OperationsPage() {
   });
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode; count?: number }[] = [
-    { id: "borrow", label: "ยืม-คืน", icon: <ArrowLeftRight className="w-4 h-4" />, count: pendingBorrows.length + returnPending.length },
+    { id: "borrow", label: "ยืม-คืน", icon: <ArrowLeftRight className="w-4 h-4" />, count: pendingBorrows.length + returnPending.length + activeBorrows.length },
     { id: "requisition", label: "เบิก", icon: <PackageOpen className="w-4 h-4" />, count: pendingReqs.length },
     { id: "adjustment", label: "ปรับสต็อก", icon: <BarChart3 className="w-4 h-4" /> },
   ];
@@ -331,6 +338,47 @@ export default function OperationsPage() {
                         className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold bg-purple-600 text-white rounded-xl hover:bg-purple-700 disabled:opacity-50 transition-colors shrink-0"
                       >
                         <CheckCircle className="w-4 h-4" /> รับทราบ
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            }
+          </div>
+
+          {/* Active borrows — admin รับของคืนโดยตรง */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              <ArrowLeftRight className="w-4 h-4 text-orange-500" />
+              ยืมอยู่ ({activeBorrows.length})
+            </h3>
+            {activeBorrows.length === 0 ? <Empty label="ไม่มีรายการยืมอยู่" /> :
+              <div className="space-y-3">
+                {activeBorrows.map((b, i) => (
+                  <motion.div key={b.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.04 }}
+                    className="bg-white rounded-2xl border border-orange-100 p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-orange-100 text-orange-700">ยืมอยู่</span>
+                          <span className="font-mono text-xs text-blue-700 bg-blue-50 px-2 py-0.5 rounded">{b.itemCode}</span>
+                        </div>
+                        <p className="font-semibold text-sm text-gray-900 truncate">{b.itemName}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {b.borrowerName} · {b.borrowerDepartment} · จำนวน {b.quantity}
+                        </p>
+                        {b.borrowDate && (
+                          <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                            <Clock className="w-3 h-3" /> ยืมเมื่อ: {formatDate(b.borrowDate)}
+                          </p>
+                        )}
+                      </div>
+                      <button onClick={() => adminReceive.mutate(b.id)} disabled={adminReceive.isPending}
+                        className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold bg-orange-500 text-white rounded-xl hover:bg-orange-600 disabled:opacity-50 transition-colors shrink-0"
+                      >
+                        <Undo2 className="w-4 h-4" /> รับคืน
                       </button>
                     </div>
                   </motion.div>
