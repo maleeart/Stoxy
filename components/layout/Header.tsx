@@ -1,8 +1,8 @@
 "use client";
 
-import { Bell, Search, Menu, RefreshCw } from "lucide-react";
+import { Search, Menu, RefreshCw, Home } from "lucide-react";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
@@ -17,6 +17,8 @@ export function Header({ title, onMenuClick }: HeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [spinning, setSpinning] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+  const onDashboard = pathname === "/dashboard";
   const qc = useQueryClient();
 
   function handleRefresh() {
@@ -62,6 +64,16 @@ export function Header({ title, onMenuClick }: HeaderProps) {
       </div>
 
       <div className="ml-auto flex items-center gap-1">
+        {/* Home */}
+        {!onDashboard && (
+          <button
+            onClick={() => router.push("/dashboard")}
+            title="หน้าหลัก"
+            className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            <Home className="w-4 h-4 text-gray-500" />
+          </button>
+        )}
         {/* Refresh */}
         <button
           onClick={handleRefresh}

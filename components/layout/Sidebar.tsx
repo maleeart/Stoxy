@@ -40,7 +40,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   // Main
-  { label: "แดชบอร์ด", href: "/dashboard", icon: LayoutDashboard, section: "หลัก" },
+  { label: "หน้าหลัก", href: "/dashboard", icon: LayoutDashboard, section: "หลัก" },
   { label: "คลังอุปกรณ์", href: "/inventory", icon: Package, section: "หลัก" },
   { label: "สแกน QR", href: "/scan", icon: ScanLine, section: "หลัก" },
   // Workflow
