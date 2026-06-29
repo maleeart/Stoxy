@@ -11,6 +11,7 @@ import { formatDate } from "@/lib/utils";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { MobileHeader } from "@/components/layout/MobileHeader";
 import type { AuditSession } from "@/types";
 
 const statusBadge: Record<string, string> = {
@@ -80,6 +81,9 @@ export default function AuditPage() {
 
   return (
     <AppShell title="ตรวจนับ">
+      {/* Mobile header for staff */}
+      {!isAdmin && <MobileHeader title="ตรวจนับสต็อก" back />}
+
       {/* Last count / pending banner */}
       {isAdmin && pendingApproval.length > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 mb-4 flex items-center gap-3">

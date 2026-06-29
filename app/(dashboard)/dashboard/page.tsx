@@ -115,10 +115,13 @@ function StaffHome() {
           </div>
           {hasActiveAudit && (
             <button onClick={() => router.push("/audit")}
-              className="shrink-0 flex flex-col items-center justify-center gap-1 bg-[#1D4ED8] text-white rounded-2xl px-4 py-2.5 active:scale-95 transition-all shadow-md shadow-[#1D4ED8]/30">
-              <ShieldCheck className="w-5 h-5" />
+              className="shrink-0 flex flex-col items-center justify-center gap-1.5 bg-red-500 text-white rounded-2xl px-4 py-2.5 active:scale-95 transition-all shadow-lg shadow-red-500/40 animate-pulse">
+              <div className="relative">
+                <ShieldCheck className="w-5 h-5" />
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-400 rounded-full animate-ping" />
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-400 rounded-full" />
+              </div>
               <span className="text-[10px] font-bold tracking-wide">ตรวจนับ</span>
-              <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
             </button>
           )}
         </div>
@@ -165,14 +168,14 @@ function StaffHome() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.06 }}
                 onClick={() => router.push(item.href)}
-                className={`${item.bg} ${item.text} ${item.border ? "border border-gray-100 shadow-sm" : "shadow-md"} rounded-3xl p-5 flex flex-col items-start gap-3 active:scale-95 transition-all text-left relative overflow-hidden`}
+                className={`${item.bg} ${item.text} ${item.border ? "border border-gray-100 shadow-sm" : "shadow-md"} rounded-3xl p-4 flex flex-col items-start gap-2 active:scale-95 transition-all text-left overflow-hidden w-full`}
               >
-                <div className={`w-10 h-10 rounded-2xl ${item.border ? "bg-blue-50" : "bg-white/20"} flex items-center justify-center`}>
-                  <item.icon className="w-5 h-5" />
+                <div className={`w-9 h-9 rounded-2xl ${item.border ? "bg-blue-50" : "bg-white/20"} flex items-center justify-center shrink-0`}>
+                  <item.icon className="w-4 h-4" />
                 </div>
-                <div>
-                  <p className="font-bold text-sm leading-tight">{item.label}</p>
-                  <p className={`text-xs mt-0.5 leading-tight ${item.border ? "text-gray-400" : "opacity-60"}`}>{item.desc}</p>
+                <div className="min-w-0 w-full">
+                  <p className="font-bold text-sm leading-tight truncate">{item.label}</p>
+                  <p className={`text-xs mt-0.5 leading-tight line-clamp-2 ${item.border ? "text-gray-400" : "opacity-60"}`}>{item.desc}</p>
                 </div>
               </motion.button>
             ))}
