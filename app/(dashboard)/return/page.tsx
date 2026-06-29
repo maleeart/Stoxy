@@ -44,7 +44,8 @@ export default function ReturnPage() {
       if (returnPhotos.length > 0) {
         try {
           photoUrls = await uploadImages(returnPhotos, `return-photos/${selected.id}`);
-        } catch {
+        } catch (err) {
+          console.error("Photo upload error:", err);
           toast.warning("อัพโหลดรูปไม่สำเร็จ จะบันทึกโดยไม่มีรูป");
         }
       }

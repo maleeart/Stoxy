@@ -99,7 +99,8 @@ export default function BorrowPage() {
       if (borrowPhotos.length > 0) {
         try {
           photoUrls = await uploadImages(borrowPhotos, "borrow-photos");
-        } catch {
+        } catch (err) {
+          console.error("Photo upload error:", err);
           toast.warning("อัพโหลดรูปไม่สำเร็จ จะบันทึกโดยไม่มีรูป");
         }
       }
