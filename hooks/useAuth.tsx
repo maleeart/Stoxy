@@ -8,7 +8,7 @@ import {
   ReactNode,
 } from "react";
 import { User } from "firebase/auth";
-import { onAuthChange, getStoxyUser, ensureUserDoc } from "@/services/auth.service";
+import { onAuthChange, getStoxyUser, ensureUserDoc, loadGuestInfo, clearGuestInfo } from "@/services/auth.service";
 import type { StoxyUser } from "@/types";
 
 interface AuthContextType {
@@ -38,12 +38,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setFirebaseUser(user);
       if (user) {
         try {
-          const u = await ensureUserDoc(user);
-          setStoxyUser(u);
+          if (user.isAnonymous) {
+            // Guest session — build stoxyUser from localStorage
+            const info = loadGuestInfo();
+            setStoxyUser({
+              uid: user.uid,
+              email: "",
+              displayName: info?.name ?? "ผู้เยี่ยมชม",
+              role: "guest" as any,
+              department: info?.department ?? "",
+              isActive: true,
+              createdAt: null as any,
+              updatedAt: null as any,
+            });
+          } else {
+            const u = await ensureUserDoc(user);
+            setStoxyUser(u);
+          }
         } catch {
           setStoxyUser(null);
         }
       } else {
+        clearGuestInfo();
         setStoxyUser(null);
       }
       setLoading(false);

@@ -7,7 +7,32 @@ import {
   signInWithPopup,
   updateProfile,
   sendPasswordResetEmail,
+  signInAnonymously,
 } from "firebase/auth";
+
+const GUEST_KEY = "stoxyGuestInfo";
+
+export function saveGuestInfo(name: string, department: string) {
+  localStorage.setItem(GUEST_KEY, JSON.stringify({ name, department }));
+}
+
+export function loadGuestInfo(): { name: string; department: string } | null {
+  try {
+    const raw = localStorage.getItem(GUEST_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearGuestInfo() {
+  localStorage.removeItem(GUEST_KEY);
+}
+
+export async function loginAsGuest(name: string, department: string): Promise<void> {
+  saveGuestInfo(name, department);
+  await signInAnonymously(auth);
+}
 import {
   doc,
   getDoc,

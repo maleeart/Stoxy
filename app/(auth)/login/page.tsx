@@ -2,15 +2,18 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Zap, Loader2 } from "lucide-react";
-import { motion } from "framer-motion";
-import { loginWithGoogle } from "@/services/auth.service";
+import { Zap, Loader2, UserCircle2, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { loginWithGoogle, loginAsGuest } from "@/services/auth.service";
 import { toast } from "sonner";
-
 
 export default function LoginPage() {
   const router = useRouter();
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [guestModal, setGuestModal] = useState(false);
+  const [guestName, setGuestName] = useState("");
+  const [guestDept, setGuestDept] = useState("");
+  const [guestLoading, setGuestLoading] = useState(false);
 
   async function handleGoogle() {
     try {
@@ -21,6 +24,19 @@ export default function LoginPage() {
       toast.error("เข้าสู่ระบบด้วย Google ไม่สำเร็จ");
     } finally {
       setGoogleLoading(false);
+    }
+  }
+
+  async function handleGuest() {
+    if (!guestName.trim()) { toast.error("กรุณากรอกชื่อ"); return; }
+    try {
+      setGuestLoading(true);
+      await loginAsGuest(guestName.trim(), guestDept.trim());
+      router.push("/borrow");
+    } catch {
+      toast.error("เข้าสู่ระบบไม่สำเร็จ");
+    } finally {
+      setGuestLoading(false);
     }
   }
 
@@ -108,7 +124,7 @@ export default function LoginPage() {
           <button
             onClick={handleGoogle}
             disabled={googleLoading}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all text-sm font-medium text-gray-700 dark:text-gray-300 shadow-sm"
+            className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all text-sm font-medium text-gray-700 shadow-sm"
           >
             {googleLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -123,9 +139,91 @@ export default function LoginPage() {
             เข้าสู่ระบบด้วย Google
           </button>
 
-          <p className="text-center text-xs text-gray-400 dark:text-gray-600 mt-6">
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-4">
+            <div className="flex-1 h-px bg-gray-200" />
+            <span className="text-xs text-gray-400">หรือ</span>
+            <div className="flex-1 h-px bg-gray-200" />
+          </div>
+
+          {/* Guest */}
+          <button
+            onClick={() => setGuestModal(true)}
+            className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 transition-all text-sm font-medium text-gray-600"
+          >
+            <UserCircle2 className="w-4 h-4 text-gray-400" />
+            เข้าใช้แบบผู้เยี่ยมชม (ยืม-คืนเท่านั้น)
+          </button>
+
+          <p className="text-center text-xs text-gray-400 mt-6">
             Stoxy © {new Date().getFullYear()} — ระบบคลังไฟฟ้าสำหรับมืออาชีพ
           </p>
+
+          {/* Guest Modal */}
+          <AnimatePresence>
+            {guestModal && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+                onClick={() => setGuestModal(false)}
+              >
+                <motion.div initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95 }}
+                  className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl space-y-4"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="w-10 h-10 bg-gray-100 rounded-2xl flex items-center justify-center">
+                      <UserCircle2 className="w-5 h-5 text-gray-500" />
+                    </div>
+                    <button onClick={() => setGuestModal(false)} className="p-1 rounded-lg hover:bg-gray-100 transition-colors">
+                      <X className="w-4 h-4 text-gray-400" />
+                    </button>
+                  </div>
+
+                  <div>
+                    <h3 className="font-bold text-gray-900 text-base">เข้าใช้แบบผู้เยี่ยมชม</h3>
+                    <p className="text-xs text-gray-500 mt-1">สามารถยืม-คืนอุปกรณ์ได้ ชื่อจะถูกบันทึกใน record</p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs font-semibold text-gray-700 mb-1.5 block">ชื่อ-สกุล *</label>
+                      <input
+                        value={guestName}
+                        onChange={e => setGuestName(e.target.value)}
+                        onKeyDown={e => e.key === "Enter" && handleGuest()}
+                        placeholder="เช่น สมชาย ใจดี"
+                        autoFocus
+                        className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]/40"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-700 mb-1.5 block">แผนก / หน่วยงาน</label>
+                      <input
+                        value={guestDept}
+                        onChange={e => setGuestDept(e.target.value)}
+                        onKeyDown={e => e.key === "Enter" && handleGuest()}
+                        placeholder="เช่น ช่างไฟฟ้า, ผู้รับเหมา"
+                        className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]/40"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleGuest}
+                    disabled={!guestName.trim() || guestLoading}
+                    className="w-full py-3.5 bg-[#1D4ED8] text-white font-bold rounded-2xl hover:bg-blue-700 disabled:opacity-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                  >
+                    {guestLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                    เข้าใช้งาน
+                  </button>
+
+                  <p className="text-center text-xs text-gray-400">
+                    ข้อมูลจะถูกลบเมื่อปิดเบราว์เซอร์
+                  </p>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       </div>
     </div>

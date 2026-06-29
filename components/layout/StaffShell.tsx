@@ -3,23 +3,35 @@
 import { usePathname, useRouter } from "next/navigation";
 import { ArrowLeftRight, PackageOpen, Package, History, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 interface StaffShellProps {
   children: React.ReactNode;
 }
 
-const sideItems = [
+const STAFF_LEFT = [
   { label: "ยืม-คืน", icon: ArrowLeftRight, href: "/borrow" },
   { label: "เบิก", icon: PackageOpen, href: "/requisition" },
 ];
-const sideItemsRight = [
+const STAFF_RIGHT = [
   { label: "คลัง", icon: Package, href: "/inventory" },
   { label: "ประวัติ", icon: History, href: "/movements" },
 ];
 
+// Guest เห็นแค่ยืม-คืน — ซ่อนแถบอื่น
+const GUEST_LEFT = [
+  { label: "ยืม-คืน", icon: ArrowLeftRight, href: "/borrow" },
+];
+const GUEST_RIGHT: typeof STAFF_RIGHT = [];
+
 export function StaffShell({ children }: StaffShellProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { stoxyUser } = useAuth();
+  const isGuest = (stoxyUser?.role as string) === "guest";
+
+  const sideItems = isGuest ? GUEST_LEFT : STAFF_LEFT;
+  const sideItemsRight = isGuest ? GUEST_RIGHT : STAFF_RIGHT;
 
   const isActive = (href: string) =>
     href === "/dashboard"
