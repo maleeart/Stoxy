@@ -3,6 +3,7 @@
 import {
   Package, CheckCircle, ArrowLeftRight, AlertTriangle,
   Clock, ShieldAlert, Activity, TrendingUp,
+  PackageOpen, History,
 } from "lucide-react";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { useDashboardStats, useRecentMovements } from "@/hooks/useInventory";
@@ -17,6 +18,7 @@ import {
   Tooltip, ResponsiveContainer,
 } from "recharts";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import type { StockMovement } from "@/types";
 
 const movementTypeLabel: Record<string, string> = {
@@ -50,6 +52,8 @@ function buildWeeklyData(movements: StockMovement[]) {
 
 export default function DashboardPage() {
   const { stoxyUser } = useAuth();
+  const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
+  const router = useRouter();
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
   const { data: movements = [], isLoading: movementsLoading } = useRecentMovements(100);
 
@@ -81,6 +85,13 @@ export default function DashboardPage() {
     return "สวัสดีตอนเย็น";
   };
 
+  const quickItems = [
+    { label: "ยืม-คืน", desc: "ยืมและแจ้งคืนอุปกรณ์", icon: ArrowLeftRight, href: "/borrow", color: "bg-[#0d2137]", text: "text-white" },
+    { label: "เบิกของ", desc: "เบิกอุปกรณ์สำหรับงาน", icon: PackageOpen, href: "/requisition", color: "bg-yellow-400", text: "text-[#0d2137]" },
+    { label: "คลังอุปกรณ์", desc: "ดูรายการอุปกรณ์ทั้งหมด", icon: Package, href: "/inventory", color: "bg-emerald-500", text: "text-white" },
+    { label: "ประวัติ", desc: "ประวัติการเบิก-ยืม", icon: History, href: "/movements", color: "bg-blue-500", text: "text-white" },
+  ];
+
   return (
     <AppShell title="แดชบอร์ด">
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
@@ -91,11 +102,34 @@ export default function DashboardPage() {
           </span>{" "}
           👋
         </h2>
-        <p className="text-sm text-gray-500 mt-0.5">ภาพรวมระบบคลังไฟฟ้าวันนี้</p>
+        <p className="text-sm text-gray-500 mt-0.5">{isAdmin ? "ภาพรวมระบบคลังไฟฟ้าวันนี้" : "เลือกเมนูที่ต้องการใช้งาน"}</p>
       </motion.div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      {/* Quick menu for regular users */}
+      {!isAdmin && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+          className="grid grid-cols-2 gap-4 mb-6"
+        >
+          {quickItems.map((item, i) => (
+            <motion.button key={item.href} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.08 + i * 0.06 }}
+              onClick={() => router.push(item.href)}
+              className={`${item.color} ${item.text} rounded-2xl p-5 flex flex-col items-start gap-3 shadow-sm hover:opacity-90 active:scale-95 transition-all text-left`}
+            >
+              <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center">
+                <item.icon className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="font-bold text-base leading-tight">{item.label}</p>
+                <p className="text-xs opacity-75 mt-0.5">{item.desc}</p>
+              </div>
+            </motion.button>
+          ))}
+        </motion.div>
+      )}
+
+      {/* Stats (admin only) */}
+      {isAdmin && <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <StatCard title="อุปกรณ์ทั้งหมด" value={statsLoading ? "—" : stats?.totalItems ?? 0} icon={Package} color="blue" href="/inventory" index={0} />
         <StatCard title="พร้อมใช้งาน" value={statsLoading ? "—" : stats?.availableQuantity ?? 0} icon={CheckCircle} color="green" href="/inventory" index={1} />
         <StatCard title="ถูกยืมออก" value={statsLoading ? "—" : stats?.borrowedQuantity ?? 0} icon={ArrowLeftRight} color="yellow" href="/borrow" index={2} />
@@ -159,7 +193,7 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
-      </div>
+      </div>}
     </AppShell>
   );
 }
