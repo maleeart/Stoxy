@@ -27,11 +27,12 @@ const statusBadge = {
 };
 const statusLabel = { pending: "รออนุมัติ", approved: "อนุมัติแล้ว", rejected: "ปฏิเสธ" };
 
+// เบิกได้เฉพาะของสิ้นเปลือง/ทดแทน — เครื่องมือให้ใช้เมนูยืมเท่านั้น
+const WITHDRAWABLE = new Set(["electrical", "cable", "safety", "spareparts", "others"]);
+
 const CATEGORIES = [
   { id: "all", label: "ทั้งหมด" },
   { id: "electrical", label: "ไฟฟ้า" },
-  { id: "tools", label: "เครื่องมือ" },
-  { id: "meter", label: "มิเตอร์" },
   { id: "cable", label: "สายไฟ" },
   { id: "safety", label: "ความปลอดภัย" },
   { id: "spareparts", label: "อะไหล่" },
@@ -52,7 +53,7 @@ function StaffRequisitionPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [purpose, setPurpose] = useState("");
 
-  const available = items.filter(i => i.quantityAvailable > 0);
+  const available = items.filter(i => i.quantityAvailable > 0 && WITHDRAWABLE.has(i.categoryId));
   const filtered = available.filter(i => {
     const matchCat = category === "all" || i.categoryId === category;
     const matchSearch = !search || i.name.toLowerCase().includes(search.toLowerCase()) || i.code.toLowerCase().includes(search.toLowerCase());

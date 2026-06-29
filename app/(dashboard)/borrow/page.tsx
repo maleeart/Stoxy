@@ -229,15 +229,13 @@ function ReturnSheet({ record, uid, onClose }: { record: BorrowRecord; uid: stri
 }
 
 // ── Staff Borrow Page ──────────────────────────────────────────────────────────
+// ยืมได้เฉพาะเครื่องมือ — ของสิ้นเปลืองให้ใช้เมนูเบิก
+const BORROWABLE = new Set(["tools", "meter"]);
+
 const CATEGORIES = [
   { id: "all", label: "ทั้งหมด" },
-  { id: "electrical", label: "ไฟฟ้า" },
   { id: "tools", label: "เครื่องมือ" },
   { id: "meter", label: "มิเตอร์" },
-  { id: "cable", label: "สายไฟ" },
-  { id: "safety", label: "ความปลอดภัย" },
-  { id: "spareparts", label: "อะไหล่" },
-  { id: "others", label: "อื่นๆ" },
 ];
 
 function useFavorites(uid: string) {
@@ -303,7 +301,7 @@ function StaffBorrowPage() {
   const myPending = allRecords.filter(b => b.borrowerId === uid && b.status === "pending_approval");
   const myReturnPending = allRecords.filter(b => b.borrowerId === uid && b.status === "return_pending");
 
-  const availableItems = items.filter(i => i.quantityAvailable > 0);
+  const availableItems = items.filter(i => i.quantityAvailable > 0 && BORROWABLE.has(i.categoryId));
 
   // Recent: last 5 unique itemIds from my borrow history
   const recentItemIds = [...new Map(
