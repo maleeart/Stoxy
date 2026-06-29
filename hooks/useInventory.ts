@@ -29,6 +29,8 @@ export function useInventoryItems(filter?: FilterState) {
     queryKey: inventoryKeys.list(filter),
     queryFn: () => getInventoryItems(filter),
     select: (data) => data.items,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
   });
 }
 

@@ -22,10 +22,11 @@ export function usePendingCount() {
   return useMemo(() => {
     const pendingReqs = requisitions.filter((r) => r.status === "pending").length;
     const pendingBorrows = borrows.filter((b) => b.status === "pending_approval").length;
+    const returnPending = borrows.filter((b) => b.status === "return_pending").length;
     const lowStock = items.filter((i) => i.quantityAvailable <= (i.minStockLevel ?? 0)).length;
     const overdue = borrows.filter(
       (b) => b.status === "borrowed" && b.expectedReturnDate.toDate() < new Date()
     ).length;
-    return { pendingReqs, pendingBorrows, lowStock, overdue, total: pendingReqs + pendingBorrows + lowStock + overdue };
+    return { pendingReqs, pendingBorrows, returnPending, lowStock, overdue, total: pendingReqs + pendingBorrows + returnPending + lowStock + overdue };
   }, [requisitions, borrows, items]);
 }

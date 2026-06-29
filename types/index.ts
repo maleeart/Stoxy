@@ -136,6 +136,7 @@ export type BorrowStatus =
   | "approved"
   | "rejected"
   | "borrowed"
+  | "return_pending"
   | "returned"
   | "overdue"
   | "lost";
@@ -164,6 +165,8 @@ export interface BorrowRecord {
   approvedBy?: string;
   approvedAt?: Timestamp;
   rejectionReason?: string;
+  // Photos
+  borrowPhotos?: string[];
   // Return condition
   returnCondition?: ItemCondition;
   returnNotes?: string;

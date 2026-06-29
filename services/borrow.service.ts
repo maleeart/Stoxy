@@ -8,6 +8,7 @@ import {
   query,
   orderBy,
   limit,
+  onSnapshot,
   Timestamp,
   writeBatch,
   increment,
@@ -142,4 +143,68 @@ export async function returnItem(
 export async function getPendingApprovals(): Promise<BorrowRecord[]> {
   const all = await getBorrowRecords();
   return all.filter((r) => r.status === "pending_approval");
+}
+
+export function subscribeBorrowRecords(
+  callback: (records: BorrowRecord[]) => void
+): () => void {
+  const q = query(collection(db, BORROWS_COLLECTION), orderBy("createdAt", "desc"), limit(200));
+  return onSnapshot(q, (snap) => {
+    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as BorrowRecord)));
+  });
+}
+
+export async function submitReturn(
+  borrowId: string,
+  data: { condition: ItemCondition; notes?: string; returnPhotos?: string[]; returnedBy: string }
+): Promise<void> {
+  const now = Timestamp.now();
+  await updateDoc(doc(db, BORROWS_COLLECTION, borrowId), {
+    status: "return_pending" as BorrowStatus,
+    returnCondition: data.condition,
+    returnNotes: data.notes ?? "",
+    returnPhotos: data.returnPhotos ?? [],
+    actualReturnDate: now,
+    updatedAt: now,
+  });
+}
+
+export async function acknowledgeReturn(borrowId: string, adminId: string): Promise<void> {
+  const borrowRef = doc(db, BORROWS_COLLECTION, borrowId);
+  const borrowSnap = await getDoc(borrowRef);
+  if (!borrowSnap.exists()) throw new Error("ไม่พบรายการ");
+  const borrow = borrowSnap.data() as BorrowRecord;
+
+  const itemRef = doc(db, "inventory_items", borrow.itemId);
+  const itemSnap = await getDoc(itemRef);
+  if (!itemSnap.exists()) throw new Error("ไม่พบอุปกรณ์");
+  const item = itemSnap.data();
+
+  const now = Timestamp.now();
+  const batch = writeBatch(db);
+
+  batch.update(borrowRef, { status: "returned" as BorrowStatus, updatedAt: now });
+  batch.update(itemRef, {
+    quantityAvailable: increment(borrow.quantity),
+    quantityBorrowed: increment(-borrow.quantity),
+    condition: borrow.returnCondition ?? item.condition,
+    updatedAt: now,
+  });
+
+  await batch.commit();
+
+  await recordStockMovement({
+    itemId: borrow.itemId,
+    itemCode: borrow.itemCode,
+    itemName: borrow.itemName,
+    type: "return",
+    quantityBefore: item.quantityAvailable,
+    quantityChange: borrow.quantity,
+    quantityAfter: item.quantityAvailable + borrow.quantity,
+    referenceId: borrowId,
+    referenceType: "borrow",
+    reason: `คืนโดย ${borrow.borrowerName}`,
+    performedBy: adminId,
+    performedByName: adminId,
+  });
 }

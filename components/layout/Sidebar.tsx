@@ -35,6 +35,7 @@ interface NavItem {
   icon: React.ElementType;
   badge?: number;
   section?: string;
+  adminOnly?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -46,15 +47,15 @@ const navItems: NavItem[] = [
   { label: "เบิกของ", href: "/requisition", icon: PackageOpen, section: "ดำเนินการ" },
   { label: "ยืม-คืน", href: "/borrow", icon: ArrowLeftRight, section: "ดำเนินการ" },
   { label: "รับคืน", href: "/return", icon: Undo2, section: "ดำเนินการ" },
-  { label: "เติมสต็อก", href: "/adjustment", icon: ClipboardList, section: "ดำเนินการ" },
-  { label: "ต้องสั่งซื้อ", href: "/purchase", icon: ShoppingCart, section: "ดำเนินการ" },
+  { label: "เติมสต็อก", href: "/adjustment", icon: ClipboardList, section: "ดำเนินการ", adminOnly: true },
+  { label: "ต้องสั่งซื้อ", href: "/purchase", icon: ShoppingCart, section: "ดำเนินการ", adminOnly: true },
   { label: "ประวัติ", href: "/movements", icon: History, section: "ดำเนินการ" },
   // System
-  { label: "ตรวจนับ", href: "/audit", icon: ShieldCheck, section: "ระบบ" },
-  { label: "รายงาน", href: "/reports", icon: FileBarChart, section: "ระบบ" },
+  { label: "ตรวจนับ", href: "/audit", icon: ShieldCheck, section: "ระบบ", adminOnly: true },
+  { label: "รายงาน", href: "/reports", icon: FileBarChart, section: "ระบบ", adminOnly: true },
   { label: "แจ้งเตือน", href: "/notifications", icon: Bell, section: "ระบบ" },
-  { label: "ผู้ใช้งาน", href: "/users", icon: Users, section: "ระบบ" },
-  { label: "ตั้งค่า", href: "/settings", icon: Settings, section: "ระบบ" },
+  { label: "ผู้ใช้งาน", href: "/users", icon: Users, section: "ระบบ", adminOnly: true },
+  { label: "ตั้งค่า", href: "/settings", icon: Settings, section: "ระบบ", adminOnly: true },
 ];
 
 const sections = ["หลัก", "ดำเนินการ", "ระบบ"];
@@ -69,6 +70,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const { stoxyUser } = useAuth();
   const router = useRouter();
   const { total: pendingTotal } = usePendingCount();
+  const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
 
   async function handleLogout() {
     try {
@@ -100,7 +102,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1 scrollbar-none">
         {sections.map((section) => {
-          const items = navItems.filter((i) => i.section === section);
+          const items = navItems.filter((i) => i.section === section && (!i.adminOnly || isAdmin));
           return (
             <div key={section}>
               {!collapsed && (
