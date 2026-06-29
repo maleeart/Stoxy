@@ -43,6 +43,7 @@ export default function AuditDetailPage() {
   }
   const [search, setSearch] = useState("");
   const [showDiffOnly, setShowDiffOnly] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   // Build item list from inventory (live system qty as expected)
   const items: AuditItem[] = useMemo(() => {
@@ -61,8 +62,18 @@ export default function AuditDetailPage() {
     }));
   }, [allItems, counts, session?.items]);
 
+  const categories = useMemo(() => {
+    const map = new Map<string, string>();
+    allItems.forEach(i => { if (i.categoryId) map.set(i.categoryId, i.categoryName ?? i.categoryId); });
+    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+  }, [allItems]);
+
   const filtered = items.filter(i => {
     if (showDiffOnly && i.status === "scanned") return false;
+    if (selectedCategory !== "all") {
+      const inv = allItems.find(a => a.id === i.itemId);
+      if (inv?.categoryId !== selectedCategory) return false;
+    }
     if (!search) return true;
     return i.itemName.toLowerCase().includes(search.toLowerCase()) ||
       i.itemCode.toLowerCase().includes(search.toLowerCase());
@@ -287,21 +298,63 @@ export default function AuditDetailPage() {
 
       {/* Filters (counting mode) */}
       {(canCount || (isPendingApproval && !isAdmin)) && (
-        <div className="flex gap-2 mb-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="ค้นหาชื่อ, รหัส..."
-              className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            />
+        <div className="space-y-3 mb-4">
+          {/* Category tabs */}
+          {categories.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+              <button
+                onClick={() => setSelectedCategory("all")}
+                className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full border transition-colors ${
+                  selectedCategory === "all"
+                    ? "bg-[#1D4ED8] text-white border-[#1D4ED8]"
+                    : "bg-white text-gray-500 border-gray-200"
+                }`}
+              >
+                ทั้งหมด ({items.length})
+              </button>
+              {categories.map(cat => {
+                const count = items.filter(i => allItems.find(a => a.id === i.itemId)?.categoryId === cat.id).length;
+                const diffInCat = items.filter(i =>
+                  allItems.find(a => a.id === i.itemId)?.categoryId === cat.id && i.status === "mismatch"
+                ).length;
+                return (
+                  <button key={cat.id}
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-full border transition-colors ${
+                      selectedCategory === cat.id
+                        ? "bg-[#1D4ED8] text-white border-[#1D4ED8]"
+                        : "bg-white text-gray-500 border-gray-200"
+                    }`}
+                  >
+                    {cat.name} ({count})
+                    {diffInCat > 0 && (
+                      <span className={`w-4 h-4 text-[10px] font-bold rounded-full flex items-center justify-center ${
+                        selectedCategory === cat.id ? "bg-white/30 text-white" : "bg-red-100 text-red-600"
+                      }`}>{diffInCat}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Search + diff filter */}
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input value={search} onChange={e => setSearch(e.target.value)}
+                placeholder="ค้นหาชื่อ, รหัส..."
+                className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+            </div>
+            <button onClick={() => setShowDiffOnly(v => !v)}
+              className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium rounded-xl border transition-colors ${
+                showDiffOnly ? "bg-red-50 border-red-200 text-red-600" : "bg-white border-gray-200 text-gray-600"
+              }`}>
+              <AlertTriangle className="w-4 h-4" />
+              ต่างกัน
+            </button>
           </div>
-          <button onClick={() => setShowDiffOnly(v => !v)}
-            className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium rounded-xl border transition-colors ${
-              showDiffOnly ? "bg-red-50 border-red-200 text-red-600" : "bg-white border-gray-200 text-gray-600"
-            }`}>
-            <AlertTriangle className="w-4 h-4" />
-            ต่างกัน
-          </button>
         </div>
       )}
 
