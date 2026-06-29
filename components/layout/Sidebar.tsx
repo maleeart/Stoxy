@@ -7,8 +7,7 @@ import {
   LayoutDashboard,
   Package,
   ArrowLeftRight,
-  Undo2,
-  ClipboardList,
+  ClipboardCheck,
   Bell,
   Users,
   Settings,
@@ -36,6 +35,7 @@ interface NavItem {
   badge?: number;
   section?: string;
   adminOnly?: boolean;
+  staffOnly?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -43,11 +43,11 @@ const navItems: NavItem[] = [
   { label: "หน้าหลัก", href: "/dashboard", icon: LayoutDashboard, section: "หลัก" },
   { label: "คลังอุปกรณ์", href: "/inventory", icon: Package, section: "หลัก" },
   { label: "สแกน QR", href: "/scan", icon: ScanLine, section: "หลัก" },
-  // Workflow
-  { label: "เบิกของ", href: "/requisition", icon: PackageOpen, section: "ดำเนินการ" },
-  { label: "ยืม-คืน", href: "/borrow", icon: ArrowLeftRight, section: "ดำเนินการ" },
-  { label: "รับคืน", href: "/return", icon: Undo2, section: "ดำเนินการ", adminOnly: true },
-  { label: "เติมสต็อก", href: "/adjustment", icon: ClipboardList, section: "ดำเนินการ", adminOnly: true },
+  // Workflow — staff only
+  { label: "เบิกของ", href: "/requisition", icon: PackageOpen, section: "ดำเนินการ", staffOnly: true },
+  { label: "ยืม-คืน", href: "/borrow", icon: ArrowLeftRight, section: "ดำเนินการ", staffOnly: true },
+  // Workflow — admin only
+  { label: "จัดการคำขอ", href: "/operations", icon: ClipboardCheck, section: "ดำเนินการ", adminOnly: true },
   { label: "ต้องสั่งซื้อ", href: "/purchase", icon: ShoppingCart, section: "ดำเนินการ", adminOnly: true },
   { label: "ประวัติ", href: "/movements", icon: History, section: "ดำเนินการ" },
   // System
@@ -103,7 +103,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1 scrollbar-none">
         {sections.map((section) => {
-          const items = navItems.filter((i) => i.section === section && (!i.adminOnly || isAdmin));
+          const items = navItems.filter((i) => i.section === section && (!i.adminOnly || isAdmin) && (!i.staffOnly || !isAdmin));
           return (
             <div key={section}>
               {!collapsed && (
