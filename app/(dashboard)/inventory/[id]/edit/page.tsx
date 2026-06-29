@@ -129,6 +129,16 @@ export default function EditItemPage({ params }: { params: Promise<{ id: string 
 
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2">
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">หมวดหมู่ *</label>
+                <select {...register("categoryId")} className="input-field">
+                  <option value="">เลือกหมวดหมู่</option>
+                  {Object.entries(CATEGORY_LABEL).map(([k, v]) => (
+                    <option key={k} value={k}>{v}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="col-span-2">
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">ชื่ออุปกรณ์ *</label>
                 <input {...register("name")} className="input-field" />
                 {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name.message}</p>}
@@ -138,16 +148,6 @@ export default function EditItemPage({ params }: { params: Promise<{ id: string 
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">รหัสอุปกรณ์ *</label>
                 <input {...register("code")} className="input-field font-mono" />
                 {errors.code && <p className="text-xs text-red-500 mt-1">{errors.code.message}</p>}
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">หมวดหมู่ *</label>
-                <select {...register("categoryId")} className="input-field">
-                  <option value="">เลือกหมวดหมู่</option>
-                  {Object.entries(CATEGORY_LABEL).map(([k, v]) => (
-                    <option key={k} value={k}>{v}</option>
-                  ))}
-                </select>
               </div>
 
               <div>
