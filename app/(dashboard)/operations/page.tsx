@@ -368,8 +368,8 @@ export default function OperationsPage() {
                       <p className="text-xs text-gray-500 mt-0.5">
                         {req.requesterName} · จำนวน: {req.quantity}
                       </p>
-                      {req.notes && (
-                        <p className="text-xs text-gray-500 mt-1">หมายเหตุ: {req.notes}</p>
+                      {req.purpose && (
+                        <p className="text-xs text-gray-500 mt-1">วัตถุประสงค์: {req.purpose}</p>
                       )}
                     </div>
                     <div className="flex gap-2 shrink-0">
