@@ -68,7 +68,6 @@ export default function BorrowPage() {
   const [returnDate, setReturnDate] = useState("");
   const [purpose, setPurpose] = useState("");
   const [borrowPhotos, setBorrowPhotos] = useState<File[]>([]);
-  const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const { data: items = [] } = useInventoryItems();
@@ -96,12 +95,14 @@ export default function BorrowPage() {
       if (!returnDate) throw new Error("กรุณาระบุวันกำหนดคืน");
       if (!purpose.trim()) throw new Error("กรุณาระบุวัตถุประสงค์");
 
-      setUploading(true);
       let photoUrls: string[] = [];
       if (borrowPhotos.length > 0) {
-        photoUrls = await uploadImages(borrowPhotos, "borrow-photos");
+        try {
+          photoUrls = await uploadImages(borrowPhotos, "borrow-photos");
+        } catch {
+          toast.warning("อัพโหลดรูปไม่สำเร็จ จะบันทึกโดยไม่มีรูป");
+        }
       }
-      setUploading(false);
 
       return createBorrowRequest({
         itemId: selected.id,
@@ -122,7 +123,7 @@ export default function BorrowPage() {
       toast.success("ส่งคำขอยืมสำเร็จ รอการอนุมัติ");
       setShowForm(false); resetForm();
     },
-    onError: (e: any) => { setUploading(false); toast.error(e.message ?? "เกิดข้อผิดพลาด"); },
+    onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
   });
 
   const approveMut = useMutation({
@@ -276,7 +277,7 @@ export default function BorrowPage() {
                   disabled={!itemId || !borrowerName.trim() || !returnDate || !purpose.trim() || createMut.isPending}
                   className="w-full py-2.5 text-sm font-medium bg-[#0d2137] text-white rounded-xl disabled:opacity-50 hover:bg-[#1a3a5c] transition-colors"
                 >
-                  {uploading ? "กำลังอัพโหลดรูป..." : createMut.isPending ? "กำลังส่ง..." : "ส่งคำขอยืม"}
+                  {createMut.isPending ? "กำลังบันทึก..." : "ส่งคำขอยืม"}
                 </button>
               </div>
             </motion.div>

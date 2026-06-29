@@ -29,7 +29,6 @@ export default function ReturnPage() {
   const [condition, setCondition] = useState<ItemCondition>("good");
   const [notes, setNotes] = useState("");
   const [returnPhotos, setReturnPhotos] = useState<File[]>([]);
-  const [uploading, setUploading] = useState(false);
 
   const { allRecords, isLoading } = useRealtimeBorrows();
 
@@ -41,12 +40,14 @@ export default function ReturnPage() {
   const submitMut = useMutation({
     mutationFn: async () => {
       if (!selected) return;
-      setUploading(true);
       let photoUrls: string[] = [];
       if (returnPhotos.length > 0) {
-        photoUrls = await uploadImages(returnPhotos, `return-photos/${selected.id}`);
+        try {
+          photoUrls = await uploadImages(returnPhotos, `return-photos/${selected.id}`);
+        } catch {
+          toast.warning("อัพโหลดรูปไม่สำเร็จ จะบันทึกโดยไม่มีรูป");
+        }
       }
-      setUploading(false);
       return submitReturn(selected.id, {
         condition,
         notes,
@@ -61,7 +62,7 @@ export default function ReturnPage() {
       setCondition("good");
       setReturnPhotos([]);
     },
-    onError: (e: any) => { setUploading(false); toast.error(e.message ?? "เกิดข้อผิดพลาด"); },
+    onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
   });
 
   const acknowledgeMut = useMutation({
@@ -202,7 +203,7 @@ export default function ReturnPage() {
                     className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 disabled:opacity-50 transition-colors"
                   >
                     <CheckCircle className="w-4 h-4" />
-                    {uploading ? "กำลังอัพโหลดรูป..." : submitMut.isPending ? "กำลังบันทึก..." : "แจ้งคืน"}
+                    {submitMut.isPending ? "กำลังบันทึก..." : "แจ้งคืน"}
                   </button>
                   <button onClick={() => setSelected(null)}
                     className="px-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
