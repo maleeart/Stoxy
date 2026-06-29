@@ -3,7 +3,7 @@
 import {
   Package, CheckCircle, ArrowLeftRight, AlertTriangle,
   Clock, ShieldAlert, Activity, TrendingUp,
-  PackageOpen, History, Bell, Search, ChevronRight, UserCircle,
+  PackageOpen, History, Bell, Search, ChevronRight, UserCircle, ShieldCheck,
 } from "lucide-react";
 import { MobileHeader } from "@/components/layout/MobileHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -21,6 +21,7 @@ import {
 } from "recharts";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { useHasActiveAudit } from "@/hooks/useMyAuditSessions";
 import type { StockMovement } from "@/types";
 
 const movementTypeLabel: Record<string, string> = {
@@ -56,6 +57,7 @@ function buildWeeklyData(movements: StockMovement[]) {
 function StaffHome() {
   const { stoxyUser } = useAuth();
   const router = useRouter();
+  const { data: hasActiveAudit = false } = useHasActiveAudit(stoxyUser?.uid);
   const { allRecords } = useRealtimeBorrows();
 
   const myBorrowed = allRecords.filter(
@@ -105,9 +107,21 @@ function StaffHome() {
 
       {/* Greeting strip */}
       <div className="px-5 py-4 bg-white border-b border-gray-50">
-        <p className="text-xs text-gray-400 font-medium">{greeting()}</p>
-        <h2 className="text-lg font-bold text-gray-900 leading-tight">{stoxyUser?.displayName ?? "ผู้ใช้งาน"}</h2>
-        {stoxyUser?.department && <p className="text-xs text-gray-400 mt-0.5">{stoxyUser.department}</p>}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-gray-400 font-medium">{greeting()}</p>
+            <h2 className="text-lg font-bold text-gray-900 leading-tight">{stoxyUser?.displayName ?? "ผู้ใช้งาน"}</h2>
+            {stoxyUser?.department && <p className="text-xs text-gray-400 mt-0.5">{stoxyUser.department}</p>}
+          </div>
+          {hasActiveAudit && (
+            <button onClick={() => router.push("/audit")}
+              className="shrink-0 flex flex-col items-center justify-center gap-1 bg-[#1D4ED8] text-white rounded-2xl px-4 py-2.5 active:scale-95 transition-all shadow-md shadow-[#1D4ED8]/30">
+              <ShieldCheck className="w-5 h-5" />
+              <span className="text-[10px] font-bold tracking-wide">ตรวจนับ</span>
+              <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+            </button>
+          )}
+        </div>
 
         {/* Stats strip */}
         {(myBorrowed.length > 0 || myPending > 0) && (

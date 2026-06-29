@@ -1,10 +1,9 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowLeftRight, PackageOpen, Package, History, Home, ShieldCheck } from "lucide-react";
+import { ArrowLeftRight, PackageOpen, Package, History, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-import { useHasActiveAudit } from "@/hooks/useMyAuditSessions";
 
 interface StaffShellProps {
   children: React.ReactNode;
@@ -30,12 +29,9 @@ export function StaffShell({ children }: StaffShellProps) {
   const router = useRouter();
   const { stoxyUser } = useAuth();
   const isGuest = (stoxyUser?.role as string) === "guest";
-  const { data: hasActiveAudit = false } = useHasActiveAudit(!isGuest ? stoxyUser?.uid : undefined);
 
-  const auditItem = { label: "ตรวจนับ", icon: ShieldCheck, href: "/audit" };
   const sideItems = isGuest ? GUEST_LEFT : STAFF_LEFT;
-  const sideItemsRight = isGuest ? GUEST_RIGHT :
-    hasActiveAudit ? [...STAFF_RIGHT, auditItem] : STAFF_RIGHT;
+  const sideItemsRight = isGuest ? GUEST_RIGHT : STAFF_RIGHT;
 
   const isActive = (href: string) =>
     href === "/dashboard"
