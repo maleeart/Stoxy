@@ -244,7 +244,7 @@ export default function OperationsPage() {
   const [tab, setTab] = useState<Tab>("borrow");
   const [rejectTarget, setRejectTarget] = useState<{ id: string; type: "borrow" | "req" } | null>(null);
   const [adjItem, setAdjItem] = useState<InventoryItem | null>(null);
-  const [receiveTarget, setReceiveTarget] = useState<{ id: string; borrowerName: string; itemName: string } | null>(null);
+  const [receiveTarget, setReceiveTarget] = useState<{ borrowId: string; borrowerName: string; itemName: string } | null>(null);
   const [search, setSearch] = useState("");
 
   // Data
@@ -477,7 +477,7 @@ export default function OperationsPage() {
                         )}
                       </div>
                       <button
-                        onClick={() => setReceiveTarget({ id: b.id, borrowerName: b.borrowerName, itemName: b.itemName })}
+                        onClick={() => setReceiveTarget({ borrowId: b.id, borrowerName: b.borrowerName, itemName: b.itemName })}
                         className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition-colors shrink-0"
                       >
                         <Undo2 className="w-4 h-4" /> รับคืน
@@ -597,7 +597,7 @@ export default function OperationsPage() {
             {...receiveTarget}
             isPending={adminReceive.isPending}
             onCancel={() => setReceiveTarget(null)}
-            onConfirm={(notes, photos) => adminReceive.mutate({ id: receiveTarget.id, notes, photos })}
+            onConfirm={(notes, photos) => adminReceive.mutate({ id: receiveTarget.borrowId, notes, photos })}
           />
         )}
         {rejectTarget && (
