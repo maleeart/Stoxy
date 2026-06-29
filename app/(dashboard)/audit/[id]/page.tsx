@@ -7,6 +7,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/hooks/useAuth";
 import { useInventoryItems } from "@/hooks/useInventory";
 import { getAuditSession, submitAuditForReview, approveAudit } from "@/services/audit.service";
+import { MobileHeader } from "@/components/layout/MobileHeader";
 import { formatDate } from "@/lib/utils";
 import {
   ArrowLeft, CheckCircle, AlertTriangle, Clock,
@@ -147,9 +148,27 @@ export default function AuditDetailPage() {
     </AppShell>
   );
 
+  const statusLabel = isCompleted ? "เสร็จสิ้น" : isPendingApproval ? "รออนุมัติ" : "กำลังนับ";
+  const statusColor = isCompleted ? "bg-emerald-100 text-emerald-700" :
+    isPendingApproval ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700";
+
   return (
     <AppShell title="ตรวจนับ">
-      {/* Header */}
+      {/* Mobile header for staff */}
+      {!isAdmin && (
+        <MobileHeader
+          title={session.name}
+          back
+          actions={
+            <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${statusColor}`}>
+              {statusLabel}
+            </span>
+          }
+        />
+      )}
+
+      {/* Desktop header for admin */}
+      {isAdmin && (
       <div className="mb-5">
         <button onClick={() => router.push("/audit")}
           className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors mb-3">
@@ -166,15 +185,14 @@ export default function AuditDetailPage() {
                 : `เริ่ม: ${formatDate(session.startDate)}`}
             </p>
           </div>
-          <span className={`text-xs px-2.5 py-1 rounded-full font-semibold shrink-0 ${
-            isCompleted ? "bg-emerald-100 text-emerald-700" :
-            isPendingApproval ? "bg-amber-100 text-amber-700" :
-            "bg-blue-100 text-blue-700"
-          }`}>
-            {isCompleted ? "เสร็จสิ้น" : isPendingApproval ? "รออนุมัติ" : "กำลังนับ"}
+          <span className={`text-xs px-2.5 py-1 rounded-full font-semibold shrink-0 ${statusColor}`}>
+            {statusLabel}
           </span>
         </div>
       </div>
+      )}
+
+      <div className={!isAdmin ? "px-4 pt-4" : ""}>
 
       {/* Staff waiting banner */}
       {isPendingApproval && !isAdmin && (
@@ -354,6 +372,8 @@ export default function AuditDetailPage() {
           <p className="text-xs text-gray-400 mt-1">ไม่มีการปรับสต็อก</p>
         </div>
       )}
+
+      </div>
 
       {/* Sticky bottom: counting actions */}
       {canCount && (
