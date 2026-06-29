@@ -72,9 +72,11 @@ export async function approveBorrowRequest(borrowId: string, approverId: string)
     updatedAt: now,
   });
 
+  const newAvailable = item.quantityAvailable - borrow.quantity;
   batch.update(itemRef, {
     quantityAvailable: increment(-borrow.quantity),
     quantityBorrowed: increment(borrow.quantity),
+    status: newAvailable <= 0 ? "borrowed" : "available",
     updatedAt: now,
   });
 
@@ -183,11 +185,13 @@ export async function acknowledgeReturn(borrowId: string, adminId: string): Prom
   const now = Timestamp.now();
   const batch = writeBatch(db);
 
+  const newAvailable = item.quantityAvailable + borrow.quantity;
   batch.update(borrowRef, { status: "returned" as BorrowStatus, updatedAt: now });
   batch.update(itemRef, {
     quantityAvailable: increment(borrow.quantity),
     quantityBorrowed: increment(-borrow.quantity),
     condition: borrow.returnCondition ?? item.condition,
+    status: newAvailable > 0 ? "available" : "borrowed",
     updatedAt: now,
   });
 

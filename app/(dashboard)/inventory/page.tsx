@@ -158,7 +158,7 @@ export default function InventoryPage() {
         header: "สถานะ",
         cell: ({ getValue }) => {
           const s = getValue() as keyof typeof statusConfig;
-          const cfg = statusConfig[s];
+          const cfg = statusConfig[s] ?? { badge: "bg-gray-100 text-gray-600", label: s };
           return (
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${cfg.badge}`}>
               {cfg.label}
