@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { logout } from "@/services/auth.service";
 import { usePendingCount } from "@/hooks/usePendingCount";
+import { useHasActiveAudit } from "@/hooks/useMyAuditSessions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -51,7 +52,7 @@ const navItems: NavItem[] = [
   { label: "ต้องสั่งซื้อ", href: "/purchase", icon: ShoppingCart, section: "ดำเนินการ", adminOnly: true },
   { label: "ประวัติ", href: "/movements", icon: History, section: "ดำเนินการ" },
   // System
-  { label: "ตรวจนับ", href: "/audit", icon: ShieldCheck, section: "ระบบ", adminOnly: true },
+  { label: "ตรวจนับ", href: "/audit", icon: ShieldCheck, section: "ดำเนินการ" },
   { label: "รายงาน", href: "/reports", icon: FileBarChart, section: "ระบบ", adminOnly: true },
   { label: "แจ้งเตือน", href: "/notifications", icon: Bell, section: "ระบบ", adminOnly: true },
   { label: "ผู้ใช้งาน", href: "/users", icon: Users, section: "ระบบ", adminOnly: true },
@@ -71,6 +72,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const router = useRouter();
   const { total: pendingTotal } = usePendingCount();
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
+  const { data: hasActiveAudit = false } = useHasActiveAudit(!isAdmin ? stoxyUser?.uid : undefined);
   const [qrPopup, setQrPopup] = useState(false);
 
   async function handleLogout() {
@@ -103,7 +105,12 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1 scrollbar-none">
         {sections.map((section) => {
-          const items = navItems.filter((i) => i.section === section && (!i.adminOnly || isAdmin) && (!i.staffOnly || !isAdmin));
+          const items = navItems.filter((i) =>
+            i.section === section &&
+            (!i.adminOnly || isAdmin) &&
+            (!i.staffOnly || !isAdmin) &&
+            (i.href !== "/audit" || isAdmin || hasActiveAudit)
+          );
           return (
             <div key={section}>
               {!collapsed && (

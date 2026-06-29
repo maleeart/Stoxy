@@ -287,7 +287,7 @@ export interface CalibrationRecord {
 }
 
 // ── Audit ─────────────────────────────────────────────────────
-export type AuditStatus = "draft" | "in_progress" | "completed" | "cancelled";
+export type AuditStatus = "draft" | "in_progress" | "pending_approval" | "completed" | "cancelled";
 
 export interface AuditSession {
   id: string;

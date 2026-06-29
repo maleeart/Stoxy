@@ -23,7 +23,7 @@ export async function createAuditSession(data: {
   const now = Timestamp.now();
   const ref = await addDoc(collection(db, COL), {
     ...data,
-    status: "draft",
+    status: "in_progress",
     locationIds: [],
     startDate: now,
     items: [],
@@ -31,6 +31,52 @@ export async function createAuditSession(data: {
     updatedAt: now,
   });
   return ref.id;
+}
+
+export async function submitAuditForReview(sessionId: string, items: AuditItem[]): Promise<void> {
+  const counted = items.filter(i => i.actualQuantity != null);
+  await updateDoc(doc(db, COL, sessionId), {
+    items,
+    status: "pending_approval",
+    summary: {
+      totalItems: items.length,
+      scannedItems: counted.length,
+      matchedItems: counted.filter(i => i.actualQuantity === i.expectedQuantity).length,
+      mismatchItems: counted.filter(i => i.actualQuantity !== i.expectedQuantity).length,
+      missingItems: items.length - counted.length,
+    },
+    updatedAt: Timestamp.now(),
+  });
+}
+
+export async function approveAudit(
+  sessionId: string,
+  performedBy: string,
+  performedByName: string,
+): Promise<void> {
+  const snap = await getDoc(doc(db, COL, sessionId));
+  if (!snap.exists()) throw new Error("ไม่พบรอบตรวจนับ");
+  const session = snap.data();
+  const items: AuditItem[] = session.items ?? [];
+
+  const diffs = items.filter(i => i.actualQuantity != null && i.actualQuantity !== i.expectedQuantity);
+  await Promise.all(diffs.map(item => {
+    const diff = item.actualQuantity! - item.expectedQuantity;
+    return adjustStock({
+      itemId: item.itemId,
+      type: diff > 0 ? "adjustment_in" : "adjustment_out",
+      quantity: Math.abs(diff),
+      reason: `ตรวจนับสต็อก (audit) — อนุมัติโดย ${performedByName}`,
+      performedBy,
+      performedByName,
+    });
+  }));
+
+  await updateDoc(doc(db, COL, sessionId), {
+    status: "completed",
+    endDate: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+  });
 }
 
 export async function updateAuditItem(
