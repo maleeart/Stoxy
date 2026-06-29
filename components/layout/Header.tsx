@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Menu, RefreshCw, Home } from "lucide-react";
+import { Menu, RefreshCw, Home } from "lucide-react";
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -14,7 +14,6 @@ interface HeaderProps {
 
 export function Header({ title, onMenuClick }: HeaderProps) {
   const { stoxyUser } = useAuth();
-  const [searchOpen, setSearchOpen] = useState(false);
   const [spinning, setSpinning] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
@@ -43,25 +42,6 @@ export function Header({ title, onMenuClick }: HeaderProps) {
           {title}
         </h1>
       )}
-
-      {/* Search */}
-      <div
-        className={cn(
-          "flex-1 max-w-md transition-all duration-200",
-          searchOpen ? "max-w-lg" : "max-w-xs"
-        )}
-      >
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="ค้นหาอุปกรณ์ รหัส หรือซีเรียล..."
-            onFocus={() => setSearchOpen(true)}
-            onBlur={() => setSearchOpen(false)}
-            className="w-full pl-9 pr-4 py-1.5 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
-          />
-        </div>
-      </div>
 
       <div className="ml-auto flex items-center gap-1">
         {/* Home */}
