@@ -12,6 +12,8 @@ import {
   limit,
   Timestamp,
   onSnapshot,
+  writeBatch,
+  increment,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type {
@@ -80,6 +82,47 @@ export async function updateInventoryItem(
 // ── Delete Item ───────────────────────────────────────────────
 export async function deleteInventoryItem(id: string): Promise<void> {
   await deleteDoc(doc(db, ITEMS_COLLECTION, id));
+}
+
+// ── Stock Adjustment ──────────────────────────────────────────
+export async function adjustStock(data: {
+  itemId: string;
+  type: "adjustment_in" | "adjustment_out";
+  quantity: number;
+  reason: string;
+  performedBy: string;
+  performedByName: string;
+}): Promise<void> {
+  const itemRef = doc(db, ITEMS_COLLECTION, data.itemId);
+  const snap = await getDoc(itemRef);
+  if (!snap.exists()) throw new Error("ไม่พบอุปกรณ์");
+  const item = snap.data() as InventoryItem;
+
+  const delta = data.type === "adjustment_in" ? data.quantity : -data.quantity;
+  const newAvailable = item.quantityAvailable + delta;
+  const newTotal = item.quantity + delta;
+  if (newAvailable < 0) throw new Error("จำนวนไม่เพียงพอ");
+
+  const batch = writeBatch(db);
+  batch.update(itemRef, {
+    quantityAvailable: increment(delta),
+    quantity: increment(delta),
+    updatedAt: Timestamp.now(),
+  });
+  await batch.commit();
+
+  await recordStockMovement({
+    itemId: data.itemId,
+    itemCode: item.code,
+    itemName: item.name,
+    type: data.type,
+    quantityBefore: item.quantityAvailable,
+    quantityChange: delta,
+    quantityAfter: newAvailable,
+    reason: data.reason,
+    performedBy: data.performedBy,
+    performedByName: data.performedByName,
+  });
 }
 
 // ── Stock Movement ────────────────────────────────────────────
