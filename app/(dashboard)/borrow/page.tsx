@@ -11,14 +11,22 @@ import { useInventoryItems } from "@/hooks/useInventory";
 import { useAuth } from "@/hooks/useAuth";
 import { useRealtimeBorrows } from "@/hooks/useRealtimeBorrows";
 import {
-  createBorrowRequest, approveBorrowRequest, rejectBorrowRequest, acknowledgeReturn,
+  createBorrowRequest, approveBorrowRequest, rejectBorrowRequest, acknowledgeReturn, submitReturn,
 } from "@/services/borrow.service";
 import { formatDate, cn } from "@/lib/utils";
 import { compressImages } from "@/lib/compress";
-import type { BorrowRecord, BorrowStatus } from "@/types";
+import type { BorrowRecord, BorrowStatus, ItemCondition } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Timestamp } from "firebase/firestore";
+
+const conditions: { value: ItemCondition; label: string }[] = [
+  { value: "excellent", label: "ดีมาก" },
+  { value: "good", label: "ดี" },
+  { value: "fair", label: "พอใช้" },
+  { value: "poor", label: "แย่" },
+  { value: "broken", label: "เสีย" },
+];
 
 const tabs: { label: string; value: BorrowStatus | "all" }[] = [
   { label: "ทั้งหมด", value: "all" },
@@ -60,6 +68,14 @@ export default function BorrowPage() {
   const [rejectReason, setRejectReason] = useState("");
   const [viewPhotos, setViewPhotos] = useState<string[] | null>(null);
   const [compressing, setCompressing] = useState(false);
+
+  // Return popup state
+  const [returnRecord, setReturnRecord] = useState<BorrowRecord | null>(null);
+  const [rtCondition, setRtCondition] = useState<ItemCondition>("good");
+  const [rtNotes, setRtNotes] = useState("");
+  const [rtFiles, setRtFiles] = useState<File[]>([]);
+  const [rtPreviews, setRtPreviews] = useState<string[]>([]);
+  const [rtCompressing, setRtCompressing] = useState(false);
 
   // Create form state
   const [itemId, setItemId] = useState("");
@@ -141,6 +157,24 @@ export default function BorrowPage() {
     mutationFn: (id: string) => acknowledgeReturn(id, stoxyUser?.uid ?? ""),
     onSuccess: () => toast.success("รับทราบการคืนแล้ว"),
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
+  });
+
+  const returnMut = useMutation({
+    mutationFn: async () => {
+      if (!returnRecord) return;
+      setRtCompressing(true);
+      const photos = rtFiles.length > 0 ? await compressImages(rtFiles) : [];
+      setRtCompressing(false);
+      return submitReturn(returnRecord.id, {
+        condition: rtCondition, notes: rtNotes,
+        returnPhotos: photos, returnedBy: stoxyUser?.uid ?? "",
+      });
+    },
+    onSuccess: () => {
+      toast.success("แจ้งคืนสำเร็จ รอแอดมินรับทราบ");
+      setReturnRecord(null); setRtNotes(""); setRtCondition("good"); setRtFiles([]); setRtPreviews([]);
+    },
+    onError: (e: any) => { setRtCompressing(false); toast.error(e.message ?? "เกิดข้อผิดพลาด"); },
   });
 
   const tomorrow = new Date();
@@ -319,6 +353,86 @@ export default function BorrowPage() {
         )}
       </AnimatePresence>
 
+      {/* Return Popup */}
+      <AnimatePresence>
+        {returnRecord && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            onClick={() => setReturnRecord(null)}
+          >
+            <motion.div initial={{ scale: 0.95, y: 12 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 12 }}
+              className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">แจ้งคืนอุปกรณ์</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">{returnRecord.itemName} · {returnRecord.borrowerName}</p>
+                </div>
+                <button onClick={() => setReturnRecord(null)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+                  <X className="w-4 h-4 text-gray-500" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">สภาพเมื่อคืน</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {conditions.map((c) => (
+                      <button key={c.value} type="button" onClick={() => setRtCondition(c.value)}
+                        className={`py-2 text-xs font-medium rounded-xl border transition-all ${
+                          rtCondition === c.value
+                            ? "bg-[#0d2137] text-white border-[#0d2137]"
+                            : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        }`}
+                      >{c.label}</button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">หมายเหตุ</label>
+                  <textarea value={rtNotes} onChange={(e) => setRtNotes(e.target.value)} rows={2}
+                    placeholder="บันทึกเพิ่มเติม..."
+                    className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">รูปสภาพอุปกรณ์ (ไม่บังคับ)</label>
+                  <label className="flex items-center gap-2 cursor-pointer px-3 py-2.5 border border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-emerald-400 transition-colors">
+                    <Camera className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm text-gray-500">ถ่ายรูปหรือเลือกไฟล์</span>
+                    <input type="file" accept="image/*" multiple capture="environment" className="hidden"
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files ?? []);
+                        setRtFiles(files);
+                        setRtPreviews(files.map(f => URL.createObjectURL(f)));
+                      }}
+                    />
+                  </label>
+                  {rtPreviews.length > 0 && (
+                    <div className="flex gap-2 mt-2 flex-wrap">
+                      {rtPreviews.map((src, i) => (
+                        <img key={i} src={src} alt="" className="w-16 h-16 object-cover rounded-lg border border-gray-200" />
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => returnMut.mutate()} disabled={returnMut.isPending || rtCompressing}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+                  >
+                    {(rtCompressing || returnMut.isPending) && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {rtCompressing ? "กำลัง compress รูป..." : returnMut.isPending ? "กำลังบันทึก..." : "ยืนยันคืน"}
+                  </button>
+                  <button onClick={() => setReturnRecord(null)} className="px-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800">
+                    ยกเลิก
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Photo Viewer Modal */}
       <AnimatePresence>
         {viewPhotos && (
@@ -482,6 +596,14 @@ export default function BorrowPage() {
                         className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
                       >
                         <CheckCircle className="w-3.5 h-3.5" /> รับทราบ
+                      </button>
+                    )}
+
+                    {record.status === "borrowed" && (
+                      <button onClick={() => { setReturnRecord(record); setRtCondition("good"); setRtNotes(""); setRtFiles([]); setRtPreviews([]); }}
+                        className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" /> แจ้งคืน
                       </button>
                     )}
                   </div>
