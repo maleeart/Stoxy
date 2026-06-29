@@ -1,8 +1,9 @@
 "use client";
 
-import { Bell, Search, Sun, Moon, Menu } from "lucide-react";
+import { Bell, Search, Menu, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
@@ -13,13 +14,15 @@ interface HeaderProps {
 
 export function Header({ title, onMenuClick }: HeaderProps) {
   const { stoxyUser } = useAuth();
-  const [dark, setDark] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [spinning, setSpinning] = useState(false);
   const router = useRouter();
+  const qc = useQueryClient();
 
-  function toggleDark() {
-    setDark((d) => !d);
-    document.documentElement.classList.toggle("dark");
+  function handleRefresh() {
+    setSpinning(true);
+    qc.invalidateQueries();
+    setTimeout(() => setSpinning(false), 800);
   }
 
   return (
@@ -59,25 +62,13 @@ export function Header({ title, onMenuClick }: HeaderProps) {
       </div>
 
       <div className="ml-auto flex items-center gap-1">
-        {/* Dark mode */}
+        {/* Refresh */}
         <button
-          onClick={toggleDark}
+          onClick={handleRefresh}
+          title="รีเฟรชข้อมูล"
           className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
         >
-          {dark ? (
-            <Sun className="w-4 h-4 text-yellow-500" />
-          ) : (
-            <Moon className="w-4 h-4 text-gray-500" />
-          )}
-        </button>
-
-        {/* Notifications */}
-        <button
-          onClick={() => router.push("/notifications")}
-          className="relative p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-        >
-          <Bell className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+          <RefreshCw className={cn("w-4 h-4 text-gray-500", spinning && "animate-spin")} />
         </button>
 
         {/* Avatar */}

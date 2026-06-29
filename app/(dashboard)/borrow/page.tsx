@@ -127,7 +127,7 @@ export default function BorrowPage() {
 
   const approveMut = useMutation({
     mutationFn: (id: string) => approveBorrowRequest(id, stoxyUser?.uid ?? ""),
-    onSuccess: () => toast.success("อนุมัติแล้ว"),
+    onSuccess: () => { toast.success("อนุมัติแล้ว"); setTab("borrowed"); },
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
   });
 

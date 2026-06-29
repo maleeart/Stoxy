@@ -53,7 +53,7 @@ const navItems: NavItem[] = [
   // System
   { label: "ตรวจนับ", href: "/audit", icon: ShieldCheck, section: "ระบบ", adminOnly: true },
   { label: "รายงาน", href: "/reports", icon: FileBarChart, section: "ระบบ", adminOnly: true },
-  { label: "แจ้งเตือน", href: "/notifications", icon: Bell, section: "ระบบ" },
+  { label: "แจ้งเตือน", href: "/notifications", icon: Bell, section: "ระบบ", adminOnly: true },
   { label: "ผู้ใช้งาน", href: "/users", icon: Users, section: "ระบบ", adminOnly: true },
   { label: "ตั้งค่า", href: "/settings", icon: Settings, section: "ระบบ", adminOnly: true },
 ];
@@ -71,6 +71,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const router = useRouter();
   const { total: pendingTotal } = usePendingCount();
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
+  const [qrPopup, setQrPopup] = useState(false);
 
   async function handleLogout() {
     try {
@@ -114,18 +115,15 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 const isActive =
                   pathname === item.href ||
                   (item.href !== "/dashboard" && pathname.startsWith(item.href));
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    title={collapsed ? item.label : undefined}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group relative",
-                      isActive
-                        ? "bg-yellow-400 text-[#0d2137] shadow-lg shadow-yellow-400/20"
-                        : "text-white/70 hover:bg-white/10 hover:text-white"
-                    )}
-                  >
+                const isQR = item.href === "/scan";
+                const cls = cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group relative w-full text-left",
+                  isActive
+                    ? "bg-yellow-400 text-[#0d2137] shadow-lg shadow-yellow-400/20"
+                    : "text-white/70 hover:bg-white/10 hover:text-white"
+                );
+                const inner = (
+                  <>
                     <item.icon
                       className={cn(
                         "shrink-0 transition-none",
@@ -142,12 +140,20 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                     {collapsed && item.href === "/notifications" && pendingTotal > 0 && (
                       <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full" />
                     )}
-                    {/* Tooltip on collapse */}
                     {collapsed && (
                       <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none z-50 transition-opacity">
                         {item.label}
                       </div>
                     )}
+                  </>
+                );
+                return isQR ? (
+                  <button key={item.href} title={collapsed ? item.label : undefined} onClick={() => setQrPopup(true)} className={cls}>
+                    {inner}
+                  </button>
+                ) : (
+                  <Link key={item.href} href={item.href} title={collapsed ? item.label : undefined} className={cls}>
+                    {inner}
                   </Link>
                 );
               })}
@@ -182,6 +188,20 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           {!collapsed && "ออกจากระบบ"}
         </button>
       </div>
+
+      {/* QR popup */}
+      {qrPopup && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50" onClick={() => setQrPopup(false)}>
+          <div className="bg-white rounded-2xl p-8 flex flex-col items-center gap-3 shadow-2xl mx-4" onClick={(e) => e.stopPropagation()}>
+            <ScanLine className="w-12 h-12 text-[#0d2137]" />
+            <p className="text-lg font-bold text-[#0d2137]">สแกน QR Code</p>
+            <p className="text-sm text-gray-500 text-center">อยู่ระหว่างพัฒนา<br/>จะเปิดให้ใช้งานเร็วๆ นี้</p>
+            <button onClick={() => setQrPopup(false)} className="mt-2 px-6 py-2 bg-[#0d2137] text-white rounded-xl text-sm font-medium hover:opacity-90">
+              ตกลง
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Collapse Toggle */}
       <button

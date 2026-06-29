@@ -34,9 +34,7 @@ export default function ReturnPage() {
 
   const { allRecords, isLoading } = useRealtimeBorrows();
 
-  const borrowed = allRecords.filter((b) => b.status === "borrowed").filter(
-    (b) => isAdmin || b.borrowerId === stoxyUser?.uid
-  );
+  const borrowed = allRecords.filter((b) => b.status === "borrowed");
   const returnPending = allRecords.filter((b) => b.status === "return_pending");
 
   const submitMut = useMutation({
