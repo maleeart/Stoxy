@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import {
   Plus, Search, CheckCircle, XCircle, X, ArrowLeftRight,
-  Camera, Clock, RotateCcw,
+  Camera, Clock, RotateCcw, Loader2,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useInventoryItems } from "@/hooks/useInventory";
@@ -14,6 +14,7 @@ import {
   createBorrowRequest, approveBorrowRequest, rejectBorrowRequest, acknowledgeReturn,
 } from "@/services/borrow.service";
 import { formatDate, cn } from "@/lib/utils";
+import { compressImages } from "@/lib/compress";
 import type { BorrowRecord, BorrowStatus } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -58,9 +59,12 @@ export default function BorrowPage() {
   const [rejectId, setRejectId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [viewPhotos, setViewPhotos] = useState<string[] | null>(null);
+  const [compressing, setCompressing] = useState(false);
 
   // Create form state
   const [itemId, setItemId] = useState("");
+  const [borrowPhotos, setBorrowPhotos] = useState<File[]>([]);
+  const [borrowPhotosPreviews, setBorrowPhotosPreviews] = useState<string[]>([]);
   const [quantityStr, setQuantityStr] = useState("1");
   const [borrowerName, setBorrowerName] = useState("");
   const [borrowerDept, setBorrowerDept] = useState("");
@@ -83,6 +87,7 @@ export default function BorrowPage() {
   function resetForm() {
     setItemId(""); setQuantityStr("1"); setBorrowerName("");
     setBorrowerDept(""); setReturnDate(""); setPurpose("");
+    setBorrowPhotos([]); setBorrowPhotosPreviews([]);
   }
 
   const createMut = useMutation({
@@ -91,6 +96,12 @@ export default function BorrowPage() {
       if (!borrowerName.trim()) throw new Error("กรุณาระบุชื่อผู้ยืม");
       if (!returnDate) throw new Error("กรุณาระบุวันกำหนดคืน");
       if (!purpose.trim()) throw new Error("กรุณาระบุวัตถุประสงค์");
+
+      setCompressing(true);
+      const borrowPhotoUrls = borrowPhotos.length > 0
+        ? await compressImages(borrowPhotos)
+        : [];
+      setCompressing(false);
 
       return createBorrowRequest({
         itemId: selected.id,
@@ -103,7 +114,7 @@ export default function BorrowPage() {
         expectedReturnDate: Timestamp.fromDate(new Date(returnDate)),
         purpose,
         status: "pending_approval",
-        borrowPhotos: [],
+        borrowPhotos: borrowPhotoUrls,
         createdBy: stoxyUser?.uid ?? "",
       } as any);
     },
@@ -111,7 +122,7 @@ export default function BorrowPage() {
       toast.success("ส่งคำขอยืมสำเร็จ รอการอนุมัติ");
       setShowForm(false); resetForm();
     },
-    onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
+    onError: (e: any) => { setCompressing(false); toast.error(e.message ?? "เกิดข้อผิดพลาด"); },
   });
 
   const approveMut = useMutation({
@@ -237,12 +248,39 @@ export default function BorrowPage() {
                   />
                 </div>
 
+                {/* Photo */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    รูปสภาพอุปกรณ์ก่อนยืม (ไม่บังคับ)
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer px-3 py-2.5 border border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-blue-400 transition-colors">
+                    <Camera className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm text-gray-500">ถ่ายรูปหรือเลือกไฟล์</span>
+                    <input type="file" accept="image/*" multiple capture="environment" className="hidden"
+                      onChange={async (e) => {
+                        const files = Array.from(e.target.files ?? []);
+                        setBorrowPhotos(files);
+                        setBorrowPhotosPreviews(files.map(f => URL.createObjectURL(f)));
+                      }}
+                    />
+                  </label>
+                  {borrowPhotosPreviews.length > 0 && (
+                    <div className="flex gap-2 mt-2 flex-wrap">
+                      {borrowPhotosPreviews.map((src, i) => (
+                        <img key={i} src={src} alt="" className="w-16 h-16 object-cover rounded-lg border border-gray-200" />
+                      ))}
+                      <p className="w-full text-xs text-gray-400 mt-1">จะถูก compress อัตโนมัติก่อนบันทึก</p>
+                    </div>
+                  )}
+                </div>
+
                 <button
                   onClick={() => createMut.mutate()}
-                  disabled={!itemId || !borrowerName.trim() || !returnDate || !purpose.trim() || createMut.isPending}
-                  className="w-full py-2.5 text-sm font-medium bg-[#0d2137] text-white rounded-xl disabled:opacity-50 hover:bg-[#1a3a5c] transition-colors"
+                  disabled={!itemId || !borrowerName.trim() || !returnDate || !purpose.trim() || createMut.isPending || compressing}
+                  className="w-full py-2.5 text-sm font-medium bg-[#0d2137] text-white rounded-xl disabled:opacity-50 hover:bg-[#1a3a5c] transition-colors flex items-center justify-center gap-2"
                 >
-                  {createMut.isPending ? "กำลังบันทึก..." : "ส่งคำขอยืม"}
+                  {(compressing || createMut.isPending) && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {compressing ? "กำลัง compress รูป..." : createMut.isPending ? "กำลังบันทึก..." : "ส่งคำขอยืม"}
                 </button>
               </div>
             </motion.div>

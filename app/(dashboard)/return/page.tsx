@@ -7,7 +7,8 @@ import { AppShell } from "@/components/layout/AppShell";
 import { useRealtimeBorrows } from "@/hooks/useRealtimeBorrows";
 import { submitReturn, acknowledgeReturn } from "@/services/borrow.service";
 import { formatDate, cn } from "@/lib/utils";
-import { Undo2, CheckCircle, AlertTriangle, Clock } from "lucide-react";
+import { compressImages } from "@/lib/compress";
+import { Undo2, CheckCircle, AlertTriangle, Clock, Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import type { BorrowRecord, ItemCondition } from "@/types";
@@ -27,6 +28,9 @@ export default function ReturnPage() {
   const [selected, setSelected] = useState<BorrowRecord | null>(null);
   const [condition, setCondition] = useState<ItemCondition>("good");
   const [notes, setNotes] = useState("");
+  const [returnPhotos, setReturnPhotos] = useState<File[]>([]);
+  const [returnPreviews, setReturnPreviews] = useState<string[]>([]);
+  const [compressing, setCompressing] = useState(false);
 
   const { allRecords, isLoading } = useRealtimeBorrows();
 
@@ -38,10 +42,13 @@ export default function ReturnPage() {
   const submitMut = useMutation({
     mutationFn: async () => {
       if (!selected) return;
+      setCompressing(true);
+      const photoUrls = returnPhotos.length > 0 ? await compressImages(returnPhotos) : [];
+      setCompressing(false);
       return submitReturn(selected.id, {
         condition,
         notes,
-        returnPhotos: [],
+        returnPhotos: photoUrls,
         returnedBy: stoxyUser?.uid ?? "",
       });
     },
@@ -50,8 +57,9 @@ export default function ReturnPage() {
       setSelected(null);
       setNotes("");
       setCondition("good");
+      setReturnPhotos([]); setReturnPreviews([]);
     },
-    onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
+    onError: (e: any) => { setCompressing(false); toast.error(e.message ?? "เกิดข้อผิดพลาด"); },
   });
 
   const acknowledgeMut = useMutation({
@@ -93,7 +101,7 @@ export default function ReturnPage() {
               const isActive = selected?.id === b.id;
               return (
                 <motion.button key={b.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }} onClick={() => { setSelected(b); setCondition("good"); setNotes(""); }}
+                  transition={{ delay: i * 0.05 }} onClick={() => { setSelected(b); setCondition("good"); setNotes(""); setReturnPhotos([]); setReturnPreviews([]); }}
                   className={`w-full text-left p-4 rounded-2xl border transition-all ${
                     isActive
                       ? "border-blue-400 bg-blue-50 dark:bg-blue-900/20"
@@ -164,12 +172,38 @@ export default function ReturnPage() {
                   />
                 </div>
 
+                {/* Photo */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    รูปสภาพอุปกรณ์หลังคืน (ไม่บังคับ)
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer px-3 py-2.5 border border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-emerald-400 transition-colors">
+                    <Camera className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm text-gray-500">ถ่ายรูปหรือเลือกไฟล์</span>
+                    <input type="file" accept="image/*" multiple capture="environment" className="hidden"
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files ?? []);
+                        setReturnPhotos(files);
+                        setReturnPreviews(files.map(f => URL.createObjectURL(f)));
+                      }}
+                    />
+                  </label>
+                  {returnPreviews.length > 0 && (
+                    <div className="flex gap-2 mt-2 flex-wrap">
+                      {returnPreviews.map((src, i) => (
+                        <img key={i} src={src} alt="" className="w-16 h-16 object-cover rounded-lg border border-gray-200" />
+                      ))}
+                      <p className="w-full text-xs text-gray-400 mt-1">จะถูก compress อัตโนมัติก่อนบันทึก</p>
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex gap-2">
-                  <button onClick={() => submitMut.mutate()} disabled={submitMut.isPending}
+                  <button onClick={() => submitMut.mutate()} disabled={submitMut.isPending || compressing}
                     className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 disabled:opacity-50 transition-colors"
                   >
-                    <CheckCircle className="w-4 h-4" />
-                    {submitMut.isPending ? "กำลังบันทึก..." : "แจ้งคืน"}
+                    {(compressing || submitMut.isPending) ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                    {compressing ? "กำลัง compress รูป..." : submitMut.isPending ? "กำลังบันทึก..." : "แจ้งคืน"}
                   </button>
                   <button onClick={() => setSelected(null)}
                     className="px-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
