@@ -13,10 +13,13 @@ interface AppShellProps {
 }
 
 export function AppShell({ children, title }: AppShellProps) {
-  const { stoxyUser } = useAuth();
+  const { stoxyUser, loading } = useAuth();
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Wait for auth — prevents flash between admin layout and StaffShell
+  if (loading) return null;
 
   // Staff gets a clean mobile-first shell
   if (!isAdmin && stoxyUser) {

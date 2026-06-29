@@ -29,16 +29,14 @@ export function StaffShell({ children }: StaffShellProps) {
   const homeActive = pathname === "/dashboard";
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-[#F8FAFC] overflow-hidden">
-      {/* Scrollable content */}
-      <main className="flex-1 overflow-y-auto pb-24">
+    // ใช้ flex column แทน fixed nav — ป้องกัน nav หายเพราะ framer-motion stacking context
+    <div className="flex flex-col h-[100dvh] bg-[#F8FAFC]">
+      <main className="flex-1 overflow-y-auto min-h-0">
         {children}
       </main>
 
-      {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50 safe-area-bottom">
+      <nav className="shrink-0 bg-white border-t border-gray-100 safe-area-bottom z-50">
         <div className="flex items-end h-16">
-          {/* Left 2 */}
           {sideItems.map((item) => {
             const active = isActive(item.href);
             return (
@@ -63,9 +61,8 @@ export function StaffShell({ children }: StaffShellProps) {
           >
             <div className={cn(
               "w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95",
-              homeActive
-                ? "bg-[#1D4ED8] shadow-[#1D4ED8]/40"
-                : "bg-[#1D4ED8] shadow-[#1D4ED8]/30"
+              "bg-[#1D4ED8]",
+              homeActive ? "shadow-[#1D4ED8]/40" : "shadow-[#1D4ED8]/30"
             )}>
               <Home className={cn("w-6 h-6 text-white", homeActive && "stroke-[2.5]")} />
             </div>
@@ -75,7 +72,6 @@ export function StaffShell({ children }: StaffShellProps) {
             )}>หน้าหลัก</span>
           </button>
 
-          {/* Right 2 */}
           {sideItemsRight.map((item) => {
             const active = isActive(item.href);
             return (
