@@ -94,13 +94,13 @@ export default function AuditDetailPage() {
         const status: AuditItem["status"] = !counted ? "pending"
           : actual === item.quantityAvailable ? "scanned" : "mismatch";
         // strip undefined — Firestore rejects them
-        const entry: Record<string, unknown> = {
+        const entry: AuditItem = {
           itemId: item.id, itemCode: item.code, itemName: item.name,
           expectedQuantity: item.quantityAvailable, status,
         };
         if (actual !== undefined) entry.actualQuantity = actual;
         if (stoxyUser?.uid) entry.scannedBy = stoxyUser.uid;
-        return entry as AuditItem;
+        return entry;
       });
       return submitAuditForReview(id, toSubmit);
     },
