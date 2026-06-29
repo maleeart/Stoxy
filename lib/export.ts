@@ -102,7 +102,7 @@ export function exportMovementsExcel(movements: StockMovement[]) {
     วันที่: m.createdAt?.toDate().toLocaleDateString("th-TH") ?? "",
     รหัสอุปกรณ์: m.itemCode,
     ชื่ออุปกรณ์: m.itemName,
-    ประเภท: m.type,
+    ประเภท: movementTypeLabel[m.type] ?? m.type,
     ก่อน: m.quantityBefore,
     เปลี่ยนแปลง: m.quantityChange,
     หลัง: m.quantityAfter,
@@ -117,6 +117,19 @@ export function exportMovementsExcel(movements: StockMovement[]) {
 }
 
 // ── Helpers ───────────────────────────────────────────────────
+const movementTypeLabel: Record<string, string> = {
+  borrow: "ยืม",
+  return: "คืน",
+  adjustment_in: "รับเข้า",
+  adjustment_out: "จ่ายออก",
+  transfer: "โอนย้าย",
+  disposal: "จำหน่ายออก",
+  purchase: "รับซื้อ",
+  maintenance_out: "ส่งซ่อม",
+  maintenance_in: "รับคืนจากซ่อม",
+  lost: "สูญหาย",
+};
+
 const statusLabel: Record<string, string> = {
   available: "พร้อมใช้งาน",
   borrowed: "ถูกยืม",

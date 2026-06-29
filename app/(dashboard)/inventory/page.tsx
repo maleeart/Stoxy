@@ -26,6 +26,8 @@ import {
   ColumnFiltersState,
 } from "@tanstack/react-table";
 import { AppShell } from "@/components/layout/AppShell";
+import { MobileHeader } from "@/components/layout/MobileHeader";
+import { useAuth } from "@/hooks/useAuth";
 import { useInventoryItems } from "@/hooks/useInventory";
 import { statusConfig, formatDate, cn } from "@/lib/utils";
 import type { InventoryItem, ItemStatus } from "@/types";
@@ -40,6 +42,8 @@ const statusFilters: { label: string; value: ItemStatus | "all" }[] = [
 ];
 
 export default function InventoryPage() {
+  const { stoxyUser } = useAuth();
+  const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<ItemStatus | "all">("all");
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -215,6 +219,8 @@ export default function InventoryPage() {
 
   return (
     <AppShell title="คลังอุปกรณ์">
+      {!isAdmin && <MobileHeader title="คลังอุปกรณ์" />}
+      <div className="px-4 sm:px-0">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
         <div>
@@ -357,6 +363,7 @@ export default function InventoryPage() {
       </div>
 
       <AddItemDialog open={showAddDialog} onClose={() => setShowAddDialog(false)} />
+      </div>
     </AppShell>
   );
 }

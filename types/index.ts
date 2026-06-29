@@ -11,6 +11,7 @@ export interface StoxyUser {
   uid: string;
   email: string;
   displayName: string;
+  nickname?: string;
   photoURL?: string;
   role: UserRole;
   department: string;

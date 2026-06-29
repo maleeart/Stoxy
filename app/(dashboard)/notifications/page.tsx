@@ -6,196 +6,220 @@ import { AppShell } from "@/components/layout/AppShell";
 import { useInventoryItems } from "@/hooks/useInventory";
 import { getRequisitions } from "@/services/requisition.service";
 import { getBorrowRecords } from "@/services/borrow.service";
-import { AlertTriangle, PackageOpen, Clock, Bell } from "lucide-react";
+import { getAuditSessions } from "@/services/audit.service";
+import {
+  AlertTriangle, PackageOpen, Clock, Bell,
+  ArrowLeftRight, ShieldCheck, CheckCircle2, ChevronRight,
+} from "lucide-react";
 import { motion } from "framer-motion";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { formatDate } from "@/lib/utils";
+
+type NotifGroup = {
+  id: string;
+  type: "borrow_pending" | "borrow_overdue" | "req_pending" | "audit_review" | "low_stock";
+  title: string;
+  subtitle: string;
+  href: string;
+  urgent: boolean;
+  date?: string;
+};
 
 export default function NotificationsPage() {
+  const router = useRouter();
   const { data: items = [] } = useInventoryItems();
-
   const { data: requisitions = [] } = useQuery({
     queryKey: ["requisitions", "all"],
     queryFn: () => getRequisitions(),
   });
-
   const { data: borrows = [] } = useQuery({
     queryKey: ["borrows", "all"],
     queryFn: () => getBorrowRecords(),
   });
+  const { data: auditSessions = [] } = useQuery({
+    queryKey: ["audit_sessions"],
+    queryFn: getAuditSessions,
+  });
 
-  const lowStock = useMemo(
-    () => items.filter((i) => i.quantityAvailable <= (i.minStockLevel ?? 0)),
-    [items]
-  );
+  const now = new Date();
 
-  const pendingReqs = useMemo(
-    () => requisitions.filter((r) => r.status === "pending"),
-    [requisitions]
-  );
+  const groups = useMemo(() => {
+    const result: NotifGroup[] = [];
 
-  const pendingBorrows = useMemo(
-    () => borrows.filter((b) => b.status === "pending_approval"),
-    [borrows]
-  );
+    // 1. Audit pending approval — most urgent for admin
+    auditSessions
+      .filter((s) => s.status === "pending_approval")
+      .forEach((s) => {
+        result.push({
+          id: `audit_${s.id}`,
+          type: "audit_review",
+          title: `ตรวจนับรออนุมัติ: ${s.name}`,
+          subtitle: `ช่างส่งผลตรวจนับ กรุณาตรวจสอบและอนุมัติ`,
+          href: `/audit/${s.id}`,
+          urgent: true,
+          date: formatDate(s.updatedAt),
+        });
+      });
 
-  const overdueBorrows = useMemo(() => {
-    const now = new Date();
-    return borrows.filter(
-      (b) => b.status === "borrowed" && b.expectedReturnDate.toDate() < now
-    );
-  }, [borrows]);
+    // 2. Borrow pending approval
+    borrows
+      .filter((b) => b.status === "pending_approval")
+      .forEach((b) => {
+        result.push({
+          id: `borrow_pending_${b.id}`,
+          type: "borrow_pending",
+          title: `ยืม: ${b.itemName}`,
+          subtitle: `${b.borrowerName} · ${b.borrowerDepartment ?? ""}`,
+          href: "/borrow",
+          urgent: false,
+          date: formatDate(b.createdAt),
+        });
+      });
 
-  const total = lowStock.length + pendingReqs.length + pendingBorrows.length + overdueBorrows.length;
+    // 3. Requisition pending
+    requisitions
+      .filter((r) => r.status === "pending")
+      .forEach((r) => {
+        result.push({
+          id: `req_${r.id}`,
+          type: "req_pending",
+          title: `เบิก: ${r.itemName}`,
+          subtitle: `${r.requesterName} · จำนวน ${r.quantity}`,
+          href: "/requisition",
+          urgent: false,
+          date: formatDate(r.createdAt),
+        });
+      });
+
+    // 4. Overdue borrows
+    borrows
+      .filter((b) => b.status === "borrowed" && b.expectedReturnDate.toDate() < now)
+      .forEach((b) => {
+        const days = Math.floor((now.getTime() - b.expectedReturnDate.toDate().getTime()) / 86400000);
+        result.push({
+          id: `overdue_${b.id}`,
+          type: "borrow_overdue",
+          title: `เกินกำหนด: ${b.itemName}`,
+          subtitle: `${b.borrowerName} · เกิน ${days} วัน`,
+          href: "/operations",
+          urgent: true,
+          date: b.expectedReturnDate.toDate().toLocaleDateString("th-TH"),
+        });
+      });
+
+    // 5. Low stock
+    items
+      .filter((i) => i.quantityAvailable <= (i.minStockLevel ?? 0) && i.minStockLevel > 0)
+      .forEach((i) => {
+        result.push({
+          id: `stock_${i.id}`,
+          type: "low_stock",
+          title: `สต็อกต่ำ: ${i.name}`,
+          subtitle: `เหลือ ${i.quantityAvailable} / ขั้นต่ำ ${i.minStockLevel}`,
+          href: "/inventory",
+          urgent: i.quantityAvailable === 0,
+          date: i.code,
+        });
+      });
+
+    return result;
+  }, [items, requisitions, borrows, auditSessions]);
+
+  // Sort: urgent first
+  const sorted = [...groups].sort((a, b) => (b.urgent ? 1 : 0) - (a.urgent ? 1 : 0));
+  const urgentCount = sorted.filter((n) => n.urgent).length;
+
+  const iconMap: Record<NotifGroup["type"], React.ReactNode> = {
+    audit_review: <ShieldCheck className="w-4 h-4 text-white" />,
+    borrow_pending: <ArrowLeftRight className="w-4 h-4 text-white" />,
+    req_pending: <PackageOpen className="w-4 h-4 text-white" />,
+    borrow_overdue: <Clock className="w-4 h-4 text-white" />,
+    low_stock: <AlertTriangle className="w-4 h-4 text-white" />,
+  };
+
+  const colorMap: Record<NotifGroup["type"], string> = {
+    audit_review: "bg-red-500",
+    borrow_overdue: "bg-orange-500",
+    borrow_pending: "bg-[#1D4ED8]",
+    req_pending: "bg-amber-500",
+    low_stock: "bg-rose-400",
+  };
+
+  const labelMap: Record<NotifGroup["type"], string> = {
+    audit_review: "ตรวจนับ",
+    borrow_overdue: "เกินกำหนด",
+    borrow_pending: "รออนุมัติยืม",
+    req_pending: "รออนุมัติเบิก",
+    low_stock: "สต็อกต่ำ",
+  };
 
   return (
     <AppShell title="แจ้งเตือน">
-      <div className="mb-5">
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white">การแจ้งเตือน</h2>
-        <p className="text-sm text-gray-500">{total} รายการที่ต้องดำเนินการ</p>
+      {/* Header summary */}
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h2 className="text-lg font-bold text-gray-900">การแจ้งเตือน</h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {sorted.length} รายการรอดำเนินการ
+            {urgentCount > 0 && (
+              <span className="ml-2 text-xs font-semibold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
+                {urgentCount} เร่งด่วน
+              </span>
+            )}
+          </p>
+        </div>
+        <Bell className="w-5 h-5 text-gray-300 mt-1" />
       </div>
 
-      {total === 0 ? (
-        <div className="text-center py-20 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800">
-          <Bell className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-          <p className="text-sm text-gray-400">ไม่มีการแจ้งเตือน ทุกอย่างปกติดี</p>
+      {sorted.length === 0 ? (
+        <div className="text-center py-24 bg-white rounded-3xl border border-gray-100">
+          <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
+            <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+          </div>
+          <p className="text-sm font-semibold text-gray-700">ทุกอย่างเรียบร้อย</p>
+          <p className="text-xs text-gray-400 mt-1">ไม่มีรายการที่ต้องดำเนินการ</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {/* Low Stock */}
-          {lowStock.length > 0 && (
-            <Section
-              icon={<AlertTriangle className="w-4 h-4 text-red-500" />}
-              title={`สต็อกต่ำ (${lowStock.length} รายการ)`}
-              color="border-red-100 dark:border-red-900/50 bg-red-50/50 dark:bg-red-950/20"
+        <div className="space-y-2.5">
+          {sorted.map((n, i) => (
+            <motion.button
+              key={n.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.04 }}
+              onClick={() => router.push(n.href)}
+              className={`w-full text-left bg-white rounded-2xl border p-4 flex items-center gap-3.5 active:scale-[0.98] transition-all hover:border-gray-200 shadow-sm ${
+                n.urgent ? "border-red-100 shadow-red-50" : "border-gray-100"
+              }`}
             >
-              {lowStock.map((item, i) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.04 }}
-                  className="flex items-center justify-between py-2 border-b border-red-100 dark:border-red-900/30 last:border-0"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{item.name}</p>
-                    <p className="text-xs text-gray-500">{item.code}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-red-600">เหลือ {item.quantityAvailable}</p>
-                    <p className="text-xs text-gray-400">ขั้นต่ำ {item.minStockLevel ?? 0}</p>
-                  </div>
-                </motion.div>
-              ))}
-              <Link href="/purchase" className="block mt-2 text-xs text-center text-blue-600 hover:underline">
-                ดูรายการต้องสั่งซื้อ →
-              </Link>
-            </Section>
-          )}
+              {/* Icon */}
+              <div className={`w-10 h-10 rounded-xl shrink-0 flex items-center justify-center ${colorMap[n.type]}`}>
+                {iconMap[n.type]}
+              </div>
 
-          {/* Pending Requisitions */}
-          {pendingReqs.length > 0 && (
-            <Section
-              icon={<PackageOpen className="w-4 h-4 text-yellow-500" />}
-              title={`คำขอเบิกรออนุมัติ (${pendingReqs.length} รายการ)`}
-              color="border-yellow-100 dark:border-yellow-900/50 bg-yellow-50/50 dark:bg-yellow-950/20"
-            >
-              {pendingReqs.map((req, i) => (
-                <motion.div
-                  key={req.id}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.04 }}
-                  className="flex items-center justify-between py-2 border-b border-yellow-100 dark:border-yellow-900/30 last:border-0"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{req.itemName}</p>
-                    <p className="text-xs text-gray-500">โดย: {req.requesterName} · จำนวน: {req.quantity}</p>
-                  </div>
-                </motion.div>
-              ))}
-              <Link href="/requisition" className="block mt-2 text-xs text-center text-blue-600 hover:underline">
-                ไปอนุมัติ →
-              </Link>
-            </Section>
-          )}
+              {/* Text */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className={`text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-md ${
+                    n.urgent ? "bg-red-50 text-red-500" : "bg-gray-100 text-gray-500"
+                  }`}>
+                    {labelMap[n.type]}
+                  </span>
+                  {n.urgent && <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />}
+                </div>
+                <p className="text-sm font-semibold text-gray-900 truncate">{n.title}</p>
+                <p className="text-xs text-gray-400 truncate mt-0.5">{n.subtitle}</p>
+              </div>
 
-          {/* Pending Borrows */}
-          {pendingBorrows.length > 0 && (
-            <Section
-              icon={<Clock className="w-4 h-4 text-blue-500" />}
-              title={`คำขอยืมรออนุมัติ (${pendingBorrows.length} รายการ)`}
-              color="border-blue-100 dark:border-blue-900/50 bg-blue-50/50 dark:bg-blue-950/20"
-            >
-              {pendingBorrows.map((b, i) => (
-                <motion.div
-                  key={b.id}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.04 }}
-                  className="flex items-center justify-between py-2 border-b border-blue-100 dark:border-blue-900/30 last:border-0"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{b.itemName}</p>
-                    <p className="text-xs text-gray-500">โดย: {b.borrowerName} · {b.borrowerDepartment}</p>
-                  </div>
-                </motion.div>
-              ))}
-              <Link href="/borrow" className="block mt-2 text-xs text-center text-blue-600 hover:underline">
-                ไปอนุมัติ →
-              </Link>
-            </Section>
-          )}
-
-          {/* Overdue Borrows */}
-          {overdueBorrows.length > 0 && (
-            <Section
-              icon={<AlertTriangle className="w-4 h-4 text-orange-500" />}
-              title={`เกินกำหนดคืน (${overdueBorrows.length} รายการ)`}
-              color="border-orange-100 dark:border-orange-900/50 bg-orange-50/50 dark:bg-orange-950/20"
-            >
-              {overdueBorrows.map((b, i) => (
-                <motion.div
-                  key={b.id}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.04 }}
-                  className="flex items-center justify-between py-2 border-b border-orange-100 dark:border-orange-900/30 last:border-0"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{b.itemName}</p>
-                    <p className="text-xs text-gray-500">ผู้ยืม: {b.borrowerName}</p>
-                  </div>
-                  <p className="text-xs font-semibold text-orange-600">
-                    {b.expectedReturnDate.toDate().toLocaleDateString("th-TH")}
-                  </p>
-                </motion.div>
-              ))}
-              <Link href="/return" className="block mt-2 text-xs text-center text-blue-600 hover:underline">
-                ไปรับคืน →
-              </Link>
-            </Section>
-          )}
+              {/* Date + arrow */}
+              <div className="shrink-0 flex flex-col items-end gap-1">
+                {n.date && <span className="text-[10px] text-gray-400">{n.date}</span>}
+                <ChevronRight className="w-4 h-4 text-gray-300" />
+              </div>
+            </motion.button>
+          ))}
         </div>
       )}
     </AppShell>
-  );
-}
-
-function Section({
-  icon, title, color, children,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  color: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className={`rounded-2xl border p-4 ${color}`}>
-      <div className="flex items-center gap-2 mb-3">
-        {icon}
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h3>
-      </div>
-      {children}
-    </div>
   );
 }

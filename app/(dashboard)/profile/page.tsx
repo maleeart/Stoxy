@@ -6,7 +6,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { MobileHeader } from "@/components/layout/MobileHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { logout, updateStoxyUser } from "@/services/auth.service";
-import { LogOut, User, Building2, Shield, Mail, Edit2, Check, X } from "lucide-react";
+import { LogOut, Building2, Shield, Mail, SmilePlus, Edit2, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -30,16 +30,35 @@ export default function ProfilePage() {
 
   const [editingDept, setEditingDept] = useState(false);
   const [dept, setDept] = useState(stoxyUser?.department ?? "");
+  const [editingNickname, setEditingNickname] = useState(false);
+  const [nickname, setNickname] = useState(stoxyUser?.nickname ?? "");
   const [saving, setSaving] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
-  // Sync dept state เมื่อ stoxyUser โหลดเสร็จหรืออัปเดต (guest/all roles)
   useEffect(() => {
     if (!editingDept) setDept(stoxyUser?.department ?? "");
   }, [stoxyUser?.department, editingDept]);
 
+  useEffect(() => {
+    if (!editingNickname) setNickname(stoxyUser?.nickname ?? "");
+  }, [stoxyUser?.nickname, editingNickname]);
+
   if (loading) return null;
   if (!stoxyUser) { router.replace("/login"); return null; }
+
+  async function saveNickname() {
+    setSaving(true);
+    try {
+      await updateStoxyUser(stoxyUser!.uid, { nickname: nickname.trim() || null as unknown as string });
+      await refreshUser();
+      toast.success("บันทึกชื่อเล่นแล้ว");
+      setEditingNickname(false);
+    } catch {
+      toast.error("เกิดข้อผิดพลาด");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function saveDept() {
     if (!dept.trim()) return;
@@ -93,6 +112,42 @@ export default function ProfilePage() {
           <div className="flex-1 min-w-0">
             <p className="text-xs text-gray-400 mb-0.5">อีเมล</p>
             <p className="text-sm font-medium text-gray-900 truncate">{stoxyUser.email}</p>
+          </div>
+        </div>
+
+        {/* Nickname (editable) */}
+        <div className="flex items-center gap-3 px-5 py-4">
+          <SmilePlus className="w-4 h-4 text-gray-400 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-gray-400 mb-0.5">ชื่อเล่น</p>
+            {editingNickname ? (
+              <div className="flex items-center gap-2">
+                <input
+                  value={nickname}
+                  onChange={e => setNickname(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && saveNickname()}
+                  autoFocus
+                  placeholder="ใส่ชื่อเล่น"
+                  className="flex-1 text-sm border border-[#1D4ED8]/30 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                />
+                <button onClick={saveNickname} disabled={saving}
+                  className="w-7 h-7 rounded-lg bg-emerald-500 flex items-center justify-center active:scale-95">
+                  <Check className="w-3.5 h-3.5 text-white" />
+                </button>
+                <button onClick={() => { setEditingNickname(false); setNickname(stoxyUser.nickname ?? ""); }}
+                  className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center active:scale-95">
+                  <X className="w-3.5 h-3.5 text-gray-500" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-gray-900">{stoxyUser.nickname || "ไม่ระบุ"}</p>
+                <button onClick={() => { setEditingNickname(true); setNickname(stoxyUser.nickname ?? ""); }}
+                  className="p-1.5 rounded-lg hover:bg-gray-50 active:scale-95 transition-all">
+                  <Edit2 className="w-3.5 h-3.5 text-gray-400" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
