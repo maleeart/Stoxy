@@ -10,15 +10,8 @@ import {
   where,
   orderBy,
   limit,
-  startAfter,
   Timestamp,
-  writeBatch,
-  increment,
-  DocumentSnapshot,
-  QueryConstraint,
   onSnapshot,
-  Query,
-  DocumentData,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type {
@@ -32,33 +25,23 @@ const ITEMS_COLLECTION = "inventory_items";
 const MOVEMENTS_COLLECTION = "stock_movements";
 
 // ── Get Items ─────────────────────────────────────────────────
+// ponytail: fetch all + client-side filter to avoid composite index requirements
 export async function getInventoryItems(
-  filter?: FilterState,
-  pageSize = 20,
-  lastDoc?: DocumentSnapshot
-): Promise<{ items: InventoryItem[]; lastDoc: DocumentSnapshot | null }> {
-  const constraints: QueryConstraint[] = [orderBy("updatedAt", "desc")];
-
-  if (filter?.categoryId) {
-    constraints.push(where("categoryId", "==", filter.categoryId));
-  }
-  if (filter?.locationId) {
-    constraints.push(where("locationId", "==", filter.locationId));
-  }
-  if (filter?.status) {
-    constraints.push(where("status", "==", filter.status));
-  }
-
-  constraints.push(limit(pageSize));
-  if (lastDoc) constraints.push(startAfter(lastDoc));
-
-  const q = query(collection(db, ITEMS_COLLECTION), ...constraints);
+  filter?: FilterState
+): Promise<{ items: InventoryItem[]; lastDoc: null }> {
+  const q = query(
+    collection(db, ITEMS_COLLECTION),
+    orderBy("createdAt", "desc"),
+    limit(500)
+  );
   const snap = await getDocs(q);
+  let items = snap.docs.map((d) => ({ id: d.id, ...d.data() } as InventoryItem));
 
-  const items = snap.docs.map((d) => ({ id: d.id, ...d.data() } as InventoryItem));
-  const newLastDoc = snap.docs[snap.docs.length - 1] ?? null;
+  if (filter?.categoryId) items = items.filter((i) => i.categoryId === filter.categoryId);
+  if (filter?.locationId) items = items.filter((i) => i.locationId === filter.locationId);
+  if (filter?.status) items = items.filter((i) => i.status === filter.status);
 
-  return { items, lastDoc: newLastDoc };
+  return { items, lastDoc: null };
 }
 
 // ── Get Single Item ───────────────────────────────────────────
