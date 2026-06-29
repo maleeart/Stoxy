@@ -31,6 +31,7 @@ export function useInventoryItems(filter?: FilterState) {
     select: (data) => data.items,
     refetchInterval: 30_000,
     refetchOnWindowFocus: true,
+    retry: 1,
   });
 }
 

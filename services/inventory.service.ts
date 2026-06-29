@@ -25,21 +25,20 @@ const ITEMS_COLLECTION = "inventory_items";
 const MOVEMENTS_COLLECTION = "stock_movements";
 
 // ── Get Items ─────────────────────────────────────────────────
-// ponytail: fetch all + client-side filter to avoid composite index requirements
+// ponytail: no orderBy to avoid composite index issues; sort client-side
 export async function getInventoryItems(
   filter?: FilterState
 ): Promise<{ items: InventoryItem[]; lastDoc: null }> {
-  const q = query(
-    collection(db, ITEMS_COLLECTION),
-    orderBy("createdAt", "desc"),
-    limit(500)
-  );
-  const snap = await getDocs(q);
+  const snap = await getDocs(collection(db, ITEMS_COLLECTION));
   let items = snap.docs.map((d) => ({ id: d.id, ...d.data() } as InventoryItem));
 
+  // client-side filter
   if (filter?.categoryId) items = items.filter((i) => i.categoryId === filter.categoryId);
   if (filter?.locationId) items = items.filter((i) => i.locationId === filter.locationId);
   if (filter?.status) items = items.filter((i) => i.status === filter.status);
+
+  // sort newest first
+  items.sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
 
   return { items, lastDoc: null };
 }
