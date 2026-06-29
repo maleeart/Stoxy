@@ -22,6 +22,10 @@ export function compressImage(
   });
 }
 
-export async function compressImages(files: File[]): Promise<string[]> {
-  return Promise.all(files.map((f) => compressImage(f)));
+export async function compressImages(
+  files: File[],
+  maxWidth = 800,
+  quality = 0.55
+): Promise<string[]> {
+  return Promise.all(files.map((f) => compressImage(f, maxWidth, quality)));
 }
