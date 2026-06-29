@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
@@ -417,7 +417,7 @@ function StaffBorrowPage() {
 
               {filtered.length === 0 ? (
                 <div className="text-center py-16">
-                  <Package className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                  <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                   <p className="text-sm text-gray-400">ไม่พบอุปกรณ์</p>
                 </div>
               ) : (
@@ -442,7 +442,7 @@ function StaffBorrowPage() {
                 ))
               ) : filteredReturn.length === 0 ? (
                 <div className="text-center py-16">
-                  <CheckCircle className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                  <CheckCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                   <p className="text-sm text-gray-400">ไม่มีรายการยืมค้างอยู่</p>
                 </div>
               ) : (
@@ -636,7 +636,7 @@ function AdminBorrowPage() {
           <p className="text-sm text-gray-500">{filtered.length} รายการ</p>
         </div>
         <button onClick={() => setShowForm(true)}
-          className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#0d2137] text-white rounded-xl hover:bg-[#1a3a5c] transition-colors"
+          className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors"
         >
           <Plus className="w-4 h-4" /> สร้างคำขอยืม
         </button>
@@ -721,7 +721,7 @@ function AdminBorrowPage() {
                   )}
                 </div>
                 <button onClick={() => createMut.mutate()} disabled={!itemId || !borrowerName.trim() || !returnDate || !purpose.trim() || createMut.isPending || compressing}
-                  className="w-full py-2.5 text-sm font-medium bg-[#0d2137] text-white rounded-xl disabled:opacity-50 hover:bg-[#1a3a5c] transition-colors flex items-center justify-center gap-2"
+                  className="w-full py-2.5 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl disabled:opacity-50 hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
                 >
                   {(compressing || createMut.isPending) && <Loader2 className="w-4 h-4 animate-spin" />}
                   {compressing ? "กำลัง compress..." : createMut.isPending ? "กำลังบันทึก..." : "ส่งคำขอยืม"}

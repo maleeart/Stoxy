@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -20,9 +20,9 @@ export default function DashboardLayout({
 
   if (loading || !initialized) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-950">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 bg-[#0d2137] rounded-2xl flex items-center justify-center animate-pulse">
+          <div className="w-12 h-12 bg-[#1D4ED8] rounded-2xl flex items-center justify-center animate-pulse">
             <svg
               className="w-6 h-6 text-yellow-400"
               fill="currentColor"

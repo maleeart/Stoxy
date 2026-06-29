@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { AppShell } from "@/components/layout/AppShell";
@@ -104,7 +104,7 @@ export default function SettingsPage() {
               <button
                 onClick={handleAdd}
                 disabled={!newLocation.trim() || saving}
-                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-[#0d2137] text-white rounded-xl hover:bg-[#1a3a5c] disabled:opacity-50 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 เพิ่ม

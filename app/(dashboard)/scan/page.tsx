@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -133,7 +133,7 @@ export default function ScanPage() {
                 />
                 <button
                   onClick={() => manualCode && lookupCode(manualCode)}
-                  className="px-4 py-2 text-sm bg-[#0d2137] text-white rounded-xl hover:bg-[#1a3a5c] transition-colors"
+                  className="px-4 py-2 text-sm bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors"
                 >
                   ค้นหา
                 </button>
@@ -175,7 +175,7 @@ export default function ScanPage() {
               <div className="flex gap-2">
                 <button
                   onClick={() => router.push(`/inventory/${item.id}`)}
-                  className="flex-1 py-2 text-sm bg-[#0d2137] text-white rounded-xl hover:bg-[#1a3a5c] transition-colors"
+                  className="flex-1 py-2 text-sm bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors"
                 >
                   ดูรายละเอียด
                 </button>
@@ -198,7 +198,7 @@ export default function ScanPage() {
             <p className="text-sm text-gray-500 mb-4">รหัสนี้ไม่มีในระบบ</p>
             <button
               onClick={reset}
-              className="px-6 py-2 text-sm bg-[#0d2137] text-white rounded-xl hover:bg-[#1a3a5c] transition-colors"
+              className="px-6 py-2 text-sm bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors"
             >
               สแกนใหม่
             </button>

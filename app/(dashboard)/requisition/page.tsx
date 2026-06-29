@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -133,7 +133,7 @@ function StaffRequisitionPage() {
       <div className="px-5 py-3 pb-32 space-y-3">
         {filtered.length === 0 ? (
           <div className="text-center py-16">
-            <Package className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+            <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
             <p className="text-sm text-gray-400">ไม่พบอุปกรณ์</p>
           </div>
         ) : (
@@ -347,7 +347,7 @@ function AdminRequisitionPage() {
           <p className="text-sm text-gray-500">ขอเบิกวัสดุ/อุปกรณ์จากสต็อก</p>
         </div>
         <button onClick={() => setShowForm(true)}
-          className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#0d2137] text-white rounded-xl hover:bg-[#1a3a5c] transition-colors"
+          className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors"
         >
           <PackageOpen className="w-4 h-4" />ขอเบิก
         </button>
@@ -400,7 +400,7 @@ function AdminRequisitionPage() {
                 </div>
                 <button onClick={() => createMut.mutate()}
                   disabled={!itemId || !purpose.trim() || createMut.isPending}
-                  className="w-full py-2.5 text-sm font-medium bg-[#0d2137] text-white rounded-xl disabled:opacity-50 hover:bg-[#1a3a5c] transition-colors"
+                  className="w-full py-2.5 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl disabled:opacity-50 hover:bg-blue-700 transition-colors"
                 >
                   {createMut.isPending ? "กำลังส่ง..." : "ส่งคำขอเบิก"}
                 </button>

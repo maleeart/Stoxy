@@ -207,7 +207,7 @@ export default function EditItemPage({ params }: { params: Promise<{ id: string 
             <button
               type="submit"
               disabled={updateItem.isPending || !isDirty}
-              className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium bg-[#0d2137] text-white rounded-xl hover:bg-[#1a3a5c] disabled:opacity-50 transition-colors"
+              className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-[#1D4ED8] disabled:opacity-50 transition-colors"
             >
               {updateItem.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               บันทึก

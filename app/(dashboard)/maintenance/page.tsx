@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { Plus, Wrench, Calendar, CheckCircle, Clock, AlertCircle } from "lucide-react";
@@ -68,7 +68,7 @@ export default function MaintenancePage() {
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">ซ่อมบำรุง</h2>
           <p className="text-sm text-gray-500">ป้องกัน / แก้ไข / ตรวจสอบ</p>
         </div>
-        <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#0d2137] text-white rounded-xl hover:bg-[#1a3a5c] transition-colors">
+        <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors">
           <Plus className="w-4 h-4" />
           สร้างงานซ่อม
         </button>
@@ -100,7 +100,7 @@ export default function MaintenancePage() {
             className={cn(
               "px-3 py-1.5 text-xs font-medium rounded-xl border transition-all",
               filter === f
-                ? "bg-[#0d2137] text-white border-[#0d2137]"
+                ? "bg-[#1D4ED8] text-white border-[#1D4ED8]"
                 : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700"
             )}
           >

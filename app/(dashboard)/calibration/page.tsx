@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { Gauge, Plus, AlertTriangle, CheckCircle, Clock } from "lucide-react";
@@ -54,7 +54,7 @@ export default function CalibrationPage() {
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">การสอบเทียบ</h2>
           <p className="text-sm text-gray-500">ติดตามใบรับรองและวันหมดอายุ</p>
         </div>
-        <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#0d2137] text-white rounded-xl hover:bg-[#1a3a5c] transition-colors">
+        <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors">
           <Plus className="w-4 h-4" />
           บันทึกการสอบเทียบ
         </button>

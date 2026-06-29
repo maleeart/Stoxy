@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -157,7 +157,7 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-[#0d2137] rounded-xl flex items-center justify-center">
+                <div className="w-9 h-9 bg-[#1D4ED8] rounded-xl flex items-center justify-center">
                   <Package className="w-5 h-5 text-yellow-400" />
                 </div>
                 <div>
@@ -183,7 +183,7 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
                   onClick={() => setActiveTab(t.id)}
                   className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-all ${
                     activeTab === t.id
-                      ? "border-[#0d2137] text-[#0d2137] dark:border-yellow-400 dark:text-yellow-400"
+                      ? "border-[#1D4ED8] text-[#1D4ED8] dark:border-yellow-400 dark:text-yellow-400"
                       : "border-transparent text-gray-500 hover:text-gray-700"
                   }`}
                 >
@@ -436,7 +436,7 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
                       onClick={() =>
                         setActiveTab(activeTab === "basic" ? "stock" : "technical")
                       }
-                      className="px-4 py-2 text-sm font-medium bg-[#0d2137] text-white rounded-xl hover:bg-[#1a3a5c] transition-colors"
+                      className="px-4 py-2 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors"
                     >
                       ถัดไป
                     </button>
@@ -444,7 +444,7 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
                     <button
                       type="submit"
                       disabled={createItem.isPending}
-                      className="flex items-center gap-2 px-5 py-2 text-sm font-medium bg-[#0d2137] text-white rounded-xl hover:bg-[#1a3a5c] transition-colors disabled:opacity-60"
+                      className="flex items-center gap-2 px-5 py-2 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-60"
                     >
                       {createItem.isPending && (
                         <Loader2 className="w-4 h-4 animate-spin" />

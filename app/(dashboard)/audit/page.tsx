@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -63,7 +63,7 @@ export default function AuditPage() {
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#0d2137] text-white rounded-xl hover:bg-[#1a3a5c] transition-colors"
+          className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors"
         >
           <Plus className="w-4 h-4" />
           สร้างรอบตรวจนับ
@@ -96,7 +96,7 @@ export default function AuditPage() {
               <button
                 onClick={() => createMut.mutate()}
                 disabled={!name.trim() || createMut.isPending}
-                className="px-4 py-2 text-sm font-medium bg-[#0d2137] text-white rounded-xl disabled:opacity-50 hover:bg-[#1a3a5c] transition-colors"
+                className="px-4 py-2 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl disabled:opacity-50 hover:bg-blue-700 transition-colors"
               >
                 {createMut.isPending ? "กำลังสร้าง..." : "สร้าง"}
               </button>

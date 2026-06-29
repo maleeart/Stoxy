@@ -67,7 +67,7 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
           </button>
           <button
             onClick={() => router.push(`/inventory/${id}/edit`)}
-            className="flex items-center gap-1.5 px-3 py-2 text-sm bg-[#0d2137] text-white rounded-xl hover:bg-[#1a3a5c] transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 text-sm bg-[#1D4ED8] text-white rounded-xl hover:bg-[#1D4ED8] transition-colors"
           >
             <Edit className="w-4 h-4" />
             แก้ไข

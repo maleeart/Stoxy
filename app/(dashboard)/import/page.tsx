@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { collection, doc, writeBatch, Timestamp, setDoc, getDoc } from "firebase/firestore";
@@ -162,7 +162,7 @@ export default function ImportPage() {
     <AppShell title="นำเข้าข้อมูลสินค้าคงคลัง">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
-        <div className="bg-[#0d2137] text-white rounded-2xl p-6">
+        <div className="bg-[#1D4ED8] text-white rounded-2xl p-6">
           <h2 className="text-lg font-bold mb-1">นำเข้าวัสดุ-อุปกรณ์ไฟฟ้า ปี 69</h2>
           <p className="text-sm text-white/60">จำนวน {ITEMS.length} รายการ · หมวดหมู่: {CATEGORY_NAME}</p>
           <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-white/50">
@@ -199,7 +199,7 @@ export default function ImportPage() {
           <div className="flex gap-3">
             <button
               onClick={() => router.push("/inventory")}
-              className="flex-1 py-3 bg-[#0d2137] text-white font-bold rounded-2xl"
+              className="flex-1 py-3 bg-[#1D4ED8] text-white font-bold rounded-2xl"
             >
               ไปที่คลังอุปกรณ์
             </button>

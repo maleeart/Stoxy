@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -25,7 +25,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0d2137] flex">
+    <div className="min-h-screen bg-[#1D4ED8] flex">
       {/* Left - Branding */}
       <div className="hidden lg:flex lg:w-1/2 flex-col items-center justify-center p-12 relative overflow-hidden">
         {/* Background pattern */}
@@ -52,7 +52,7 @@ export default function LoginPage() {
           className="relative z-10 text-center"
         >
           <div className="flex items-center justify-center w-20 h-20 bg-yellow-400 rounded-3xl mx-auto mb-6 shadow-2xl shadow-yellow-400/30">
-            <Zap className="w-10 h-10 text-[#0d2137]" />
+            <Zap className="w-10 h-10 text-[#1D4ED8]" />
           </div>
           <h1 className="text-5xl font-bold text-white mb-2">
             sto<span className="text-yellow-400">xy</span>
@@ -88,11 +88,11 @@ export default function LoginPage() {
         >
           {/* Mobile logo */}
           <div className="flex items-center gap-3 mb-8 lg:hidden">
-            <div className="w-10 h-10 bg-[#0d2137] rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-[#1D4ED8] rounded-xl flex items-center justify-center">
               <Zap className="w-6 h-6 text-yellow-400" />
             </div>
             <div className="flex items-baseline">
-              <span className="text-2xl font-bold text-[#0d2137]">sto</span>
+              <span className="text-2xl font-bold text-[#1D4ED8]">sto</span>
               <span className="text-2xl font-bold text-yellow-500">xy</span>
             </div>
           </div>

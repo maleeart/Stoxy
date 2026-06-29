@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   Package, CheckCircle, ArrowLeftRight, AlertTriangle,
@@ -280,7 +280,7 @@ export default function DashboardPage() {
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white">
           {greeting()},{" "}
-          <span className="text-[#0d2137] dark:text-yellow-400">
+          <span className="text-[#1D4ED8] dark:text-yellow-400">
             {stoxyUser?.displayName ?? "ผู้ใช้งาน"}
           </span>{" "}
           👋

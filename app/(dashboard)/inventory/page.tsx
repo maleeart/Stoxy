@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useMemo } from "react";
 import {
@@ -232,7 +232,7 @@ export default function InventoryPage() {
           </button>
           <button
             onClick={() => setShowAddDialog(true)}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#0d2137] text-white rounded-xl hover:bg-[#1a3a5c] transition-colors shadow-sm"
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
           >
             <Plus className="w-4 h-4" />
             เพิ่มอุปกรณ์
@@ -259,7 +259,7 @@ export default function InventoryPage() {
               className={cn(
                 "px-3 py-2 text-xs font-medium rounded-xl border transition-all",
                 statusFilter === f.value
-                  ? "bg-[#0d2137] text-white border-[#0d2137]"
+                  ? "bg-[#1D4ED8] text-white border-[#1D4ED8]"
                   : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-300"
               )}
             >

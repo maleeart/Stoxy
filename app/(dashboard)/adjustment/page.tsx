@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -193,7 +193,7 @@ export default function AdjustmentPage() {
                 </div>
               </div>
               <button onClick={() => setSelected(item)}
-                className="shrink-0 px-4 py-2 text-sm font-bold bg-[#0d2137] text-white rounded-xl hover:bg-[#1a3a5c] active:scale-95 transition-all"
+                className="shrink-0 px-4 py-2 text-sm font-bold bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 active:scale-95 transition-all"
               >
                 ปรับ
               </button>
