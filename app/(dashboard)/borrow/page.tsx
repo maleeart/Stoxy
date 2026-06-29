@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import {
   Plus, Search, CheckCircle, XCircle, X, ArrowLeftRight,
@@ -13,7 +13,6 @@ import { useRealtimeBorrows } from "@/hooks/useRealtimeBorrows";
 import {
   createBorrowRequest, approveBorrowRequest, rejectBorrowRequest, acknowledgeReturn,
 } from "@/services/borrow.service";
-import { uploadImages } from "@/lib/upload";
 import { formatDate, cn } from "@/lib/utils";
 import type { BorrowRecord, BorrowStatus } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
@@ -67,8 +66,6 @@ export default function BorrowPage() {
   const [borrowerDept, setBorrowerDept] = useState("");
   const [returnDate, setReturnDate] = useState("");
   const [purpose, setPurpose] = useState("");
-  const [borrowPhotos, setBorrowPhotos] = useState<File[]>([]);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   const { data: items = [] } = useInventoryItems();
   const { records, isLoading } = useRealtimeBorrows(tab);
@@ -85,7 +82,7 @@ export default function BorrowPage() {
 
   function resetForm() {
     setItemId(""); setQuantityStr("1"); setBorrowerName("");
-    setBorrowerDept(""); setReturnDate(""); setPurpose(""); setBorrowPhotos([]);
+    setBorrowerDept(""); setReturnDate(""); setPurpose("");
   }
 
   const createMut = useMutation({
@@ -94,16 +91,6 @@ export default function BorrowPage() {
       if (!borrowerName.trim()) throw new Error("กรุณาระบุชื่อผู้ยืม");
       if (!returnDate) throw new Error("กรุณาระบุวันกำหนดคืน");
       if (!purpose.trim()) throw new Error("กรุณาระบุวัตถุประสงค์");
-
-      let photoUrls: string[] = [];
-      if (borrowPhotos.length > 0) {
-        try {
-          photoUrls = await uploadImages(borrowPhotos, "borrow-photos");
-        } catch (err) {
-          console.error("Photo upload error:", err);
-          toast.warning("อัพโหลดรูปไม่สำเร็จ จะบันทึกโดยไม่มีรูป");
-        }
-      }
 
       return createBorrowRequest({
         itemId: selected.id,
@@ -116,7 +103,7 @@ export default function BorrowPage() {
         expectedReturnDate: Timestamp.fromDate(new Date(returnDate)),
         purpose,
         status: "pending_approval",
-        borrowPhotos: photoUrls,
+        borrowPhotos: [],
         createdBy: stoxyUser?.uid ?? "",
       } as any);
     },
@@ -248,29 +235,6 @@ export default function BorrowPage() {
                     placeholder="ระบุเหตุผลที่ยืม..."
                     className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none"
                   />
-                </div>
-
-                {/* Photo upload */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    รูปภาพสภาพอุปกรณ์ก่อนยืม
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer px-3 py-2.5 border border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-blue-400 transition-colors">
-                    <Camera className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-500">เลือกรูปภาพ (ไม่บังคับ)</span>
-                    <input ref={fileRef} type="file" accept="image/*" multiple className="hidden"
-                      onChange={(e) => setBorrowPhotos(Array.from(e.target.files ?? []))}
-                    />
-                  </label>
-                  {borrowPhotos.length > 0 && (
-                    <div className="flex gap-2 mt-2 flex-wrap">
-                      {borrowPhotos.map((f, i) => (
-                        <img key={i} src={URL.createObjectURL(f)} alt=""
-                          className="w-16 h-16 object-cover rounded-lg border border-gray-200"
-                        />
-                      ))}
-                    </div>
-                  )}
                 </div>
 
                 <button

@@ -6,9 +6,8 @@ import { useMutation } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { useRealtimeBorrows } from "@/hooks/useRealtimeBorrows";
 import { submitReturn, acknowledgeReturn } from "@/services/borrow.service";
-import { uploadImages } from "@/lib/upload";
 import { formatDate, cn } from "@/lib/utils";
-import { Undo2, CheckCircle, AlertTriangle, Camera, Clock } from "lucide-react";
+import { Undo2, CheckCircle, AlertTriangle, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import type { BorrowRecord, ItemCondition } from "@/types";
@@ -28,7 +27,6 @@ export default function ReturnPage() {
   const [selected, setSelected] = useState<BorrowRecord | null>(null);
   const [condition, setCondition] = useState<ItemCondition>("good");
   const [notes, setNotes] = useState("");
-  const [returnPhotos, setReturnPhotos] = useState<File[]>([]);
 
   const { allRecords, isLoading } = useRealtimeBorrows();
 
@@ -40,19 +38,10 @@ export default function ReturnPage() {
   const submitMut = useMutation({
     mutationFn: async () => {
       if (!selected) return;
-      let photoUrls: string[] = [];
-      if (returnPhotos.length > 0) {
-        try {
-          photoUrls = await uploadImages(returnPhotos, `return-photos/${selected.id}`);
-        } catch (err) {
-          console.error("Photo upload error:", err);
-          toast.warning("อัพโหลดรูปไม่สำเร็จ จะบันทึกโดยไม่มีรูป");
-        }
-      }
       return submitReturn(selected.id, {
         condition,
         notes,
-        returnPhotos: photoUrls,
+        returnPhotos: [],
         returnedBy: stoxyUser?.uid ?? "",
       });
     },
@@ -61,7 +50,6 @@ export default function ReturnPage() {
       setSelected(null);
       setNotes("");
       setCondition("good");
-      setReturnPhotos([]);
     },
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
   });
@@ -105,7 +93,7 @@ export default function ReturnPage() {
               const isActive = selected?.id === b.id;
               return (
                 <motion.button key={b.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }} onClick={() => { setSelected(b); setCondition("good"); setNotes(""); setReturnPhotos([]); }}
+                  transition={{ delay: i * 0.05 }} onClick={() => { setSelected(b); setCondition("good"); setNotes(""); }}
                   className={`w-full text-left p-4 rounded-2xl border transition-all ${
                     isActive
                       ? "border-blue-400 bg-blue-50 dark:bg-blue-900/20"
@@ -174,29 +162,6 @@ export default function ReturnPage() {
                     placeholder="บันทึกเพิ่มเติม..."
                     className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none"
                   />
-                </div>
-
-                {/* Photo upload */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    รูปภาพสภาพอุปกรณ์หลังคืน
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer px-3 py-2.5 border border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-blue-400 transition-colors">
-                    <Camera className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-500">เลือกรูปภาพ (ไม่บังคับ)</span>
-                    <input type="file" accept="image/*" multiple className="hidden"
-                      onChange={(e) => setReturnPhotos(Array.from(e.target.files ?? []))}
-                    />
-                  </label>
-                  {returnPhotos.length > 0 && (
-                    <div className="flex gap-2 mt-2 flex-wrap">
-                      {returnPhotos.map((f, i) => (
-                        <img key={i} src={URL.createObjectURL(f)} alt=""
-                          className="w-16 h-16 object-cover rounded-lg border border-gray-200"
-                        />
-                      ))}
-                    </div>
-                  )}
                 </div>
 
                 <div className="flex gap-2">
