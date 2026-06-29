@@ -162,21 +162,25 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         })}
       </nav>
 
-      {/* User + Logout */}
+      {/* User + Profile + Logout */}
       <div className="border-t border-white/10 p-3 space-y-1">
-        {!collapsed && stoxyUser && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl">
-            <div className="w-7 h-7 rounded-full bg-yellow-400 flex items-center justify-center text-[#0d2137] font-bold text-sm shrink-0">
-              {stoxyUser.displayName.charAt(0).toUpperCase()}
-            </div>
-            <div className="overflow-hidden">
-              <p className="text-xs font-semibold text-white truncate">
-                {stoxyUser.displayName}
-              </p>
+        <Link
+          href="/profile"
+          className={cn(
+            "flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white/10 transition-all group",
+            collapsed && "justify-center"
+          )}
+        >
+          <div className="w-7 h-7 rounded-full bg-yellow-400 flex items-center justify-center text-[#0d2137] font-bold text-sm shrink-0">
+            {stoxyUser?.displayName.charAt(0).toUpperCase()}
+          </div>
+          {!collapsed && stoxyUser && (
+            <div className="overflow-hidden flex-1 min-w-0">
+              <p className="text-xs font-semibold text-white truncate">{stoxyUser.displayName}</p>
               <p className="text-xs text-white/50 truncate">{stoxyUser.department}</p>
             </div>
-          </div>
-        )}
+          )}
+        </Link>
         <button
           onClick={handleLogout}
           className={cn(

@@ -3,7 +3,7 @@
 import {
   Package, CheckCircle, ArrowLeftRight, AlertTriangle,
   Clock, ShieldAlert, Activity, TrendingUp,
-  PackageOpen, History, Bell, Search, ChevronRight,
+  PackageOpen, History, Bell, Search, ChevronRight, UserCircle,
 } from "lucide-react";
 import { MobileHeader } from "@/components/layout/MobileHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -95,11 +95,9 @@ function StaffHome() {
               className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-gray-50 active:scale-95 transition-all">
               <Search className="w-5 h-5 text-gray-500" />
             </button>
-            <button className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-gray-50 relative">
-              <Bell className="w-5 h-5 text-gray-500" />
-              {(myPending + myReturnPending) > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
-              )}
+            <button onClick={() => router.push("/profile")}
+              className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-gray-50 active:scale-95 transition-all">
+              <UserCircle className="w-5 h-5 text-gray-500" />
             </button>
           </>
         }
