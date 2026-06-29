@@ -318,7 +318,7 @@ function AdminRequisitionPage() {
   });
 
   const approveMut = useMutation({
-    mutationFn: (id: string) => approveRequisition(id, stoxyUser?.uid ?? ""),
+    mutationFn: (id: string) => approveRequisition(id, stoxyUser?.uid ?? "", stoxyUser?.displayName),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["requisitions"] });
       qc.invalidateQueries({ queryKey: ["inventory"] });

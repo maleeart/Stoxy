@@ -46,7 +46,7 @@ export async function getBorrowRecord(id: string): Promise<BorrowRecord | null> 
   return { id: snap.id, ...snap.data() } as BorrowRecord;
 }
 
-export async function approveBorrowRequest(borrowId: string, approverId: string): Promise<void> {
+export async function approveBorrowRequest(borrowId: string, approverId: string, approverName?: string): Promise<void> {
   const borrowRef = doc(db, BORROWS_COLLECTION, borrowId);
   const borrowSnap = await getDoc(borrowRef);
   if (!borrowSnap.exists()) throw new Error("ไม่พบรายการ");
@@ -94,7 +94,7 @@ export async function approveBorrowRequest(borrowId: string, approverId: string)
     referenceType: "borrow",
     reason: borrow.purpose,
     performedBy: approverId,
-    performedByName: approverId,
+    performedByName: approverName || approverId,
   });
 }
 

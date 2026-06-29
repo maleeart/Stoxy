@@ -596,7 +596,7 @@ function AdminBorrowPage() {
   });
 
   const approveMut = useMutation({
-    mutationFn: (id: string) => approveBorrowRequest(id, stoxyUser?.uid ?? ""),
+    mutationFn: (id: string) => approveBorrowRequest(id, stoxyUser?.uid ?? "", stoxyUser?.displayName),
     onSuccess: () => { toast.success("อนุมัติแล้ว"); setTab("borrowed"); },
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
   });

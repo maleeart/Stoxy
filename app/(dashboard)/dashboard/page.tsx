@@ -408,6 +408,35 @@ export default function DashboardPage() {
             bg="bg-amber-50"
             onClick={() => router.push("/borrow")}
           />
+          <SummaryTile
+            label="คืนแล้ว (เดือนนี้)"
+            value={statsLoading ? "—" : String(
+              borrows.filter(b => {
+                if (b.status !== "returned" || !b.actualReturnDate) return false;
+                const d = b.actualReturnDate.toDate();
+                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+              }).length
+            )}
+            icon={<CheckCircle className="w-4 h-4 text-green-500" />}
+            bg="bg-green-50"
+            onClick={() => router.push("/movements")}
+          />
+          <SummaryTile
+            label="เกินกำหนดคืน"
+            value={String(overdueBorrows.length)}
+            icon={<Clock className="w-4 h-4 text-orange-500" />}
+            bg="bg-orange-50"
+            urgent={overdueBorrows.length > 0}
+            onClick={() => router.push("/operations")}
+          />
+          <SummaryTile
+            label="ต้องสั่งซื้อ"
+            value={String(lowStockItems.length)}
+            icon={<AlertTriangle className="w-4 h-4 text-rose-500" />}
+            bg="bg-rose-50"
+            urgent={lowStockItems.length > 0}
+            onClick={() => router.push("/notifications")}
+          />
         </div>
       </section>
 
@@ -509,18 +538,19 @@ function ActionCard({
 }
 
 function SummaryTile({
-  label, value, icon, bg, onClick,
+  label, value, icon, bg, onClick, urgent,
 }: {
   label: string;
   value: string;
   icon: React.ReactNode;
   bg: string;
   onClick: () => void;
+  urgent?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
-      className="bg-white border border-gray-100 rounded-2xl p-3.5 flex flex-col gap-2 active:scale-95 transition-all text-left w-full shadow-sm hover:border-gray-200"
+      className={`bg-white border rounded-2xl p-3.5 flex flex-col gap-2 active:scale-95 transition-all text-left w-full shadow-sm hover:border-gray-200 ${urgent && value !== "0" ? "border-red-100" : "border-gray-100"}`}
     >
       <div className={`w-8 h-8 rounded-xl ${bg} flex items-center justify-center`}>
         {icon}

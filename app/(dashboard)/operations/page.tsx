@@ -268,7 +268,7 @@ export default function OperationsPage() {
 
   // Mutations
   const approveBorrow = useMutation({
-    mutationFn: (id: string) => approveBorrowRequest(id, stoxyUser?.uid ?? ""),
+    mutationFn: (id: string) => approveBorrowRequest(id, stoxyUser?.uid ?? "", stoxyUser?.displayName),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["borrows"] }); toast.success("อนุมัติการยืมแล้ว"); },
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
   });
@@ -300,7 +300,7 @@ export default function OperationsPage() {
   });
 
   const approveReq = useMutation({
-    mutationFn: (id: string) => approveRequisition(id, stoxyUser?.uid ?? ""),
+    mutationFn: (id: string) => approveRequisition(id, stoxyUser?.uid ?? "", stoxyUser?.displayName),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["requisitions"] }); toast.success("อนุมัติการเบิกแล้ว"); },
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
   });

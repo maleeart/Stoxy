@@ -56,7 +56,7 @@ export async function getMyRequisitions(requesterId: string): Promise<Requisitio
   return all.filter((r) => r.requesterId === requesterId);
 }
 
-export async function approveRequisition(id: string, approverId: string): Promise<void> {
+export async function approveRequisition(id: string, approverId: string, approverName?: string): Promise<void> {
   const ref = doc(db, COL, id);
   const snap = await getDoc(ref);
   if (!snap.exists()) throw new Error("ไม่พบรายการ");
@@ -93,7 +93,7 @@ export async function approveRequisition(id: string, approverId: string): Promis
     referenceType: "requisition",
     reason: `เบิกโดย ${req.requesterName}: ${req.purpose}`,
     performedBy: approverId,
-    performedByName: approverId,
+    performedByName: approverName || approverId,
   });
 }
 

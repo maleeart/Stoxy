@@ -41,7 +41,7 @@ export async function exportInventoryPDF(items: InventoryItem[]) {
       i.locationName ?? "-",
     ]),
     styles: { font: "Sarabun", fontSize: 10 },
-    headStyles: { fillColor: [13, 33, 55], font: "Sarabun" },
+    headStyles: { fillColor: [13, 33, 55], font: "Sarabun", fontStyle: "normal", textColor: 255 },
   });
 
   doc.save(`stoxy-inventory-${dateStr()}.pdf`);
@@ -67,7 +67,7 @@ export async function exportBorrowsPDF(records: BorrowRecord[]) {
       borrowStatusLabel[r.status] ?? r.status,
     ]),
     styles: { font: "Sarabun", fontSize: 10 },
-    headStyles: { fillColor: [13, 33, 55], font: "Sarabun" },
+    headStyles: { fillColor: [13, 33, 55], font: "Sarabun", fontStyle: "normal", textColor: 255 },
   });
 
   doc.save(`stoxy-borrows-${dateStr()}.pdf`);
@@ -75,45 +75,35 @@ export async function exportBorrowsPDF(records: BorrowRecord[]) {
 
 // ── Excel ─────────────────────────────────────────────────────
 export function exportInventoryExcel(items: InventoryItem[]) {
-  const rows = items.map((i) => ({
-    รหัส: i.code,
-    ชื่ออุปกรณ์: i.name,
-    ยี่ห้อ: i.brand ?? "",
-    รุ่น: i.model ?? "",
-    หมวดหมู่: i.categoryName ?? "",
-    จำนวนทั้งหมด: i.quantity,
-    คงเหลือ: i.quantityAvailable,
-    ถูกยืม: i.quantityBorrowed,
-    สถานะ: statusLabel[i.status] ?? i.status,
-    สภาพ: conditionLabel[i.condition] ?? i.condition,
-    สถานที่: i.locationName ?? "",
-    ราคาซื้อ: i.purchasePrice ?? "",
-    หมายเหตุ: i.notes ?? "",
-  }));
+  const headers = ["รหัส", "ชื่ออุปกรณ์", "ยี่ห้อ", "รุ่น", "หมวดหมู่", "จำนวนทั้งหมด", "คงเหลือ", "ถูกยืม", "สถานะ", "สภาพ", "สถานที่", "ราคาซื้อ", "หมายเหตุ"];
+  const rows = items.map((i) => [
+    i.code, i.name, i.brand ?? "", i.model ?? "", i.categoryName ?? "",
+    i.quantity, i.quantityAvailable, i.quantityBorrowed,
+    statusLabel[i.status] ?? i.status, conditionLabel[i.condition] ?? i.condition,
+    i.locationName ?? "", i.purchasePrice ?? "", i.notes ?? "",
+  ]);
 
-  const ws = XLSX.utils.json_to_sheet(rows);
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Inventory");
-  XLSX.writeFile(wb, `stoxy-inventory-${dateStr()}.xlsx`);
+  saveExcel(wb, `stoxy-inventory-${dateStr()}.xlsx`);
 }
 
 export function exportMovementsExcel(movements: StockMovement[]) {
-  const rows = movements.map((m) => ({
-    วันที่: m.createdAt?.toDate().toLocaleDateString("th-TH") ?? "",
-    รหัสอุปกรณ์: m.itemCode,
-    ชื่ออุปกรณ์: m.itemName,
-    ประเภท: movementTypeLabel[m.type] ?? m.type,
-    ก่อน: m.quantityBefore,
-    เปลี่ยนแปลง: m.quantityChange,
-    หลัง: m.quantityAfter,
-    เหตุผล: m.reason ?? "",
-    ผู้ดำเนินการ: m.performedByName,
-  }));
+  const headers = ["วันที่", "รหัสอุปกรณ์", "ชื่ออุปกรณ์", "ประเภท", "ก่อน", "เปลี่ยนแปลง", "หลัง", "เหตุผล", "ผู้ดำเนินการ"];
+  const rows = movements.map((m) => [
+    m.createdAt?.toDate().toLocaleDateString("th-TH") ?? "",
+    m.itemCode, m.itemName,
+    movementTypeLabel[m.type] ?? m.type,
+    m.quantityBefore, m.quantityChange, m.quantityAfter,
+    m.reason ?? "",
+    m.performedByName,
+  ]);
 
-  const ws = XLSX.utils.json_to_sheet(rows);
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Movements");
-  XLSX.writeFile(wb, `stoxy-movements-${dateStr()}.xlsx`);
+  saveExcel(wb, `stoxy-movements-${dateStr()}.xlsx`);
 }
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -160,4 +150,14 @@ const borrowStatusLabel: Record<string, string> = {
 
 function dateStr() {
   return new Date().toISOString().slice(0, 10);
+}
+
+// Write xlsx as Blob to avoid browser encoding issues with Thai headers
+function saveExcel(wb: XLSX.WorkBook, filename: string) {
+  const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+  const blob = new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
 }
