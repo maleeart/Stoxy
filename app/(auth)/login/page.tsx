@@ -33,8 +33,11 @@ export default function LoginPage() {
       setGuestLoading(true);
       await loginAsGuest(guestName.trim(), guestDept.trim());
       router.push("/borrow");
-    } catch {
-      toast.error("เข้าสู่ระบบไม่สำเร็จ");
+    } catch (err: any) {
+      console.error("Guest login error:", err?.code, err?.message);
+      toast.error(err?.code === "auth/operation-not-allowed"
+        ? "กรุณาเปิด Anonymous Auth ใน Firebase Console ก่อน"
+        : `เข้าสู่ระบบไม่สำเร็จ: ${err?.code ?? err?.message}`);
     } finally {
       setGuestLoading(false);
     }
