@@ -158,7 +158,7 @@ export function subscribeBorrowRecords(
 
 export async function submitReturn(
   borrowId: string,
-  data: { condition: ItemCondition; notes?: string; returnPhotos?: string[]; returnedBy: string }
+  data: { condition?: ItemCondition; notes?: string; returnPhotos?: string[]; returnedBy: string }
 ): Promise<void> {
   const now = Timestamp.now();
   await updateDoc(doc(db, BORROWS_COLLECTION, borrowId), {
