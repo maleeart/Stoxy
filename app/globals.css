@@ -18,6 +18,11 @@
   --color-stoxy-yellow: #f5a623;
 }
 
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+
 * {
   box-sizing: border-box;
   border-color: hsl(214 32% 91%);

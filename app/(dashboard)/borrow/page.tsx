@@ -3,32 +3,25 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import {
-  Plus, Search, CheckCircle, XCircle, X, ArrowLeftRight,
-  Camera, Clock, RotateCcw, Loader2,
+  Search, X, Camera, Clock, RotateCcw, Loader2, MapPin,
+  Package, CheckCircle, ArrowLeftRight, ChevronRight, Plus, Minus,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useInventoryItems } from "@/hooks/useInventory";
 import { useAuth } from "@/hooks/useAuth";
 import { useRealtimeBorrows } from "@/hooks/useRealtimeBorrows";
 import {
-  createBorrowRequest, approveBorrowRequest, rejectBorrowRequest, acknowledgeReturn, submitReturn,
+  createBorrowRequest, approveBorrowRequest, rejectBorrowRequest,
+  acknowledgeReturn, submitReturn,
 } from "@/services/borrow.service";
 import { formatDate, cn } from "@/lib/utils";
 import { compressImages } from "@/lib/compress";
-import type { BorrowRecord, BorrowStatus } from "@/types";
+import type { BorrowRecord, BorrowStatus, InventoryItem } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Timestamp } from "firebase/firestore";
 
-const tabs: { label: string; value: BorrowStatus | "all" }[] = [
-  { label: "ทั้งหมด", value: "all" },
-  { label: "รออนุมัติ", value: "pending_approval" },
-  { label: "ยืมอยู่", value: "borrowed" },
-  { label: "รอรับทราบ", value: "return_pending" },
-  { label: "คืนแล้ว", value: "returned" },
-  { label: "ปฏิเสธ", value: "rejected" },
-];
-
+// ── Shared status maps ─────────────────────────────────────────────────────────
 const statusBadge: Partial<Record<BorrowStatus, string>> = {
   pending_approval: "bg-yellow-100 text-yellow-700",
   borrowed: "bg-blue-100 text-blue-700",
@@ -36,7 +29,6 @@ const statusBadge: Partial<Record<BorrowStatus, string>> = {
   returned: "bg-emerald-100 text-emerald-700",
   rejected: "bg-red-100 text-red-700",
   overdue: "bg-red-100 text-red-700",
-  lost: "bg-gray-100 text-gray-700",
 };
 const statusLabel: Partial<Record<BorrowStatus, string>> = {
   pending_approval: "รออนุมัติ",
@@ -46,13 +38,428 @@ const statusLabel: Partial<Record<BorrowStatus, string>> = {
   returned: "คืนแล้ว",
   rejected: "ปฏิเสธ",
   overdue: "เกินกำหนด",
-  lost: "สูญหาย",
 };
 
-export default function BorrowPage() {
-  const { stoxyUser } = useAuth();
-  const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
+// ── Staff: Borrow Form Bottom Sheet ───────────────────────────────────────────
+function BorrowSheet({ item, uid, displayName, dept, onClose }: {
+  item: InventoryItem; uid: string; displayName: string; dept: string; onClose: () => void;
+}) {
+  const [qty, setQty] = useState(1);
+  const [returnDate, setReturnDate] = useState("");
+  const [purpose, setPurpose] = useState("");
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
+  const [compressing, setCompressing] = useState(false);
 
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+  const minDate = tomorrow.toISOString().split("T")[0];
+
+  const mut = useMutation({
+    mutationFn: async () => {
+      if (!returnDate) throw new Error("กรุณาระบุวันกำหนดคืน");
+      if (!purpose.trim()) throw new Error("กรุณาระบุวัตถุประสงค์");
+      setCompressing(true);
+      const urls = photos.length > 0 ? await compressImages(photos) : [];
+      setCompressing(false);
+      return createBorrowRequest({
+        itemId: item.id, itemCode: item.code, itemName: item.name,
+        quantity: qty, borrowerName: displayName, borrowerDepartment: dept,
+        borrowerId: uid, expectedReturnDate: Timestamp.fromDate(new Date(returnDate)),
+        purpose, status: "pending_approval", borrowPhotos: urls, createdBy: uid,
+      } as any);
+    },
+    onSuccess: () => { toast.success("ส่งคำขอยืมแล้ว รอแอดมินอนุมัติ"); onClose(); },
+    onError: (e: any) => { setCompressing(false); toast.error(e.message ?? "เกิดข้อผิดพลาด"); },
+  });
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-end bg-black/50" onClick={onClose}
+    >
+      <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+        transition={{ type: "spring", damping: 30, stiffness: 400 }}
+        className="w-full bg-white rounded-t-3xl p-5 max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Handle */}
+        <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4" />
+        <div className="flex items-start justify-between mb-5">
+          <div>
+            <h3 className="font-bold text-gray-900 text-base">ขอยืมอุปกรณ์</h3>
+            <p className="text-sm text-gray-500 mt-0.5 truncate max-w-[240px]">{item.name}</p>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-50">
+            <X className="w-5 h-5 text-gray-400" />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {/* Qty */}
+          <div>
+            <label className="text-sm font-semibold text-gray-700 mb-2 block">จำนวน</label>
+            <div className="flex items-center gap-4">
+              <button onClick={() => setQty(Math.max(1, qty - 1))}
+                className="w-11 h-11 rounded-2xl bg-gray-100 flex items-center justify-center active:scale-95 transition-transform">
+                <Minus className="w-5 h-5 text-gray-600" />
+              </button>
+              <span className="text-2xl font-bold text-gray-900 min-w-[2rem] text-center">{qty}</span>
+              <button onClick={() => setQty(Math.min(item.quantityAvailable, qty + 1))}
+                className="w-11 h-11 rounded-2xl bg-gray-100 flex items-center justify-center active:scale-95 transition-transform">
+                <Plus className="w-5 h-5 text-gray-600" />
+              </button>
+              <span className="text-xs text-gray-400 ml-auto">คงเหลือ {item.quantityAvailable} {item.notes?.replace("หน่วย: ", "") ?? ""}</span>
+            </div>
+          </div>
+
+          {/* Return date */}
+          <div>
+            <label className="text-sm font-semibold text-gray-700 mb-2 block">กำหนดคืน</label>
+            <input type="date" value={returnDate} min={minDate} onChange={(e) => setReturnDate(e.target.value)}
+              className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl bg-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/30"
+            />
+          </div>
+
+          {/* Purpose */}
+          <div>
+            <label className="text-sm font-semibold text-gray-700 mb-2 block">วัตถุประสงค์</label>
+            <textarea value={purpose} onChange={(e) => setPurpose(e.target.value)} rows={2}
+              placeholder="ระบุเหตุผลที่ยืม..."
+              className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl bg-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/30 resize-none"
+            />
+          </div>
+
+          {/* Photo */}
+          <div>
+            <label className="text-sm font-semibold text-gray-700 mb-2 block">รูปสภาพก่อนยืม (ไม่บังคับ)</label>
+            <label className="flex items-center gap-2 cursor-pointer px-4 py-3 border-2 border-dashed border-gray-200 rounded-2xl hover:border-[#1D4ED8]/40 transition-colors bg-[#F8FAFC]">
+              <Camera className="w-5 h-5 text-gray-400" />
+              <span className="text-sm text-gray-500">ถ่ายรูปหรือเลือกไฟล์</span>
+              <input type="file" accept="image/*" multiple capture="environment" className="hidden"
+                onChange={(e) => { const f = Array.from(e.target.files ?? []); setPhotos(f); setPreviews(f.map(x => URL.createObjectURL(x))); }}
+              />
+            </label>
+            {previews.length > 0 && (
+              <div className="flex gap-2 mt-2 flex-wrap">
+                {previews.map((src, i) => <img key={i} src={src} alt="" className="w-16 h-16 object-cover rounded-xl border border-gray-100" />)}
+              </div>
+            )}
+          </div>
+
+          <button onClick={() => mut.mutate()} disabled={!returnDate || !purpose.trim() || mut.isPending || compressing}
+            className="w-full py-4 bg-[#1D4ED8] text-white font-bold rounded-2xl disabled:opacity-50 flex items-center justify-center gap-2 text-base active:scale-[0.98] transition-transform"
+          >
+            {(compressing || mut.isPending) && <Loader2 className="w-5 h-5 animate-spin" />}
+            {compressing ? "กำลัง compress รูป..." : mut.isPending ? "กำลังส่ง..." : "ส่งคำขอยืม"}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ── Staff: Return Bottom Sheet ─────────────────────────────────────────────────
+function ReturnSheet({ record, uid, onClose }: { record: BorrowRecord; uid: string; onClose: () => void }) {
+  const [notes, setNotes] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
+  const [compressing, setCompressing] = useState(false);
+
+  const mut = useMutation({
+    mutationFn: async () => {
+      setCompressing(true);
+      const photos = files.length > 0 ? await compressImages(files) : [];
+      setCompressing(false);
+      return submitReturn(record.id, { notes, returnPhotos: photos, returnedBy: uid });
+    },
+    onSuccess: () => { toast.success("แจ้งคืนสำเร็จ รอแอดมินรับทราบ"); onClose(); },
+    onError: (e: any) => { setCompressing(false); toast.error(e.message ?? "เกิดข้อผิดพลาด"); },
+  });
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-end bg-black/50" onClick={onClose}
+    >
+      <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+        transition={{ type: "spring", damping: 30, stiffness: 400 }}
+        className="w-full bg-white rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4" />
+        <div className="flex items-start justify-between mb-5">
+          <div>
+            <h3 className="font-bold text-gray-900 text-base">แจ้งคืนอุปกรณ์</h3>
+            <p className="text-sm text-gray-500 mt-0.5 truncate max-w-[240px]">{record.itemName}</p>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-50"><X className="w-5 h-5 text-gray-400" /></button>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-semibold text-gray-700 mb-2 block">หมายเหตุ (ไม่บังคับ)</label>
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2}
+              placeholder="บันทึกเพิ่มเติม..."
+              className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl bg-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-emerald-500/30 resize-none"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-semibold text-gray-700 mb-2 block">รูปสภาพอุปกรณ์ (ไม่บังคับ)</label>
+            <label className="flex items-center gap-2 cursor-pointer px-4 py-3 border-2 border-dashed border-gray-200 rounded-2xl hover:border-emerald-400/50 transition-colors bg-[#F8FAFC]">
+              <Camera className="w-5 h-5 text-gray-400" />
+              <span className="text-sm text-gray-500">ถ่ายรูปหรือเลือกไฟล์</span>
+              <input type="file" accept="image/*" multiple capture="environment" className="hidden"
+                onChange={(e) => { const f = Array.from(e.target.files ?? []); setFiles(f); setPreviews(f.map(x => URL.createObjectURL(x))); }}
+              />
+            </label>
+            {previews.length > 0 && (
+              <div className="flex gap-2 mt-2 flex-wrap">
+                {previews.map((src, i) => <img key={i} src={src} alt="" className="w-16 h-16 object-cover rounded-xl border border-gray-100" />)}
+              </div>
+            )}
+          </div>
+          <button onClick={() => mut.mutate()} disabled={mut.isPending || compressing}
+            className="w-full py-4 bg-emerald-500 text-white font-bold rounded-2xl disabled:opacity-50 flex items-center justify-center gap-2 text-base active:scale-[0.98] transition-transform"
+          >
+            {(compressing || mut.isPending) && <Loader2 className="w-5 h-5 animate-spin" />}
+            {compressing ? "กำลัง compress รูป..." : mut.isPending ? "กำลังบันทึก..." : "ยืนยันคืน"}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ── Staff Borrow Page ──────────────────────────────────────────────────────────
+function StaffBorrowPage() {
+  const { stoxyUser } = useAuth();
+  const { data: items = [] } = useInventoryItems();
+  const { allRecords, isLoading } = useRealtimeBorrows();
+  const [tab, setTab] = useState<"borrow" | "return">("borrow");
+  const [search, setSearch] = useState("");
+  const [borrowItem, setBorrowItem] = useState<InventoryItem | null>(null);
+  const [returnRecord, setReturnRecord] = useState<BorrowRecord | null>(null);
+
+  const myBorrowed = allRecords.filter(
+    (b) => b.borrowerId === stoxyUser?.uid && b.status === "borrowed"
+  );
+  const myPending = allRecords.filter(
+    (b) => b.borrowerId === stoxyUser?.uid && b.status === "pending_approval"
+  );
+  const myReturnPending = allRecords.filter(
+    (b) => b.borrowerId === stoxyUser?.uid && b.status === "return_pending"
+  );
+
+  const availableItems = items.filter((i) => i.quantityAvailable > 0);
+  const filteredItems = search
+    ? availableItems.filter(
+        (i) => i.name.toLowerCase().includes(search.toLowerCase()) ||
+               i.code.toLowerCase().includes(search.toLowerCase())
+      )
+    : availableItems;
+
+  const returnItems = [...myBorrowed, ...myPending, ...myReturnPending];
+  const filteredReturn = search
+    ? returnItems.filter((r) => r.itemName.toLowerCase().includes(search.toLowerCase()))
+    : returnItems;
+
+  const now = new Date();
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC]">
+      {/* Header */}
+      <div className="px-5 pt-14 pb-0 bg-white sticky top-0 z-30">
+        <h1 className="text-xl font-bold text-gray-900 mb-4">ยืม-คืน</h1>
+
+        {/* Segmented Control */}
+        <div className="flex bg-gray-100 rounded-2xl p-1 mb-4">
+          <button onClick={() => { setTab("borrow"); setSearch(""); }}
+            className={cn(
+              "flex-1 py-2.5 text-sm font-bold rounded-xl transition-all",
+              tab === "borrow" ? "bg-white text-[#1D4ED8] shadow-sm" : "text-gray-500"
+            )}
+          >
+            ยืมอุปกรณ์
+          </button>
+          <button onClick={() => { setTab("return"); setSearch(""); }}
+            className={cn(
+              "flex-1 py-2.5 text-sm font-bold rounded-xl transition-all relative",
+              tab === "return" ? "bg-white text-emerald-600 shadow-sm" : "text-gray-500"
+            )}
+          >
+            คืนอุปกรณ์
+            {(myBorrowed.length + myPending.length) > 0 && (
+              <span className="ml-1.5 inline-flex items-center justify-center w-5 h-5 bg-emerald-500 text-white text-[10px] font-bold rounded-full">
+                {myBorrowed.length + myPending.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Search */}
+        <div className="relative mb-4">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)}
+            placeholder={tab === "borrow" ? "ค้นหาอุปกรณ์, รหัส..." : "ค้นหารายการ..."}
+            className="w-full pl-11 pr-4 py-3 text-sm bg-[#F8FAFC] border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+          />
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="px-5 py-3 space-y-3">
+        <AnimatePresence mode="wait">
+          {tab === "borrow" ? (
+            <motion.div key="borrow" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="space-y-3"
+            >
+              {filteredItems.length === 0 ? (
+                <div className="text-center py-16">
+                  <Package className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                  <p className="text-sm text-gray-400">ไม่พบอุปกรณ์</p>
+                </div>
+              ) : (
+                filteredItems.map((item, i) => (
+                  <motion.div key={item.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.02 }}
+                    className="bg-white rounded-2xl p-4 border border-gray-50 shadow-sm flex items-center gap-3"
+                  >
+                    <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0">
+                      <Package className="w-7 h-7 text-[#1D4ED8]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2">{item.name}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        {item.locationName && (
+                          <span className="flex items-center gap-1 text-xs text-gray-400">
+                            <MapPin className="w-3 h-3" />
+                            {item.locationName}
+                          </span>
+                        )}
+                        <span className="text-xs text-emerald-600 font-medium">
+                          คงเหลือ {item.quantityAvailable}
+                        </span>
+                      </div>
+                    </div>
+                    <button onClick={() => setBorrowItem(item)}
+                      className="shrink-0 px-4 py-2.5 bg-[#1D4ED8] text-white text-sm font-bold rounded-xl active:scale-95 transition-transform"
+                    >
+                      ยืม
+                    </button>
+                  </motion.div>
+                ))
+              )}
+            </motion.div>
+          ) : (
+            <motion.div key="return" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="space-y-3"
+            >
+              {isLoading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="h-24 bg-white rounded-2xl animate-pulse border border-gray-50" />
+                ))
+              ) : filteredReturn.length === 0 ? (
+                <div className="text-center py-16">
+                  <CheckCircle className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                  <p className="text-sm text-gray-400">ไม่มีรายการยืมค้างอยู่</p>
+                </div>
+              ) : (
+                filteredReturn.map((record, i) => {
+                  const returnDate = record.expectedReturnDate.toDate();
+                  const daysLeft = Math.ceil((returnDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                  const overdue = daysLeft < 0;
+                  const canReturn = record.status === "borrowed";
+                  return (
+                    <motion.div key={record.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.04 }}
+                      className={cn(
+                        "bg-white rounded-2xl p-4 border shadow-sm",
+                        overdue ? "border-red-100" : "border-gray-50"
+                      )}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={cn(
+                          "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0",
+                          overdue ? "bg-red-50" : "bg-blue-50"
+                        )}>
+                          <ArrowLeftRight className={cn("w-6 h-6", overdue ? "text-red-400" : "text-[#1D4ED8]")} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm text-gray-900 line-clamp-1">{record.itemName}</p>
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
+                            <span className={cn(
+                              "text-xs px-2 py-0.5 rounded-full font-medium",
+                              statusBadge[record.status] ?? "bg-gray-100 text-gray-600"
+                            )}>
+                              {statusLabel[record.status] ?? record.status}
+                            </span>
+                            {record.status === "borrowed" && (
+                              <span className={cn(
+                                "text-xs font-medium",
+                                overdue ? "text-red-500" : daysLeft <= 2 ? "text-orange-500" : "text-gray-400"
+                              )}>
+                                {overdue ? `เกินกำหนด ${Math.abs(daysLeft)} วัน` : `คืนใน ${daysLeft} วัน`}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3 mt-1">
+                            {record.borrowDate && (
+                              <span className="flex items-center gap-1 text-xs text-gray-400">
+                                <Clock className="w-3 h-3" />
+                                ยืม {formatDate(record.borrowDate)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      {canReturn && (
+                        <button onClick={() => setReturnRecord(record)}
+                          className="mt-3 w-full py-2.5 border-2 border-emerald-400 text-emerald-600 font-bold text-sm rounded-xl active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                          แจ้งคืน
+                        </button>
+                      )}
+                    </motion.div>
+                  );
+                })
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Bottom sheets */}
+      <AnimatePresence>
+        {borrowItem && (
+          <BorrowSheet
+            item={borrowItem}
+            uid={stoxyUser?.uid ?? ""}
+            displayName={stoxyUser?.displayName ?? ""}
+            dept={stoxyUser?.department ?? ""}
+            onClose={() => setBorrowItem(null)}
+          />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {returnRecord && (
+          <ReturnSheet record={returnRecord} uid={stoxyUser?.uid ?? ""} onClose={() => setReturnRecord(null)} />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ── Admin Borrow Page ──────────────────────────────────────────────────────────
+const adminTabs: { label: string; value: BorrowStatus | "all" }[] = [
+  { label: "ทั้งหมด", value: "all" },
+  { label: "รออนุมัติ", value: "pending_approval" },
+  { label: "ยืมอยู่", value: "borrowed" },
+  { label: "รอรับทราบ", value: "return_pending" },
+  { label: "คืนแล้ว", value: "returned" },
+  { label: "ปฏิเสธ", value: "rejected" },
+];
+
+function AdminBorrowPage() {
+  const { stoxyUser } = useAuth();
+  const { data: items = [] } = useInventoryItems();
   const [tab, setTab] = useState<BorrowStatus | "all">("all");
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -61,14 +468,12 @@ export default function BorrowPage() {
   const [viewPhotos, setViewPhotos] = useState<string[] | null>(null);
   const [compressing, setCompressing] = useState(false);
 
-  // Return popup state
   const [returnRecord, setReturnRecord] = useState<BorrowRecord | null>(null);
   const [rtNotes, setRtNotes] = useState("");
   const [rtFiles, setRtFiles] = useState<File[]>([]);
   const [rtPreviews, setRtPreviews] = useState<string[]>([]);
   const [rtCompressing, setRtCompressing] = useState(false);
 
-  // Create form state
   const [itemId, setItemId] = useState("");
   const [borrowPhotos, setBorrowPhotos] = useState<File[]>([]);
   const [borrowPhotosPreviews, setBorrowPhotosPreviews] = useState<string[]>([]);
@@ -78,14 +483,11 @@ export default function BorrowPage() {
   const [returnDate, setReturnDate] = useState("");
   const [purpose, setPurpose] = useState("");
 
-  const { data: items = [] } = useInventoryItems();
   const { records, isLoading } = useRealtimeBorrows(tab);
-
   const filtered = search
     ? records.filter(
-        (r) =>
-          r.itemName.toLowerCase().includes(search.toLowerCase()) ||
-          r.borrowerName.toLowerCase().includes(search.toLowerCase())
+        (r) => r.itemName.toLowerCase().includes(search.toLowerCase()) ||
+               r.borrowerName.toLowerCase().includes(search.toLowerCase())
       )
     : records;
 
@@ -97,38 +499,27 @@ export default function BorrowPage() {
     setBorrowPhotos([]); setBorrowPhotosPreviews([]);
   }
 
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+  const minDate = tomorrow.toISOString().split("T")[0];
+
   const createMut = useMutation({
     mutationFn: async () => {
       if (!selected) throw new Error("กรุณาเลือกอุปกรณ์");
       if (!borrowerName.trim()) throw new Error("กรุณาระบุชื่อผู้ยืม");
       if (!returnDate) throw new Error("กรุณาระบุวันกำหนดคืน");
       if (!purpose.trim()) throw new Error("กรุณาระบุวัตถุประสงค์");
-
       setCompressing(true);
-      const borrowPhotoUrls = borrowPhotos.length > 0
-        ? await compressImages(borrowPhotos)
-        : [];
+      const urls = borrowPhotos.length > 0 ? await compressImages(borrowPhotos) : [];
       setCompressing(false);
-
       return createBorrowRequest({
-        itemId: selected.id,
-        itemCode: selected.code,
-        itemName: selected.name,
+        itemId: selected.id, itemCode: selected.code, itemName: selected.name,
         quantity: Math.max(1, parseInt(quantityStr) || 1),
-        borrowerName,
-        borrowerDepartment: borrowerDept,
-        borrowerId: stoxyUser?.uid ?? "",
+        borrowerName, borrowerDepartment: borrowerDept, borrowerId: stoxyUser?.uid ?? "",
         expectedReturnDate: Timestamp.fromDate(new Date(returnDate)),
-        purpose,
-        status: "pending_approval",
-        borrowPhotos: borrowPhotoUrls,
-        createdBy: stoxyUser?.uid ?? "",
+        purpose, status: "pending_approval", borrowPhotos: urls, createdBy: stoxyUser?.uid ?? "",
       } as any);
     },
-    onSuccess: () => {
-      toast.success("ส่งคำขอยืมสำเร็จ รอการอนุมัติ");
-      setShowForm(false); resetForm();
-    },
+    onSuccess: () => { toast.success("ส่งคำขอยืมสำเร็จ"); setShowForm(false); resetForm(); },
     onError: (e: any) => { setCompressing(false); toast.error(e.message ?? "เกิดข้อผิดพลาด"); },
   });
 
@@ -156,63 +547,49 @@ export default function BorrowPage() {
       setRtCompressing(true);
       const photos = rtFiles.length > 0 ? await compressImages(rtFiles) : [];
       setRtCompressing(false);
-      return submitReturn(returnRecord.id, {
-        notes: rtNotes, returnPhotos: photos, returnedBy: stoxyUser?.uid ?? "",
-      });
+      return submitReturn(returnRecord.id, { notes: rtNotes, returnPhotos: photos, returnedBy: stoxyUser?.uid ?? "" });
     },
     onSuccess: () => {
-      toast.success("แจ้งคืนสำเร็จ รอแอดมินรับทราบ");
+      toast.success("แจ้งคืนสำเร็จ");
       setReturnRecord(null); setRtNotes(""); setRtFiles([]); setRtPreviews([]);
     },
     onError: (e: any) => { setRtCompressing(false); toast.error(e.message ?? "เกิดข้อผิดพลาด"); },
   });
 
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const minDate = tomorrow.toISOString().split("T")[0];
-
   return (
-    <AppShell title="ยืม-คืน">
-      {/* Header */}
+    <>
       <div className="flex items-center justify-between mb-5">
         <div>
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">บันทึกการยืม-คืน</h2>
           <p className="text-sm text-gray-500">{filtered.length} รายการ</p>
         </div>
-        <button
-          onClick={() => setShowForm(true)}
+        <button onClick={() => setShowForm(true)}
           className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#0d2137] text-white rounded-xl hover:bg-[#1a3a5c] transition-colors"
         >
-          <Plus className="w-4 h-4" />
-          สร้างคำขอยืม
+          <Plus className="w-4 h-4" /> สร้างคำขอยืม
         </button>
       </div>
 
-      {/* Create Form Modal */}
+      {/* Create Form */}
       <AnimatePresence>
         {showForm && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
             onClick={() => { setShowForm(false); resetForm(); }}
           >
-            <motion.div
-              initial={{ scale: 0.95, y: 12 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 12 }}
-              transition={{ duration: 0.15 }}
+            <motion.div initial={{ scale: 0.95, y: 12 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 12 }}
               className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-gray-900 dark:text-white">สร้างคำขอยืม</h3>
-                <button onClick={() => { setShowForm(false); resetForm(); }} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+                <button onClick={() => { setShowForm(false); resetForm(); }} className="p-1.5 rounded-lg hover:bg-gray-100">
                   <X className="w-4 h-4 text-gray-500" />
                 </button>
               </div>
-
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">อุปกรณ์ที่ต้องการยืม</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">อุปกรณ์</label>
                   <select value={itemId} onChange={(e) => setItemId(e.target.value)}
                     className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                   >
@@ -222,89 +599,60 @@ export default function BorrowPage() {
                     ))}
                   </select>
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">จำนวน</label>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    value={quantityStr}
+                  <input type="number" inputMode="numeric" value={quantityStr}
                     onChange={(e) => setQuantityStr(e.target.value)}
-                    onBlur={() => {
-                      const n = parseInt(quantityStr);
-                      const max = selected?.quantityAvailable ?? 99;
-                      setQuantityStr(String(Math.min(Math.max(1, isNaN(n) ? 1 : n), max)));
-                    }}
-                    min={1}
-                    max={selected?.quantityAvailable ?? 99}
+                    onBlur={() => { const n = parseInt(quantityStr); const max = selected?.quantityAvailable ?? 99; setQuantityStr(String(Math.min(Math.max(1, isNaN(n) ? 1 : n), max))); }}
+                    min={1} max={selected?.quantityAvailable ?? 99}
                     className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">ชื่อผู้ยืม</label>
-                  <input value={borrowerName} onChange={(e) => setBorrowerName(e.target.value)}
-                    placeholder="ชื่อ-นามสกุล"
+                  <input value={borrowerName} onChange={(e) => setBorrowerName(e.target.value)} placeholder="ชื่อ-นามสกุล"
                     className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                   />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">แผนก/หน่วยงาน</label>
-                  <input value={borrowerDept} onChange={(e) => setBorrowerDept(e.target.value)}
-                    placeholder="เช่น แผนกไฟฟ้า"
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">แผนก</label>
+                  <input value={borrowerDept} onChange={(e) => setBorrowerDept(e.target.value)} placeholder="เช่น แผนกไฟฟ้า"
                     className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">กำหนดคืน</label>
                   <input type="date" value={returnDate} onChange={(e) => setReturnDate(e.target.value)} min={minDate}
                     className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">วัตถุประสงค์</label>
                   <textarea value={purpose} onChange={(e) => setPurpose(e.target.value)} rows={2}
-                    placeholder="ระบุเหตุผลที่ยืม..."
+                    placeholder="ระบุเหตุผล..."
                     className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none"
                   />
                 </div>
-
-                {/* Photo */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    รูปสภาพอุปกรณ์ก่อนยืม (ไม่บังคับ)
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">รูปก่อนยืม (ไม่บังคับ)</label>
                   <label className="flex items-center gap-2 cursor-pointer px-3 py-2.5 border border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-blue-400 transition-colors">
                     <Camera className="w-4 h-4 text-gray-400" />
                     <span className="text-sm text-gray-500">ถ่ายรูปหรือเลือกไฟล์</span>
                     <input type="file" accept="image/*" multiple capture="environment" className="hidden"
-                      onChange={async (e) => {
-                        const files = Array.from(e.target.files ?? []);
-                        setBorrowPhotos(files);
-                        setBorrowPhotosPreviews(files.map(f => URL.createObjectURL(f)));
-                      }}
+                      onChange={(e) => { const f = Array.from(e.target.files ?? []); setBorrowPhotos(f); setBorrowPhotosPreviews(f.map(x => URL.createObjectURL(x))); }}
                     />
                   </label>
                   {borrowPhotosPreviews.length > 0 && (
                     <div className="flex gap-2 mt-2 flex-wrap">
-                      {borrowPhotosPreviews.map((src, i) => (
-                        <img key={i} src={src} alt="" className="w-16 h-16 object-cover rounded-lg border border-gray-200" />
-                      ))}
-                      <p className="w-full text-xs text-gray-400 mt-1">จะถูก compress อัตโนมัติก่อนบันทึก</p>
+                      {borrowPhotosPreviews.map((src, i) => <img key={i} src={src} alt="" className="w-16 h-16 object-cover rounded-lg border border-gray-200" />)}
                     </div>
                   )}
                 </div>
-
-                <button
-                  onClick={() => createMut.mutate()}
-                  disabled={!itemId || !borrowerName.trim() || !returnDate || !purpose.trim() || createMut.isPending || compressing}
+                <button onClick={() => createMut.mutate()} disabled={!itemId || !borrowerName.trim() || !returnDate || !purpose.trim() || createMut.isPending || compressing}
                   className="w-full py-2.5 text-sm font-medium bg-[#0d2137] text-white rounded-xl disabled:opacity-50 hover:bg-[#1a3a5c] transition-colors flex items-center justify-center gap-2"
                 >
                   {(compressing || createMut.isPending) && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {compressing ? "กำลัง compress รูป..." : createMut.isPending ? "กำลังบันทึก..." : "ส่งคำขอยืม"}
+                  {compressing ? "กำลัง compress..." : createMut.isPending ? "กำลังบันทึก..." : "ส่งคำขอยืม"}
                 </button>
               </div>
             </motion.div>
@@ -315,35 +663,28 @@ export default function BorrowPage() {
       {/* Reject Modal */}
       <AnimatePresence>
         {rejectId && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
             onClick={() => setRejectId(null)}
           >
-            <motion.div
-              initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
-              className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-6"
-              onClick={(e) => e.stopPropagation()}
+            <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+              className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}
             >
               <h3 className="font-semibold text-gray-900 dark:text-white mb-3">เหตุผลที่ปฏิเสธ</h3>
               <textarea value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} rows={3}
-                placeholder="ระบุเหตุผล..."
-                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none mb-3"
+                placeholder="ระบุเหตุผล..." className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none mb-3"
               />
               <div className="flex gap-2">
                 <button onClick={() => rejectMut.mutate()} disabled={!rejectReason.trim() || rejectMut.isPending}
-                  className="flex-1 py-2 text-sm font-medium bg-red-600 text-white rounded-xl disabled:opacity-50 hover:bg-red-700 transition-colors"
-                >ยืนยัน</button>
-                <button onClick={() => setRejectId(null)} className="px-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800">
-                  ยกเลิก
-                </button>
+                  className="flex-1 py-2 text-sm font-medium bg-red-600 text-white rounded-xl disabled:opacity-50">ยืนยัน</button>
+                <button onClick={() => setRejectId(null)} className="px-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl">ยกเลิก</button>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Return Popup */}
+      {/* Admin Return Popup */}
       <AnimatePresence>
         {returnRecord && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -359,15 +700,12 @@ export default function BorrowPage() {
                   <h3 className="font-semibold text-gray-900 dark:text-white">แจ้งคืนอุปกรณ์</h3>
                   <p className="text-xs text-gray-500 mt-0.5">{returnRecord.itemName} · {returnRecord.borrowerName}</p>
                 </div>
-                <button onClick={() => setReturnRecord(null)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-                  <X className="w-4 h-4 text-gray-500" />
-                </button>
+                <button onClick={() => setReturnRecord(null)} className="p-1.5 rounded-lg hover:bg-gray-100"><X className="w-4 h-4 text-gray-500" /></button>
               </div>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">หมายเหตุ</label>
-                  <textarea value={rtNotes} onChange={(e) => setRtNotes(e.target.value)} rows={2}
-                    placeholder="บันทึกเพิ่มเติม..."
+                  <textarea value={rtNotes} onChange={(e) => setRtNotes(e.target.value)} rows={2} placeholder="บันทึกเพิ่มเติม..."
                     className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none"
                   />
                 </div>
@@ -377,31 +715,23 @@ export default function BorrowPage() {
                     <Camera className="w-4 h-4 text-gray-400" />
                     <span className="text-sm text-gray-500">ถ่ายรูปหรือเลือกไฟล์</span>
                     <input type="file" accept="image/*" multiple capture="environment" className="hidden"
-                      onChange={(e) => {
-                        const files = Array.from(e.target.files ?? []);
-                        setRtFiles(files);
-                        setRtPreviews(files.map(f => URL.createObjectURL(f)));
-                      }}
+                      onChange={(e) => { const f = Array.from(e.target.files ?? []); setRtFiles(f); setRtPreviews(f.map(x => URL.createObjectURL(x))); }}
                     />
                   </label>
                   {rtPreviews.length > 0 && (
                     <div className="flex gap-2 mt-2 flex-wrap">
-                      {rtPreviews.map((src, i) => (
-                        <img key={i} src={src} alt="" className="w-16 h-16 object-cover rounded-lg border border-gray-200" />
-                      ))}
+                      {rtPreviews.map((src, i) => <img key={i} src={src} alt="" className="w-16 h-16 object-cover rounded-lg border border-gray-200" />)}
                     </div>
                   )}
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => returnMut.mutate()} disabled={returnMut.isPending || rtCompressing}
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium bg-emerald-600 text-white rounded-xl disabled:opacity-50"
                   >
                     {(rtCompressing || returnMut.isPending) && <Loader2 className="w-4 h-4 animate-spin" />}
-                    {rtCompressing ? "กำลัง compress รูป..." : returnMut.isPending ? "กำลังบันทึก..." : "ยืนยันคืน"}
+                    {rtCompressing ? "กำลัง compress..." : returnMut.isPending ? "กำลังบันทึก..." : "ยืนยันคืน"}
                   </button>
-                  <button onClick={() => setReturnRecord(null)} className="px-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800">
-                    ยกเลิก
-                  </button>
+                  <button onClick={() => setReturnRecord(null)} className="px-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl">ยกเลิก</button>
                 </div>
               </div>
             </motion.div>
@@ -409,19 +739,16 @@ export default function BorrowPage() {
         )}
       </AnimatePresence>
 
-      {/* Photo Viewer Modal */}
+      {/* Photo Viewer */}
       <AnimatePresence>
         {viewPhotos && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"
             onClick={() => setViewPhotos(null)}
           >
             <div className="flex gap-3 flex-wrap justify-center max-w-2xl" onClick={(e) => e.stopPropagation()}>
-              {viewPhotos.map((url, i) => (
-                <img key={i} src={url} alt="" className="max-h-[70vh] max-w-full rounded-xl object-contain" />
-              ))}
-              <button onClick={() => setViewPhotos(null)} className="absolute top-4 right-4 p-2 bg-white/10 rounded-full hover:bg-white/20">
+              {viewPhotos.map((url, i) => <img key={i} src={url} alt="" className="max-h-[70vh] max-w-full rounded-xl object-contain" />)}
+              <button onClick={() => setViewPhotos(null)} className="absolute top-4 right-4 p-2 bg-white/10 rounded-full">
                 <X className="w-5 h-5 text-white" />
               </button>
             </div>
@@ -431,36 +758,25 @@ export default function BorrowPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 mb-4 bg-gray-100 dark:bg-gray-800 rounded-xl p-1 w-fit overflow-x-auto">
-        {tabs.map((t) => (
+        {adminTabs.map((t) => (
           <button key={t.value} onClick={() => setTab(t.value)}
             className={cn(
               "px-3 py-1.5 text-xs font-medium rounded-lg transition-all whitespace-nowrap",
-              tab === t.value
-                ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
-                : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              tab === t.value ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm" : "text-gray-500"
             )}
-          >
-            {t.label}
-          </button>
+          >{t.label}</button>
         ))}
       </div>
 
-      {/* Search */}
       <div className="relative max-w-sm mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input value={search} onChange={(e) => setSearch(e.target.value)}
-          placeholder="ค้นหาอุปกรณ์หรือผู้ยืม..."
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ค้นหา..."
           className="w-full pl-9 pr-4 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30"
         />
       </div>
 
-      {/* List */}
       {isLoading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-20 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 animate-pulse" />
-          ))}
-        </div>
+        <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-20 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 animate-pulse" />)}</div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800">
           <ArrowLeftRight className="w-10 h-10 text-gray-300 mx-auto mb-2" />
@@ -470,16 +786,10 @@ export default function BorrowPage() {
         <div className="space-y-3">
           {filtered.map((record, i) => {
             const overdue = record.status === "borrowed" && record.expectedReturnDate.toDate() < new Date();
-            const isReturnPending = record.status === "return_pending";
             return (
-              <motion.div key={record.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.03 }}
-                className={cn(
-                  "bg-white dark:bg-gray-900 rounded-2xl border p-4",
-                  overdue ? "border-red-200 dark:border-red-900"
-                    : isReturnPending ? "border-purple-200 dark:border-purple-900"
-                    : "border-gray-100 dark:border-gray-800"
-                )}
+              <motion.div key={record.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
+                className={cn("bg-white dark:bg-gray-900 rounded-2xl border p-4",
+                  overdue ? "border-red-200 dark:border-red-900" : "border-gray-100 dark:border-gray-800")}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
@@ -487,101 +797,74 @@ export default function BorrowPage() {
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusBadge[record.status] ?? "bg-gray-100 text-gray-700"}`}>
                         {overdue ? "เกินกำหนด" : (statusLabel[record.status] ?? record.status)}
                       </span>
-                      <span className="font-mono text-xs text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded">
-                        {record.itemCode}
-                      </span>
+                      <span className="font-mono text-xs text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded">{record.itemCode}</span>
                     </div>
                     <p className="font-medium text-gray-900 dark:text-white">{record.itemName}</p>
                     <p className="text-xs text-gray-500 mt-0.5">
                       ผู้ยืม: {record.borrowerName} · {record.borrowerDepartment} · จำนวน: {record.quantity}
                     </p>
-
-                    {/* Timestamps */}
                     <div className="flex items-center gap-3 mt-1 flex-wrap">
                       {record.borrowDate && (
                         <span className="flex items-center gap-1 text-xs text-gray-400">
-                          <Clock className="w-3 h-3" />
-                          ยืม: {formatDate(record.borrowDate)}
+                          <Clock className="w-3 h-3" />ยืม: {formatDate(record.borrowDate)}
                         </span>
                       )}
                       {record.actualReturnDate && (
                         <span className="flex items-center gap-1 text-xs text-emerald-600">
-                          <RotateCcw className="w-3 h-3" />
-                          คืน: {formatDate(record.actualReturnDate)}
+                          <RotateCcw className="w-3 h-3" />คืน: {formatDate(record.actualReturnDate)}
                         </span>
                       )}
                     </div>
-
-                    {record.rejectionReason && (
-                      <p className="text-xs text-red-500 mt-0.5">เหตุผล: {record.rejectionReason}</p>
-                    )}
-
-                    {/* Return info for return_pending */}
-                    {isReturnPending && (
+                    {record.rejectionReason && <p className="text-xs text-red-500 mt-0.5">เหตุผล: {record.rejectionReason}</p>}
+                    {record.status === "return_pending" && (
                       <div className="mt-2 p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg text-xs text-purple-700 dark:text-purple-400">
-                        <p>สภาพเมื่อคืน: {record.returnCondition ?? "-"}</p>
                         {record.returnNotes && <p>หมายเหตุ: {record.returnNotes}</p>}
                       </div>
                     )}
-
-                    {/* Photo buttons */}
                     <div className="flex gap-2 mt-2 flex-wrap">
                       {(record.borrowPhotos?.length ?? 0) > 0 && (
-                        <button onClick={() => setViewPhotos(record.borrowPhotos!)}
-                          className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
-                        >
-                          <Camera className="w-3 h-3" />
-                          รูปก่อนยืม ({record.borrowPhotos!.length})
+                        <button onClick={() => setViewPhotos(record.borrowPhotos!)} className="flex items-center gap-1 text-xs text-blue-600 hover:underline">
+                          <Camera className="w-3 h-3" />รูปก่อนยืม ({record.borrowPhotos!.length})
                         </button>
                       )}
                       {(record.returnPhotos?.length ?? 0) > 0 && (
-                        <button onClick={() => setViewPhotos(record.returnPhotos!)}
-                          className="flex items-center gap-1 text-xs text-emerald-600 hover:underline"
-                        >
-                          <Camera className="w-3 h-3" />
-                          รูปหลังคืน ({record.returnPhotos!.length})
+                        <button onClick={() => setViewPhotos(record.returnPhotos!)} className="flex items-center gap-1 text-xs text-emerald-600 hover:underline">
+                          <Camera className="w-3 h-3" />รูปหลังคืน ({record.returnPhotos!.length})
                         </button>
                       )}
                     </div>
                   </div>
-
                   <div className="text-right shrink-0 space-y-1.5">
                     <p className="text-xs text-gray-400">กำหนดคืน</p>
-                    <p className={`text-sm font-semibold ${overdue ? "text-red-600" : "text-gray-800 dark:text-gray-200"}`}>
+                    <p className={cn("text-xs font-medium", overdue ? "text-red-500" : "text-gray-700 dark:text-gray-300")}>
                       {formatDate(record.expectedReturnDate)}
                     </p>
-
-                    {/* Admin actions */}
-                    {isAdmin && record.status === "pending_approval" && (
-                      <div className="flex gap-1.5">
-                        <button onClick={() => approveMut.mutate(record.id)} disabled={approveMut.isPending}
-                          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors"
-                        >
-                          <CheckCircle className="w-3.5 h-3.5" /> อนุมัติ
+                    <div className="space-y-1">
+                      {record.status === "pending_approval" && (
+                        <>
+                          <button onClick={() => approveMut.mutate(record.id)} disabled={approveMut.isPending}
+                            className="flex items-center gap-1 text-xs px-2.5 py-1 bg-emerald-600 text-white rounded-lg disabled:opacity-50 w-full justify-center">
+                            <CheckCircle className="w-3 h-3" />อนุมัติ
+                          </button>
+                          <button onClick={() => setRejectId(record.id)}
+                            className="flex items-center gap-1 text-xs px-2.5 py-1 bg-red-600 text-white rounded-lg w-full justify-center">
+                            ปฏิเสธ
+                          </button>
+                        </>
+                      )}
+                      {record.status === "borrowed" && (
+                        <button onClick={() => setReturnRecord(record)}
+                          className="flex items-center gap-1 text-xs px-2.5 py-1 bg-blue-600 text-white rounded-lg w-full justify-center">
+                          <RotateCcw className="w-3 h-3" />คืน
                         </button>
-                        <button onClick={() => setRejectId(record.id)}
-                          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
-                        >
-                          <XCircle className="w-3.5 h-3.5" /> ปฏิเสธ
+                      )}
+                      {record.status === "return_pending" && (
+                        <button onClick={() => acknowledgeMut.mutate(record.id)} disabled={acknowledgeMut.isPending}
+                          className="flex items-center gap-1 text-xs px-2.5 py-1 bg-purple-600 text-white rounded-lg disabled:opacity-50 w-full justify-center">
+                          รับทราบ
                         </button>
-                      </div>
-                    )}
-
-                    {isAdmin && record.status === "return_pending" && (
-                      <button onClick={() => acknowledgeMut.mutate(record.id)} disabled={acknowledgeMut.isPending}
-                        className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
-                      >
-                        <CheckCircle className="w-3.5 h-3.5" /> รับทราบ
-                      </button>
-                    )}
-
-                    {record.status === "borrowed" && (
-                      <button onClick={() => { setReturnRecord(record); setRtNotes(""); setRtFiles([]); setRtPreviews([]); }}
-                        className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors"
-                      >
-                        <RotateCcw className="w-3.5 h-3.5" /> แจ้งคืน
-                      </button>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -589,6 +872,26 @@ export default function BorrowPage() {
           })}
         </div>
       )}
+    </>
+  );
+}
+
+// ── Entry point ────────────────────────────────────────────────────────────────
+export default function BorrowPage() {
+  const { stoxyUser } = useAuth();
+  const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
+
+  if (!isAdmin) {
+    return (
+      <AppShell title="ยืม-คืน">
+        <StaffBorrowPage />
+      </AppShell>
+    );
+  }
+
+  return (
+    <AppShell title="ยืม-คืน">
+      <AdminBorrowPage />
     </AppShell>
   );
 }

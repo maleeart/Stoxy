@@ -163,7 +163,7 @@ export async function submitReturn(
   const now = Timestamp.now();
   await updateDoc(doc(db, BORROWS_COLLECTION, borrowId), {
     status: "return_pending" as BorrowStatus,
-    returnCondition: data.condition,
+    returnCondition: data.condition ?? null,
     returnNotes: data.notes ?? "",
     returnPhotos: data.returnPhotos ?? [],
     actualReturnDate: now,

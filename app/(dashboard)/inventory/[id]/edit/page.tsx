@@ -13,6 +13,7 @@ import { getLocations } from "@/services/locations.service";
 import { useState } from "react";
 
 const CATEGORY_LABEL: Record<string, string> = {
+  electrical: "วัสดุ-อุปกรณ์ไฟฟ้า",
   meter: "เครื่องมือวัด",
   cable: "สายไฟ & เคเบิ้ล",
   tools: "เครื่องมือช่าง",

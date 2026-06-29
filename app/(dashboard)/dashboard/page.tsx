@@ -3,7 +3,7 @@
 import {
   Package, CheckCircle, ArrowLeftRight, AlertTriangle,
   Clock, ShieldAlert, Activity, TrendingUp,
-  PackageOpen, History,
+  PackageOpen, History, Bell, Search, ChevronRight,
 } from "lucide-react";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { useDashboardStats, useRecentMovements } from "@/hooks/useInventory";
@@ -51,6 +51,188 @@ function buildWeeklyData(movements: StockMovement[]) {
   });
 }
 
+// ── Staff home ─────────────────────────────────────────────────────────────────
+function StaffHome() {
+  const { stoxyUser } = useAuth();
+  const router = useRouter();
+  const { allRecords } = useRealtimeBorrows();
+
+  const myBorrowed = allRecords.filter(
+    (b) => b.status === "borrowed" && b.borrowerId === stoxyUser?.uid
+  );
+  const myPending = allRecords.filter(
+    (b) => b.status === "pending_approval" && b.borrowerId === stoxyUser?.uid
+  ).length;
+  const myReturnPending = allRecords.filter(
+    (b) => b.status === "return_pending" && b.borrowerId === stoxyUser?.uid
+  ).length;
+
+  const greeting = () => {
+    const h = new Date().getHours();
+    if (h < 12) return "อรุณสวัสดิ์";
+    if (h < 17) return "สวัสดีตอนบ่าย";
+    return "สวัสดีตอนเย็น";
+  };
+
+  const quickItems = [
+    { label: "ยืม-คืน", desc: "ยืมและแจ้งคืนอุปกรณ์", icon: ArrowLeftRight, href: "/borrow", bg: "bg-[#1D4ED8]", text: "text-white" },
+    { label: "เบิกของ", desc: "เบิกอุปกรณ์สำหรับงาน", icon: PackageOpen, href: "/requisition", bg: "bg-[#FBBF24]", text: "text-[#1D4ED8]" },
+    { label: "คลัง", desc: "ดูรายการอุปกรณ์ทั้งหมด", icon: Package, href: "/inventory", bg: "bg-white", text: "text-[#1D4ED8]", border: true },
+    { label: "ประวัติ", desc: "ประวัติการใช้งาน", icon: History, href: "/movements", bg: "bg-white", text: "text-[#1D4ED8]", border: true },
+  ];
+
+  const now = new Date();
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC]">
+      {/* Top bar */}
+      <div className="px-5 pt-14 pb-4 bg-white">
+        <div className="flex items-center justify-between mb-1">
+          <div>
+            <p className="text-xs text-gray-400 font-medium">{greeting()}</p>
+            <h1 className="text-xl font-bold text-gray-900 leading-tight">
+              {stoxyUser?.displayName ?? "ผู้ใช้งาน"}
+            </h1>
+            <p className="text-xs text-gray-400 mt-0.5">{stoxyUser?.department}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => router.push("/inventory")}
+              className="w-10 h-10 rounded-2xl bg-[#F8FAFC] flex items-center justify-center"
+            >
+              <Search className="w-5 h-5 text-gray-500" />
+            </button>
+            <button className="w-10 h-10 rounded-2xl bg-[#F8FAFC] flex items-center justify-center relative">
+              <Bell className="w-5 h-5 text-gray-500" />
+              {(myPending + myReturnPending) > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Stats strip */}
+        {(myBorrowed.length > 0 || myPending > 0) && (
+          <div className="flex gap-3 mt-4 pt-4 border-t border-gray-50">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center">
+                <ArrowLeftRight className="w-4 h-4 text-[#1D4ED8]" />
+              </div>
+              <div>
+                <p className="text-lg font-bold text-gray-900 leading-none">{myBorrowed.length}</p>
+                <p className="text-xs text-gray-400">ยืมอยู่</p>
+              </div>
+            </div>
+            {myPending > 0 && (
+              <>
+                <div className="w-px bg-gray-100" />
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-yellow-50 flex items-center justify-center">
+                    <Clock className="w-4 h-4 text-yellow-500" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-gray-900 leading-none">{myPending}</p>
+                    <p className="text-xs text-gray-400">รออนุมัติ</p>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="px-5 py-5 space-y-6">
+        {/* Quick Menu 2x2 */}
+        <div>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">เมนูด่วน</p>
+          <div className="grid grid-cols-2 gap-3">
+            {quickItems.map((item, i) => (
+              <motion.button
+                key={item.href}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.06 }}
+                onClick={() => router.push(item.href)}
+                className={`${item.bg} ${item.text} ${item.border ? "border border-gray-100 shadow-sm" : "shadow-md"} rounded-3xl p-5 flex flex-col items-start gap-3 active:scale-95 transition-all text-left relative overflow-hidden`}
+              >
+                <div className={`w-10 h-10 rounded-2xl ${item.border ? "bg-blue-50" : "bg-white/20"} flex items-center justify-center`}>
+                  <item.icon className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="font-bold text-sm leading-tight">{item.label}</p>
+                  <p className={`text-xs mt-0.5 leading-tight ${item.border ? "text-gray-400" : "opacity-60"}`}>{item.desc}</p>
+                </div>
+              </motion.button>
+            ))}
+          </div>
+        </div>
+
+        {/* My Borrowed Items */}
+        {myBorrowed.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">อุปกรณ์ที่ยืมอยู่</p>
+              <button
+                onClick={() => router.push("/borrow")}
+                className="flex items-center gap-1 text-xs font-semibold text-[#1D4ED8]"
+              >
+                ดูทั้งหมด <ChevronRight className="w-3 h-3" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              {myBorrowed.slice(0, 3).map((b) => {
+                const returnDate = b.expectedReturnDate.toDate();
+                const daysLeft = Math.ceil((returnDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                const overdue = daysLeft < 0;
+                const urgent = daysLeft >= 0 && daysLeft <= 2;
+                return (
+                  <motion.div
+                    key={b.id}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="bg-white rounded-2xl p-4 flex items-center gap-3 shadow-sm border border-gray-50"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center shrink-0">
+                      <Package className="w-6 h-6 text-gray-300" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm text-gray-900 truncate">{b.itemName}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        คืนก่อน {returnDate.toLocaleDateString("th-TH", { day: "numeric", month: "short" })}
+                      </p>
+                    </div>
+                    <div>
+                      {overdue ? (
+                        <span className="text-xs font-bold text-white bg-red-500 px-2.5 py-1 rounded-full">เกินกำหนด</span>
+                      ) : urgent ? (
+                        <span className="text-xs font-bold text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full">อีก {daysLeft} วัน</span>
+                      ) : (
+                        <span className="text-xs font-medium text-gray-400 bg-gray-50 px-2.5 py-1 rounded-full">อีก {daysLeft} วัน</span>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Empty state */}
+        {myBorrowed.length === 0 && myPending === 0 && (
+          <div className="text-center py-10">
+            <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-3">
+              <Package className="w-8 h-8 text-[#1D4ED8]" />
+            </div>
+            <p className="text-sm font-semibold text-gray-700">ไม่มีรายการยืมอยู่</p>
+            <p className="text-xs text-gray-400 mt-1">กด ยืม-คืน เพื่อเริ่มต้นใช้งาน</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Admin dashboard ────────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const { stoxyUser } = useAuth();
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
@@ -79,14 +261,6 @@ export default function DashboardPage() {
 
   const weeklyData = buildWeeklyData(movements);
 
-  const { allRecords } = useRealtimeBorrows();
-  const myBorrowed = allRecords.filter(
-    (b) => b.status === "borrowed" && b.borrowerId === stoxyUser?.uid
-  ).length;
-  const myPending = allRecords.filter(
-    (b) => b.status === "pending_approval" && b.borrowerId === stoxyUser?.uid
-  ).length;
-
   const greeting = () => {
     const h = new Date().getHours();
     if (h < 12) return "อรุณสวัสดิ์";
@@ -94,163 +268,92 @@ export default function DashboardPage() {
     return "สวัสดีตอนเย็น";
   };
 
-  const quickItems = [
-    { label: "ยืม-คืน", desc: "ยืมและแจ้งคืนอุปกรณ์", icon: ArrowLeftRight, href: "/borrow", color: "bg-[#0d2137]", text: "text-white" },
-    { label: "เบิกของ", desc: "เบิกอุปกรณ์สำหรับงาน", icon: PackageOpen, href: "/requisition", color: "bg-yellow-400", text: "text-[#0d2137]" },
-    { label: "คลังอุปกรณ์", desc: "ดูรายการอุปกรณ์ทั้งหมด", icon: Package, href: "/inventory", color: "bg-emerald-500", text: "text-white" },
-    { label: "ประวัติ", desc: "ประวัติการเบิก-ยืม", icon: History, href: "/movements", color: "bg-blue-500", text: "text-white" },
-  ];
+  // Staff renders its own full-screen layout via StaffShell
+  if (!isAdmin) {
+    return (
+      <AppShell title="หน้าหลัก">
+        <StaffHome />
+      </AppShell>
+    );
+  }
 
   return (
-    <AppShell title={isAdmin ? "แดชบอร์ด" : "หน้าหลัก"}>
-      {/* ── Staff view ── */}
-      {!isAdmin && (
-        <>
-          {/* Hero card */}
-          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl bg-[#0d2137] p-5 mb-5 relative overflow-hidden"
-          >
-            {/* decorative circle */}
-            <div className="absolute -right-8 -top-8 w-40 h-40 rounded-full bg-white/5" />
-            <div className="absolute -right-2 bottom-0 w-24 h-24 rounded-full bg-yellow-400/10" />
+    <AppShell title="แดชบอร์ด">
+      <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+          {greeting()},{" "}
+          <span className="text-[#0d2137] dark:text-yellow-400">
+            {stoxyUser?.displayName ?? "ผู้ใช้งาน"}
+          </span>{" "}
+          👋
+        </h2>
+        <p className="text-sm text-gray-500 mt-0.5">ภาพรวมระบบคลังไฟฟ้าวันนี้</p>
+      </motion.div>
 
-            <div className="relative flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs text-white/50 mb-1">{greeting()}</p>
-                <p className="text-xl font-bold text-white leading-tight">
-                  {stoxyUser?.displayName ?? "ผู้ใช้งาน"}
-                </p>
-                <p className="text-xs text-white/40 mt-0.5">{stoxyUser?.department}</p>
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-yellow-400 flex items-center justify-center shrink-0">
-                <span className="text-xl font-bold text-[#0d2137]">
-                  {stoxyUser?.displayName?.charAt(0)?.toUpperCase() ?? "S"}
-                </span>
-              </div>
-            </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <StatCard title="อุปกรณ์ทั้งหมด" value={statsLoading ? "—" : stats?.totalItems ?? 0} icon={Package} color="blue" href="/inventory" index={0} />
+        <StatCard title="พร้อมใช้งาน" value={statsLoading ? "—" : stats?.availableQuantity ?? 0} icon={CheckCircle} color="green" href="/inventory" index={1} />
+        <StatCard title="ถูกยืมออก" value={statsLoading ? "—" : stats?.borrowedQuantity ?? 0} icon={ArrowLeftRight} color="yellow" href="/borrow" index={2} />
+        <StatCard title="สต็อกต่ำ" value={statsLoading ? "—" : stats?.lowStockCount ?? 0} icon={AlertTriangle} color="red" href="/purchase" index={3} />
+        <StatCard title="เกินกำหนดคืน" value={overdueCount} icon={Clock} color="red" href="/return" index={4} />
+        <StatCard title="รออนุมัติทั้งหมด" value={pendingCount} icon={ShieldAlert} color="yellow" href="/notifications" index={5} />
+      </div>
 
-            <div className="relative mt-4 pt-4 border-t border-white/10 flex gap-6">
-              <div>
-                <p className="text-2xl font-bold text-yellow-400">{myBorrowed}</p>
-                <p className="text-xs text-white/50">ยืมอยู่</p>
-              </div>
-              <div className="w-px bg-white/10" />
-              <div>
-                <p className="text-2xl font-bold text-yellow-400">{myPending}</p>
-                <p className="text-xs text-white/50">รออนุมัติ</p>
-              </div>
-            </div>
-          </motion.div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-blue-500" />
+              การเคลื่อนไหว 7 วันล่าสุด
+            </h3>
+            <p className="text-xs text-gray-500 mt-0.5">ยืม/เบิก vs รับเข้า/คืน</p>
+          </div>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={weeklyData} barGap={4}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="day" tick={{ fontSize: 12, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 12, fill: "#9ca3af" }} axisLine={false} tickLine={false} allowDecimals={false} />
+              <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid #e5e7eb", fontSize: "13px" }} />
+              <Bar dataKey="ยืม" fill="#1D4ED8" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="คืน" fill="#FBBF24" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
 
-          {/* Section label */}
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3 px-1">เมนูด่วน</p>
-
-          {/* Quick menu 2x2 */}
-          <div className="grid grid-cols-2 gap-3 mb-6">
-            {quickItems.map((item, i) => (
-              <motion.button key={item.href} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.05 + i * 0.06 }}
-                onClick={() => router.push(item.href)}
-                className={`${item.color} ${item.text} rounded-2xl p-5 flex flex-col items-start gap-3 active:scale-95 transition-all text-left relative overflow-hidden`}
-              >
-                <div className="absolute right-0 bottom-0 w-20 h-20 rounded-full bg-white/10 translate-x-4 translate-y-4" />
-                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                  <item.icon className="w-5 h-5" />
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
+            <Activity className="w-4 h-4 text-yellow-500" />
+            กิจกรรมล่าสุด
+          </h3>
+          <div className="space-y-3">
+            {movementsLoading ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="animate-pulse flex gap-3">
+                  <div className="w-14 h-5 bg-gray-100 dark:bg-gray-800 rounded" />
+                  <div className="flex-1 h-5 bg-gray-100 dark:bg-gray-800 rounded" />
                 </div>
-                <div>
-                  <p className="font-bold text-sm leading-tight">{item.label}</p>
-                  <p className="text-xs opacity-60 mt-0.5 leading-tight">{item.desc}</p>
+              ))
+            ) : movements.length > 0 ? (
+              movements.slice(0, 8).map((m) => (
+                <div key={m.id} className="flex items-start gap-2.5">
+                  <span className={`shrink-0 text-xs px-1.5 py-0.5 rounded-md font-medium ${movementTypeColor[m.type] ?? "bg-gray-100 text-gray-600"}`}>
+                    {movementTypeLabel[m.type] ?? m.type}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">{m.itemName}</p>
+                    <p className="text-xs text-gray-400">{formatRelative(m.createdAt)}</p>
+                  </div>
+                  <span className={`text-xs font-semibold shrink-0 ${m.quantityChange >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+                    {m.quantityChange >= 0 ? "+" : ""}{m.quantityChange}
+                  </span>
                 </div>
-              </motion.button>
-            ))}
+              ))
+            ) : (
+              <p className="text-sm text-gray-400 text-center py-8">ยังไม่มีกิจกรรม</p>
+            )}
           </div>
-        </>
-      )}
-
-      {/* ── Admin: greeting only ── */}
-      {isAdmin && (
-        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-            {greeting()},{" "}
-            <span className="text-[#0d2137] dark:text-yellow-400">
-              {stoxyUser?.displayName ?? "ผู้ใช้งาน"}
-            </span>{" "}
-            👋
-          </h2>
-          <p className="text-sm text-gray-500 mt-0.5">ภาพรวมระบบคลังไฟฟ้าวันนี้</p>
-        </motion.div>
-      )}
-
-      {isAdmin && (
-        <>
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <StatCard title="อุปกรณ์ทั้งหมด" value={statsLoading ? "—" : stats?.totalItems ?? 0} icon={Package} color="blue" href="/inventory" index={0} />
-            <StatCard title="พร้อมใช้งาน" value={statsLoading ? "—" : stats?.availableQuantity ?? 0} icon={CheckCircle} color="green" href="/inventory" index={1} />
-            <StatCard title="ถูกยืมออก" value={statsLoading ? "—" : stats?.borrowedQuantity ?? 0} icon={ArrowLeftRight} color="yellow" href="/borrow" index={2} />
-            <StatCard title="สต็อกต่ำ" value={statsLoading ? "—" : stats?.lowStockCount ?? 0} icon={AlertTriangle} color="red" href="/purchase" index={3} />
-            <StatCard title="เกินกำหนดคืน" value={overdueCount} icon={Clock} color="red" href="/return" index={4} />
-            <StatCard title="รออนุมัติทั้งหมด" value={pendingCount} icon={ShieldAlert} color="yellow" href="/notifications" index={5} />
-          </div>
-
-          {/* Chart + Activity */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
-              <div className="mb-4">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-blue-500" />
-                  การเคลื่อนไหว 7 วันล่าสุด
-                </h3>
-                <p className="text-xs text-gray-500 mt-0.5">ยืม/เบิก vs รับเข้า/คืน</p>
-              </div>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={weeklyData} barGap={4}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="day" tick={{ fontSize: 12, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 12, fill: "#9ca3af" }} axisLine={false} tickLine={false} allowDecimals={false} />
-                  <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid #e5e7eb", fontSize: "13px" }} />
-                  <Bar dataKey="ยืม" fill="#1a3a5c" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="คืน" fill="#f5a623" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
-                <Activity className="w-4 h-4 text-yellow-500" />
-                กิจกรรมล่าสุด
-              </h3>
-              <div className="space-y-3">
-                {movementsLoading ? (
-                  Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="animate-pulse flex gap-3">
-                      <div className="w-14 h-5 bg-gray-100 dark:bg-gray-800 rounded" />
-                      <div className="flex-1 h-5 bg-gray-100 dark:bg-gray-800 rounded" />
-                    </div>
-                  ))
-                ) : movements.length > 0 ? (
-                  movements.slice(0, 8).map((m) => (
-                    <div key={m.id} className="flex items-start gap-2.5">
-                      <span className={`shrink-0 text-xs px-1.5 py-0.5 rounded-md font-medium ${movementTypeColor[m.type] ?? "bg-gray-100 text-gray-600"}`}>
-                        {movementTypeLabel[m.type] ?? m.type}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">{m.itemName}</p>
-                        <p className="text-xs text-gray-400">{formatRelative(m.createdAt)}</p>
-                      </div>
-                      <span className={`text-xs font-semibold shrink-0 ${m.quantityChange >= 0 ? "text-emerald-600" : "text-red-500"}`}>
-                        {m.quantityChange >= 0 ? "+" : ""}{m.quantityChange}
-                      </span>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-gray-400 text-center py-8">ยังไม่มีกิจกรรม</p>
-                )}
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+        </div>
+      </div>
     </AppShell>
   );
 }
