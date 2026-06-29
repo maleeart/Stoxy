@@ -1,6 +1,6 @@
 import {
   collection, doc, getDoc, getDocs, addDoc, updateDoc,
-  query, orderBy, limit, Timestamp, writeBatch,
+  query, orderBy, limit, Timestamp, writeBatch, increment,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { recordStockMovement } from "./inventory.service";
@@ -74,8 +74,8 @@ export async function approveRequisition(id: string, approverId: string): Promis
 
   batch.update(ref, { status: "approved", approvedBy: approverId, updatedAt: now });
   batch.update(itemRef, {
-    quantityAvailable: item.quantityAvailable - req.quantity,
-    quantity: item.quantity - req.quantity,
+    quantityAvailable: increment(-req.quantity),
+    quantity: increment(-req.quantity),
     updatedAt: now,
   });
 
