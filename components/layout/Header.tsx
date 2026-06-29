@@ -3,6 +3,7 @@
 import { Menu, RefreshCw, Home } from "lucide-react";
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
@@ -64,11 +65,11 @@ export function Header({ title, onMenuClick }: HeaderProps) {
         </button>
 
         {/* Avatar */}
-        <div className="w-8 h-8 rounded-full bg-[#0d2137] flex items-center justify-center ml-1 cursor-pointer">
-          <span className="text-xs font-bold text-yellow-400">
+        <Link href="/profile" className="w-8 h-8 rounded-full bg-[#1D4ED8] flex items-center justify-center ml-1 cursor-pointer hover:opacity-90 transition-opacity">
+          <span className="text-xs font-bold text-white">
             {stoxyUser?.displayName?.charAt(0)?.toUpperCase() ?? "S"}
           </span>
-        </div>
+        </Link>
       </div>
     </header>
   );

@@ -85,17 +85,17 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "flex flex-col h-screen bg-[#0d2137] text-white transition-all duration-300 relative shrink-0",
+        "flex flex-col h-screen bg-white border-r border-gray-100 transition-all duration-300 relative shrink-0",
         collapsed ? "w-16" : "w-64"
       )}
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-white/10">
+      <div className="flex items-center gap-3 px-4 py-5 border-b border-gray-100">
         <img src="/logo.png" alt="Stoxy" className="w-9 h-9 rounded-xl shrink-0 object-cover" />
         {!collapsed && (
           <div className="flex items-baseline gap-0.5 overflow-hidden">
-            <span className="text-xl font-bold tracking-tight text-white">sto</span>
-            <span className="text-xl font-bold tracking-tight text-yellow-400">xy</span>
+            <span className="text-xl font-bold tracking-tight text-gray-900">sto</span>
+            <span className="text-xl font-bold tracking-tight text-[#1D4ED8]">xy</span>
           </div>
         )}
       </div>
@@ -107,7 +107,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           return (
             <div key={section}>
               {!collapsed && (
-                <p className="px-3 py-1.5 text-xs font-semibold text-white/40 uppercase tracking-widest">
+                <p className="px-3 py-1.5 text-xs font-semibold text-gray-400 uppercase tracking-widest">
                   {section}
                 </p>
               )}
@@ -119,8 +119,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 const cls = cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group relative w-full text-left",
                   isActive
-                    ? "bg-yellow-400 text-[#0d2137] shadow-lg shadow-yellow-400/20"
-                    : "text-white/70 hover:bg-white/10 hover:text-white"
+                    ? "bg-[#1D4ED8] text-white shadow-md shadow-[#1D4ED8]/20"
+                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                 );
                 const inner = (
                   <>
@@ -128,7 +128,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                       className={cn(
                         "shrink-0 transition-none",
                         collapsed ? "w-5 h-5 mx-auto" : "w-4 h-4",
-                        isActive ? "text-[#0d2137]" : ""
+                        isActive ? "text-white" : "text-gray-500"
                       )}
                     />
                     {!collapsed && <span className="truncate">{item.label}</span>}
@@ -141,7 +141,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                       <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full" />
                     )}
                     {collapsed && (
-                      <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none z-50 transition-opacity">
+                      <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none z-50 transition-opacity">
                         {item.label}
                       </div>
                     )}
@@ -163,28 +163,28 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       </nav>
 
       {/* User + Profile + Logout */}
-      <div className="border-t border-white/10 p-3 space-y-1">
+      <div className="border-t border-gray-100 p-3 space-y-1">
         <Link
           href="/profile"
           className={cn(
-            "flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white/10 transition-all group",
+            "flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-100 transition-all group",
             collapsed && "justify-center"
           )}
         >
-          <div className="w-7 h-7 rounded-full bg-yellow-400 flex items-center justify-center text-[#0d2137] font-bold text-sm shrink-0">
+          <div className="w-7 h-7 rounded-full bg-[#1D4ED8] flex items-center justify-center text-white font-bold text-sm shrink-0">
             {stoxyUser?.displayName.charAt(0).toUpperCase()}
           </div>
           {!collapsed && stoxyUser && (
             <div className="overflow-hidden flex-1 min-w-0">
-              <p className="text-xs font-semibold text-white truncate">{stoxyUser.displayName}</p>
-              <p className="text-xs text-white/50 truncate">{stoxyUser.department}</p>
+              <p className="text-xs font-semibold text-gray-900 truncate">{stoxyUser.displayName}</p>
+              <p className="text-xs text-gray-400 truncate">{stoxyUser.department}</p>
             </div>
           )}
         </Link>
         <button
           onClick={handleLogout}
           className={cn(
-            "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/60 hover:bg-white/10 hover:text-white transition-all",
+            "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 transition-all",
             collapsed && "justify-center"
           )}
         >
@@ -197,10 +197,10 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {qrPopup && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50" onClick={() => setQrPopup(false)}>
           <div className="bg-white rounded-2xl p-8 flex flex-col items-center gap-3 shadow-2xl mx-4" onClick={(e) => e.stopPropagation()}>
-            <ScanLine className="w-12 h-12 text-[#0d2137]" />
-            <p className="text-lg font-bold text-[#0d2137]">สแกน QR Code</p>
+            <ScanLine className="w-12 h-12 text-[#1D4ED8]" />
+            <p className="text-lg font-bold text-gray-900">สแกน QR Code</p>
             <p className="text-sm text-gray-500 text-center">อยู่ระหว่างพัฒนา<br/>จะเปิดให้ใช้งานเร็วๆ นี้</p>
-            <button onClick={() => setQrPopup(false)} className="mt-2 px-6 py-2 bg-[#0d2137] text-white rounded-xl text-sm font-medium hover:opacity-90">
+            <button onClick={() => setQrPopup(false)} className="mt-2 px-6 py-2 bg-[#1D4ED8] text-white rounded-xl text-sm font-medium hover:opacity-90">
               ตกลง
             </button>
           </div>
@@ -210,12 +210,12 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Collapse Toggle */}
       <button
         onClick={onToggle}
-        className="absolute -right-3 top-8 w-6 h-6 bg-[#0d2137] border border-white/20 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors z-50"
+        className="absolute -right-3 top-8 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors z-50 shadow-sm"
       >
         {collapsed ? (
-          <ChevronRight className="w-3 h-3 text-white/60" />
+          <ChevronRight className="w-3 h-3 text-gray-400" />
         ) : (
-          <ChevronLeft className="w-3 h-3 text-white/60" />
+          <ChevronLeft className="w-3 h-3 text-gray-400" />
         )}
       </button>
     </aside>
