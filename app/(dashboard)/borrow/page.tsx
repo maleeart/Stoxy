@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import {
   Search, X, Camera, Clock, RotateCcw, Loader2, MapPin,
-  Package, CheckCircle, ArrowLeftRight, ChevronRight, Plus, Minus,
+  Package, CheckCircle, ArrowLeftRight, ChevronRight, Plus, Minus, Star,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useInventoryItems } from "@/hooks/useInventory";
@@ -228,39 +228,108 @@ function ReturnSheet({ record, uid, onClose }: { record: BorrowRecord; uid: stri
 }
 
 // ── Staff Borrow Page ──────────────────────────────────────────────────────────
+const CATEGORIES = [
+  { id: "all", label: "ทั้งหมด" },
+  { id: "electrical", label: "ไฟฟ้า" },
+  { id: "tools", label: "เครื่องมือ" },
+  { id: "meter", label: "มิเตอร์" },
+  { id: "cable", label: "สายไฟ" },
+  { id: "safety", label: "ความปลอดภัย" },
+  { id: "spareparts", label: "อะไหล่" },
+  { id: "others", label: "อื่นๆ" },
+];
+
+function useFavorites(uid: string) {
+  const key = `stoxy_fav_borrow_${uid}`;
+  const [favs, setFavs] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem(key) ?? "[]"); } catch { return []; }
+  });
+  const toggle = (id: string) => setFavs(prev => {
+    const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+    localStorage.setItem(key, JSON.stringify(next));
+    return next;
+  });
+  return { favs, toggle };
+}
+
+function ItemCard({ item, isFav, onFav, onBorrow }: {
+  item: InventoryItem; isFav: boolean; onFav: () => void; onBorrow: () => void;
+}) {
+  return (
+    <div className="bg-white rounded-2xl p-4 border border-gray-50 shadow-sm flex items-center gap-3">
+      <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0">
+        <Package className="w-7 h-7 text-[#1D4ED8]" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start gap-1">
+          <p className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2 flex-1">{item.name}</p>
+          <button onClick={onFav} className="shrink-0 p-0.5 -mt-0.5">
+            <Star className={cn("w-4 h-4", isFav ? "fill-amber-400 stroke-amber-400" : "stroke-gray-300")} />
+          </button>
+        </div>
+        <div className="flex items-center gap-2 mt-1">
+          {item.locationName && (
+            <span className="flex items-center gap-1 text-xs text-gray-400">
+              <MapPin className="w-3 h-3" />{item.locationName}
+            </span>
+          )}
+          <span className="text-xs text-emerald-600 font-medium">คงเหลือ {item.quantityAvailable}</span>
+        </div>
+      </div>
+      <button onClick={onBorrow}
+        className="shrink-0 px-4 py-2.5 bg-[#1D4ED8] text-white text-sm font-bold rounded-xl active:scale-95 transition-transform"
+      >
+        ยืม
+      </button>
+    </div>
+  );
+}
+
 function StaffBorrowPage() {
   const { stoxyUser } = useAuth();
   const { data: items = [] } = useInventoryItems();
   const { allRecords, isLoading } = useRealtimeBorrows();
+  const uid = stoxyUser?.uid ?? "";
+  const { favs, toggle: toggleFav } = useFavorites(uid);
+
   const [tab, setTab] = useState<"borrow" | "return">("borrow");
   const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("all");
   const [borrowItem, setBorrowItem] = useState<InventoryItem | null>(null);
   const [returnRecord, setReturnRecord] = useState<BorrowRecord | null>(null);
 
-  const myBorrowed = allRecords.filter(
-    (b) => b.borrowerId === stoxyUser?.uid && b.status === "borrowed"
-  );
-  const myPending = allRecords.filter(
-    (b) => b.borrowerId === stoxyUser?.uid && b.status === "pending_approval"
-  );
-  const myReturnPending = allRecords.filter(
-    (b) => b.borrowerId === stoxyUser?.uid && b.status === "return_pending"
-  );
+  const myBorrowed = allRecords.filter(b => b.borrowerId === uid && b.status === "borrowed");
+  const myPending = allRecords.filter(b => b.borrowerId === uid && b.status === "pending_approval");
+  const myReturnPending = allRecords.filter(b => b.borrowerId === uid && b.status === "return_pending");
 
-  const availableItems = items.filter((i) => i.quantityAvailable > 0);
-  const filteredItems = search
-    ? availableItems.filter(
-        (i) => i.name.toLowerCase().includes(search.toLowerCase()) ||
-               i.code.toLowerCase().includes(search.toLowerCase())
-      )
-    : availableItems;
+  const availableItems = items.filter(i => i.quantityAvailable > 0);
+
+  // Recent: last 5 unique itemIds from my borrow history
+  const recentItemIds = [...new Map(
+    allRecords
+      .filter(b => b.borrowerId === uid)
+      .sort((a, b) => b.createdAt.seconds - a.createdAt.seconds)
+      .map(b => [b.itemId, b.itemId])
+  ).values()].slice(0, 5);
+  const recentItems = recentItemIds
+    .map(id => availableItems.find(i => i.id === id))
+    .filter(Boolean) as InventoryItem[];
+
+  const favItems = availableItems.filter(i => favs.includes(i.id));
+
+  const filtered = availableItems.filter(i => {
+    const matchCat = category === "all" || i.categoryId === category;
+    const matchSearch = !search || i.name.toLowerCase().includes(search.toLowerCase()) || i.code.toLowerCase().includes(search.toLowerCase());
+    return matchCat && matchSearch;
+  });
 
   const returnItems = [...myBorrowed, ...myPending, ...myReturnPending];
   const filteredReturn = search
-    ? returnItems.filter((r) => r.itemName.toLowerCase().includes(search.toLowerCase()))
+    ? returnItems.filter(r => r.itemName.toLowerCase().includes(search.toLowerCase()))
     : returnItems;
 
   const now = new Date();
+  const isSearching = search.length > 0;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -270,19 +339,13 @@ function StaffBorrowPage() {
 
         {/* Segmented Control */}
         <div className="flex bg-gray-100 rounded-2xl p-1 mb-4">
-          <button onClick={() => { setTab("borrow"); setSearch(""); }}
-            className={cn(
-              "flex-1 py-2.5 text-sm font-bold rounded-xl transition-all",
-              tab === "borrow" ? "bg-white text-[#1D4ED8] shadow-sm" : "text-gray-500"
-            )}
-          >
-            ยืมอุปกรณ์
-          </button>
+          <button onClick={() => { setTab("borrow"); setSearch(""); setCategory("all"); }}
+            className={cn("flex-1 py-2.5 text-sm font-bold rounded-xl transition-all",
+              tab === "borrow" ? "bg-white text-[#1D4ED8] shadow-sm" : "text-gray-500")}
+          >ยืมอุปกรณ์</button>
           <button onClick={() => { setTab("return"); setSearch(""); }}
-            className={cn(
-              "flex-1 py-2.5 text-sm font-bold rounded-xl transition-all relative",
-              tab === "return" ? "bg-white text-emerald-600 shadow-sm" : "text-gray-500"
-            )}
+            className={cn("flex-1 py-2.5 text-sm font-bold rounded-xl transition-all relative",
+              tab === "return" ? "bg-white text-emerald-600 shadow-sm" : "text-gray-500")}
           >
             คืนอุปกรณ์
             {(myBorrowed.length + myPending.length) > 0 && (
@@ -294,13 +357,29 @@ function StaffBorrowPage() {
         </div>
 
         {/* Search */}
-        <div className="relative mb-4">
+        <div className="relative mb-3">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)}
+          <input value={search} onChange={e => setSearch(e.target.value)}
             placeholder={tab === "borrow" ? "ค้นหาอุปกรณ์, รหัส..." : "ค้นหารายการ..."}
             className="w-full pl-11 pr-4 py-3 text-sm bg-[#F8FAFC] border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
           />
         </div>
+
+        {/* Category chips — only on borrow tab */}
+        {tab === "borrow" && (
+          <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-none">
+            {CATEGORIES.map(c => (
+              <button key={c.id} onClick={() => setCategory(c.id)}
+                className={cn(
+                  "shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all",
+                  category === c.id
+                    ? "bg-[#1D4ED8] text-white"
+                    : "bg-gray-100 text-gray-500"
+                )}
+              >{c.label}</button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -308,43 +387,52 @@ function StaffBorrowPage() {
         <AnimatePresence mode="wait">
           {tab === "borrow" ? (
             <motion.div key="borrow" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="space-y-3"
+              className="space-y-4"
             >
-              {filteredItems.length === 0 ? (
+              {/* When not searching: show Favorites + Recent sections first */}
+              {!isSearching && category === "all" && (
+                <>
+                  {favItems.length > 0 && (
+                    <div>
+                      <p className="text-xs font-bold text-amber-500 uppercase tracking-wider mb-2">⭐ รายการโปรด</p>
+                      <div className="space-y-3">
+                        {favItems.map(item => (
+                          <ItemCard key={item.id} item={item} isFav onFav={() => toggleFav(item.id)} onBorrow={() => setBorrowItem(item)} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {recentItems.length > 0 && (
+                    <div>
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">เคยยืมล่าสุด</p>
+                      <div className="space-y-3">
+                        {recentItems.map(item => (
+                          <ItemCard key={item.id} item={item} isFav={favs.includes(item.id)} onFav={() => toggleFav(item.id)} onBorrow={() => setBorrowItem(item)} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {(favItems.length > 0 || recentItems.length > 0) && (
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">อุปกรณ์ทั้งหมด</p>
+                  )}
+                </>
+              )}
+
+              {filtered.length === 0 ? (
                 <div className="text-center py-16">
                   <Package className="w-12 h-12 text-gray-200 mx-auto mb-3" />
                   <p className="text-sm text-gray-400">ไม่พบอุปกรณ์</p>
                 </div>
               ) : (
-                filteredItems.map((item, i) => (
-                  <motion.div key={item.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.02 }}
-                    className="bg-white rounded-2xl p-4 border border-gray-50 shadow-sm flex items-center gap-3"
-                  >
-                    <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0">
-                      <Package className="w-7 h-7 text-[#1D4ED8]" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2">{item.name}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        {item.locationName && (
-                          <span className="flex items-center gap-1 text-xs text-gray-400">
-                            <MapPin className="w-3 h-3" />
-                            {item.locationName}
-                          </span>
-                        )}
-                        <span className="text-xs text-emerald-600 font-medium">
-                          คงเหลือ {item.quantityAvailable}
-                        </span>
-                      </div>
-                    </div>
-                    <button onClick={() => setBorrowItem(item)}
-                      className="shrink-0 px-4 py-2.5 bg-[#1D4ED8] text-white text-sm font-bold rounded-xl active:scale-95 transition-transform"
+                <div className="space-y-3">
+                  {filtered.map((item, i) => (
+                    <motion.div key={item.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.02 }}
                     >
-                      ยืม
-                    </button>
-                  </motion.div>
-                ))
+                      <ItemCard item={item} isFav={favs.includes(item.id)} onFav={() => toggleFav(item.id)} onBorrow={() => setBorrowItem(item)} />
+                    </motion.div>
+                  ))}
+                </div>
               )}
             </motion.div>
           ) : (
@@ -369,52 +457,39 @@ function StaffBorrowPage() {
                   return (
                     <motion.div key={record.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.04 }}
-                      className={cn(
-                        "bg-white rounded-2xl p-4 border shadow-sm",
-                        overdue ? "border-red-100" : "border-gray-50"
-                      )}
+                      className={cn("bg-white rounded-2xl p-4 border shadow-sm", overdue ? "border-red-100" : "border-gray-50")}
                     >
                       <div className="flex items-start gap-3">
-                        <div className={cn(
-                          "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0",
-                          overdue ? "bg-red-50" : "bg-blue-50"
-                        )}>
+                        <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shrink-0",
+                          overdue ? "bg-red-50" : "bg-blue-50")}>
                           <ArrowLeftRight className={cn("w-6 h-6", overdue ? "text-red-400" : "text-[#1D4ED8]")} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-sm text-gray-900 line-clamp-1">{record.itemName}</p>
                           <div className="flex items-center gap-2 mt-1 flex-wrap">
-                            <span className={cn(
-                              "text-xs px-2 py-0.5 rounded-full font-medium",
-                              statusBadge[record.status] ?? "bg-gray-100 text-gray-600"
-                            )}>
+                            <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium",
+                              statusBadge[record.status] ?? "bg-gray-100 text-gray-600")}>
                               {statusLabel[record.status] ?? record.status}
                             </span>
                             {record.status === "borrowed" && (
-                              <span className={cn(
-                                "text-xs font-medium",
-                                overdue ? "text-red-500" : daysLeft <= 2 ? "text-orange-500" : "text-gray-400"
-                              )}>
+                              <span className={cn("text-xs font-medium",
+                                overdue ? "text-red-500" : daysLeft <= 2 ? "text-orange-500" : "text-gray-400")}>
                                 {overdue ? `เกินกำหนด ${Math.abs(daysLeft)} วัน` : `คืนใน ${daysLeft} วัน`}
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-3 mt-1">
-                            {record.borrowDate && (
-                              <span className="flex items-center gap-1 text-xs text-gray-400">
-                                <Clock className="w-3 h-3" />
-                                ยืม {formatDate(record.borrowDate)}
-                              </span>
-                            )}
-                          </div>
+                          {record.borrowDate && (
+                            <span className="flex items-center gap-1 text-xs text-gray-400 mt-1">
+                              <Clock className="w-3 h-3" />ยืม {formatDate(record.borrowDate)}
+                            </span>
+                          )}
                         </div>
                       </div>
                       {canReturn && (
                         <button onClick={() => setReturnRecord(record)}
                           className="mt-3 w-full py-2.5 border-2 border-emerald-400 text-emerald-600 font-bold text-sm rounded-xl active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
                         >
-                          <RotateCcw className="w-4 h-4" />
-                          แจ้งคืน
+                          <RotateCcw className="w-4 h-4" />แจ้งคืน
                         </button>
                       )}
                     </motion.div>
@@ -431,7 +506,7 @@ function StaffBorrowPage() {
         {borrowItem && (
           <BorrowSheet
             item={borrowItem}
-            uid={stoxyUser?.uid ?? ""}
+            uid={uid}
             displayName={stoxyUser?.displayName ?? ""}
             dept={stoxyUser?.department ?? ""}
             onClose={() => setBorrowItem(null)}
@@ -440,7 +515,7 @@ function StaffBorrowPage() {
       </AnimatePresence>
       <AnimatePresence>
         {returnRecord && (
-          <ReturnSheet record={returnRecord} uid={stoxyUser?.uid ?? ""} onClose={() => setReturnRecord(null)} />
+          <ReturnSheet record={returnRecord} uid={uid} onClose={() => setReturnRecord(null)} />
         )}
       </AnimatePresence>
     </div>
