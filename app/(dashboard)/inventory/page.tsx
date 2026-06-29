@@ -37,8 +37,6 @@ const statusFilters: { label: string; value: ItemStatus | "all" }[] = [
   { label: "ทั้งหมด", value: "all" },
   { label: "พร้อมใช้งาน", value: "available" },
   { label: "ถูกยืม", value: "borrowed" },
-  { label: "ซ่อมแซม", value: "under_repair" },
-  { label: "สอบเทียบ", value: "calibrating" },
 ];
 
 export default function InventoryPage() {
@@ -61,7 +59,7 @@ export default function InventoryPage() {
         i.serialNumber?.toLowerCase().includes(lower) ||
         i.brand?.toLowerCase().includes(lower)
     );
-  }, [items, search]);
+  }, [items, search, statusFilter]);
 
   const columns = useMemo<ColumnDef<InventoryItem>[]>(
     () => [
