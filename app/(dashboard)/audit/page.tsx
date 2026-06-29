@@ -5,10 +5,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { getAuditSessions, createAuditSession } from "@/services/audit.service";
 import { useAuth } from "@/hooks/useAuth";
-import { ShieldCheck, Plus, Clock, CheckCircle, FileText, PlayCircle } from "lucide-react";
+import { ShieldCheck, Plus, Clock, CheckCircle, ChevronRight } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import type { AuditSession } from "@/types";
 
 const statusBadge: Record<string, string> = {
@@ -56,9 +57,28 @@ export default function AuditPage() {
 
   return (
     <AppShell title="ตรวจนับ">
+      {/* Last count banner */}
+      {(() => {
+        const last = sessions.find(s => s.status === "completed");
+        return last ? (
+          <div className="bg-emerald-50 border border-emerald-100 rounded-2xl px-4 py-3 mb-5 flex items-center gap-3">
+            <CheckCircle className="w-5 h-5 text-emerald-500 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-emerald-800">นับสต็อกล่าสุด: {formatDate(last.endDate ?? last.startDate)}</p>
+              <p className="text-xs text-emerald-600">{last.name}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3 mb-5 flex items-center gap-3">
+            <Clock className="w-5 h-5 text-amber-500 shrink-0" />
+            <p className="text-sm text-amber-700">ยังไม่เคยตรวจนับสต็อก</p>
+          </div>
+        );
+      })()}
+
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">ตรวจนับสต็อก</h2>
+          <h2 className="text-lg font-bold text-gray-900">ตรวจนับสต็อก</h2>
           <p className="text-sm text-gray-500">{sessions.length} รอบตรวจนับ</p>
         </div>
         <button
@@ -142,7 +162,9 @@ function AuditCard({ session, delay }: { session: AuditSession; delay: number })
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
-      className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4 hover:border-blue-200 dark:hover:border-blue-800 transition-colors"
+    >
+    <Link href={`/audit/${session.id}`}
+      className="block bg-white rounded-2xl border border-gray-100 p-4 hover:border-blue-200 transition-colors"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
@@ -151,40 +173,39 @@ function AuditCard({ session, delay }: { session: AuditSession; delay: number })
               {statusLabel[session.status]}
             </span>
           </div>
-          <p className="font-semibold text-gray-900 dark:text-white truncate">{session.name}</p>
+          <p className="font-semibold text-gray-900 truncate">{session.name}</p>
           {session.description && (
             <p className="text-xs text-gray-400 mt-0.5 truncate">{session.description}</p>
           )}
           <p className="text-xs text-gray-400 mt-1">
-            เริ่มต้น: {formatDate(session.startDate)}
-            {session.endDate && ` · สิ้นสุด: ${formatDate(session.endDate)}`}
+            เริ่ม: {formatDate(session.startDate)}
+            {session.endDate && ` · เสร็จ: ${formatDate(session.endDate)}`}
           </p>
         </div>
-        <div className="shrink-0 text-right">
+        <div className="shrink-0 flex items-center gap-2">
           {total > 0 && (
-            <>
-              <p className="text-sm font-bold text-gray-900 dark:text-white">{scanned}/{total}</p>
+            <div className="text-right">
+              <p className="text-sm font-bold text-gray-900">{scanned}/{total}</p>
               <p className="text-xs text-gray-400">รายการ</p>
-            </>
+            </div>
           )}
+          <ChevronRight className="w-4 h-4 text-gray-300" />
         </div>
       </div>
 
       {total > 0 && (
         <div className="mt-3">
-          <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-emerald-500 rounded-full transition-all"
-              style={{ width: `${pct}%` }}
-            />
+          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
           </div>
           <div className="flex gap-3 mt-1.5 text-xs text-gray-400">
             <span className="text-emerald-600">✓ {session.summary?.matchedItems ?? 0} ตรงกัน</span>
-            <span className="text-yellow-600">⚠ {session.summary?.mismatchItems ?? 0} ไม่ตรง</span>
-            <span className="text-red-600">✗ {session.summary?.missingItems ?? 0} หายไป</span>
+            <span className="text-amber-600">⚠ {session.summary?.mismatchItems ?? 0} ต่างกัน</span>
+            <span className="text-gray-400">○ {session.summary?.missingItems ?? 0} ยังไม่นับ</span>
           </div>
         </div>
       )}
+    </Link>
     </motion.div>
   );
 }
