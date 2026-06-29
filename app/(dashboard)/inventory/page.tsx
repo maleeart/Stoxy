@@ -32,7 +32,7 @@ import { useInventoryItems } from "@/hooks/useInventory";
 import { statusConfig, formatDate, cn } from "@/lib/utils";
 import type { InventoryItem, ItemStatus } from "@/types";
 import { motion } from "framer-motion";
-import Link from "next/link";
+
 import { AddItemDialog } from "@/components/inventory/AddItemDialog";
 
 const statusFilters: { label: string; value: ItemStatus | "all" }[] = [
@@ -241,12 +241,7 @@ export default function InventoryPage() {
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline">ส่งออก</span>
           </button>
-          {isAdmin && (
-            <Link href="/inventory/set-units"
-              className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
-              <span>กำหนดหน่วย</span>
-            </Link>
-          )}
+
           <button
             onClick={() => setShowAddDialog(true)}
             className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
