@@ -360,7 +360,7 @@ export default function AuditDetailPage() {
 
       {/* Item list (counting) */}
       {(canCount || (isPendingApproval && !isAdmin)) && (
-        <div className="space-y-2 pb-28">
+        <div className={`space-y-2 ${isAdmin ? "pb-28" : "pb-44"}`}>
           {filtered.length === 0
             ? <p className="text-center text-sm text-gray-400 py-10">ไม่พบรายการ</p>
             : filtered.map((item, i) => {
@@ -430,7 +430,7 @@ export default function AuditDetailPage() {
 
       {/* Sticky bottom: counting actions */}
       {canCount && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 z-40">
+        <div className={`fixed left-0 right-0 bg-white border-t border-gray-100 p-4 z-40 ${isAdmin ? "bottom-0" : "bottom-16"}`}>
           <div className="max-w-3xl mx-auto flex items-center gap-3">
             <div className="flex-1">
               <p className="text-xs text-gray-500">
