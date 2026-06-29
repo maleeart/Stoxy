@@ -32,7 +32,7 @@ import { useInventoryItems } from "@/hooks/useInventory";
 import { statusConfig, formatDate, cn } from "@/lib/utils";
 import type { InventoryItem, ItemStatus } from "@/types";
 import { motion } from "framer-motion";
-
+import Link from "next/link";
 import { AddItemDialog } from "@/components/inventory/AddItemDialog";
 
 const statusFilters: { label: string; value: ItemStatus | "all" }[] = [
