@@ -7,13 +7,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { useInventoryItems } from "@/hooks/useInventory";
 import { useRealtimeBorrows } from "@/hooks/useRealtimeBorrows";
 import { approveBorrowRequest, rejectBorrowRequest, acknowledgeReturn, adminReceiveReturn } from "@/services/borrow.service";
+import { uploadImages } from "@/lib/upload";
 import { getRequisitions, approveRequisition, rejectRequisition } from "@/services/requisition.service";
 import { adjustStock } from "@/services/inventory.service";
 import { formatDate } from "@/lib/utils";
 import {
   ArrowLeftRight, PackageOpen, BarChart3,
   CheckCircle, XCircle, Undo2, Search,
-  ArrowDownCircle, ArrowUpCircle, Plus, Minus, Clock,
+  ArrowDownCircle, ArrowUpCircle, Plus, Minus, Clock, Camera, X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -144,6 +145,98 @@ function RejectModal({ onConfirm, onCancel, isPending }: {
   );
 }
 
+// ── Admin Receive Modal ───────────────────────────────────────────────────────
+function AdminReceiveModal({ borrowId, borrowerName, itemName, onConfirm, onCancel, isPending }: {
+  borrowId: string;
+  borrowerName: string;
+  itemName: string;
+  onConfirm: (notes: string, photos: File[]) => void;
+  onCancel: () => void;
+  isPending: boolean;
+}) {
+  const [notes, setNotes] = useState("");
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
+
+  function handleFiles(files: FileList | null) {
+    if (!files) return;
+    const arr = Array.from(files).slice(0, 3);
+    setPhotos(p => [...p, ...arr].slice(0, 3));
+    arr.forEach(f => {
+      const r = new FileReader();
+      r.onload = e => setPreviews(p => [...p, e.target?.result as string].slice(0, 3));
+      r.readAsDataURL(f);
+    });
+  }
+
+  function removePhoto(i: number) {
+    setPhotos(p => p.filter((_, j) => j !== i));
+    setPreviews(p => p.filter((_, j) => j !== i));
+  }
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-end bg-black/50" onClick={onCancel}
+    >
+      <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+        transition={{ type: "spring", damping: 30, stiffness: 350 }}
+        className="w-full bg-white rounded-t-3xl p-6 space-y-4"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto" />
+        <div>
+          <h3 className="font-bold text-gray-900 text-base">รับของคืน</h3>
+          <p className="text-sm text-gray-500 mt-0.5 truncate">{itemName}</p>
+          <p className="text-xs text-gray-400">ผู้ยืม: {borrowerName}</p>
+        </div>
+
+        <div>
+          <label className="text-sm font-semibold text-gray-700 mb-2 block">หมายเหตุ (ไม่บังคับ)</label>
+          <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
+            placeholder="เช่น สภาพดี, มีรอยขีดข่วนเล็กน้อย..."
+            className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500/20 resize-none"
+          />
+        </div>
+
+        <div>
+          <label className="text-sm font-semibold text-gray-700 mb-2 block">ถ่ายรูปประกอบ (ไม่บังคับ)</label>
+          {previews.length > 0 && (
+            <div className="flex gap-2 mb-3 flex-wrap">
+              {previews.map((src, i) => (
+                <div key={i} className="relative">
+                  <img src={src} alt="" className="w-20 h-20 object-cover rounded-xl border border-gray-200" />
+                  <button onClick={() => removePhoto(i)}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                    <X className="w-3 h-3 text-white" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          {photos.length < 3 && (
+            <label className="flex items-center gap-2 w-full px-4 py-3 border-2 border-dashed border-gray-200 rounded-2xl text-sm text-gray-400 cursor-pointer hover:border-orange-300 hover:text-orange-400 transition-colors">
+              <Camera className="w-4 h-4" />
+              เพิ่มรูป (สูงสุด 3 รูป)
+              <input type="file" accept="image/*" multiple className="hidden" onChange={e => handleFiles(e.target.files)} />
+            </label>
+          )}
+        </div>
+
+        <div className="flex gap-3 pt-1">
+          <button onClick={onCancel} className="flex-1 py-3 text-sm font-semibold text-gray-600 bg-gray-100 rounded-2xl hover:bg-gray-200 transition-colors">
+            ยกเลิก
+          </button>
+          <button onClick={() => onConfirm(notes.trim(), photos)} disabled={isPending}
+            className="flex-1 py-3 text-sm font-semibold text-white bg-orange-500 rounded-2xl hover:bg-orange-600 disabled:opacity-50 transition-colors"
+          >
+            {isPending ? "กำลังบันทึก..." : "ยืนยันรับคืน"}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function OperationsPage() {
   const { stoxyUser } = useAuth();
@@ -151,6 +244,7 @@ export default function OperationsPage() {
   const [tab, setTab] = useState<Tab>("borrow");
   const [rejectTarget, setRejectTarget] = useState<{ id: string; type: "borrow" | "req" } | null>(null);
   const [adjItem, setAdjItem] = useState<InventoryItem | null>(null);
+  const [receiveTarget, setReceiveTarget] = useState<{ id: string; borrowerName: string; itemName: string } | null>(null);
   const [search, setSearch] = useState("");
 
   // Data
@@ -193,8 +287,15 @@ export default function OperationsPage() {
   });
 
   const adminReceive = useMutation({
-    mutationFn: (id: string) => adminReceiveReturn(id, stoxyUser?.uid ?? ""),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["borrows"] }); toast.success("รับของคืนเรียบร้อย"); },
+    mutationFn: async ({ id, notes, photos }: { id: string; notes: string; photos: File[] }) => {
+      const urls = photos.length > 0 ? await uploadImages(photos, "return-photos") : [];
+      return adminReceiveReturn(id, stoxyUser?.uid ?? "", notes || undefined, urls);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["borrows"] });
+      toast.success("รับของคืนเรียบร้อย");
+      setReceiveTarget(null);
+    },
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
   });
 
@@ -375,8 +476,9 @@ export default function OperationsPage() {
                           </p>
                         )}
                       </div>
-                      <button onClick={() => adminReceive.mutate(b.id)} disabled={adminReceive.isPending}
-                        className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold bg-orange-500 text-white rounded-xl hover:bg-orange-600 disabled:opacity-50 transition-colors shrink-0"
+                      <button
+                        onClick={() => setReceiveTarget({ id: b.id, borrowerName: b.borrowerName, itemName: b.itemName })}
+                        className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition-colors shrink-0"
                       >
                         <Undo2 className="w-4 h-4" /> รับคืน
                       </button>
@@ -490,6 +592,14 @@ export default function OperationsPage() {
       {/* Modals */}
       <AnimatePresence>
         {adjItem && <AdjustSheet item={adjItem} onClose={() => setAdjItem(null)} />}
+        {receiveTarget && (
+          <AdminReceiveModal
+            {...receiveTarget}
+            isPending={adminReceive.isPending}
+            onCancel={() => setReceiveTarget(null)}
+            onConfirm={(notes, photos) => adminReceive.mutate({ id: receiveTarget.id, notes, photos })}
+          />
+        )}
         {rejectTarget && (
           <RejectModal
             isPending={rejectTarget.type === "borrow" ? rejectBorrow.isPending : rejectReq.isPending}

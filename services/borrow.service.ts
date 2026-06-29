@@ -214,7 +214,7 @@ export async function acknowledgeReturn(borrowId: string, adminId: string): Prom
 }
 
 // Admin รับของคืนโดยตรง (สำหรับ guest หรือกรณีที่ไม่ได้แจ้งคืนผ่านแอพ)
-export async function adminReceiveReturn(borrowId: string, adminId: string, notes?: string): Promise<void> {
+export async function adminReceiveReturn(borrowId: string, adminId: string, notes?: string, returnPhotos?: string[]): Promise<void> {
   const borrowRef = doc(db, BORROWS_COLLECTION, borrowId);
   const borrowSnap = await getDoc(borrowRef);
   if (!borrowSnap.exists()) throw new Error("ไม่พบรายการ");
@@ -233,6 +233,7 @@ export async function adminReceiveReturn(borrowId: string, adminId: string, note
     status: "returned" as BorrowStatus,
     actualReturnDate: now,
     returnNotes: notes ?? "",
+    returnPhotos: returnPhotos ?? [],
     updatedAt: now,
   });
   batch.update(itemRef, {
