@@ -29,7 +29,17 @@ export default function AuditDetailPage() {
   });
 
   const { data: allItems = [], isLoading: itemsLoading } = useInventoryItems();
-  const [counts, setCounts] = useState<Record<string, string>>({});
+  const storageKey = `audit_counts_${id}`;
+  const [counts, setCountsRaw] = useState<Record<string, string>>(() => {
+    try { return JSON.parse(localStorage.getItem(storageKey) ?? "{}"); } catch { return {}; }
+  });
+  function setCounts(fn: (prev: Record<string, string>) => Record<string, string>) {
+    setCountsRaw(prev => {
+      const next = fn(prev);
+      localStorage.setItem(storageKey, JSON.stringify(next));
+      return next;
+    });
+  }
   const [search, setSearch] = useState("");
   const [showDiffOnly, setShowDiffOnly] = useState(false);
 
@@ -78,6 +88,7 @@ export default function AuditDetailPage() {
       return submitAuditForReview(id, toSubmit);
     },
     onSuccess: () => {
+      localStorage.removeItem(storageKey);
       qc.invalidateQueries({ queryKey: ["audit_session", id] });
       qc.invalidateQueries({ queryKey: ["audit_sessions"] });
       toast.success("ส่งผลตรวจนับแล้ว รอ Admin อนุมัติ");
@@ -104,6 +115,7 @@ export default function AuditDetailPage() {
       return approveAudit(id, stoxyUser?.uid ?? "", stoxyUser?.displayName ?? "");
     },
     onSuccess: () => {
+      localStorage.removeItem(storageKey);
       qc.invalidateQueries({ queryKey: ["audit_sessions"] });
       qc.invalidateQueries({ queryKey: ["inventory"] });
       qc.invalidateQueries({ queryKey: ["my_active_audit"] });
