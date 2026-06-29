@@ -7,6 +7,7 @@ import {
   Package, CheckCircle, ArrowLeftRight, ChevronRight, Plus, Minus, Star,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
+import { MobileHeader } from "@/components/layout/MobileHeader";
 import { useInventoryItems } from "@/hooks/useInventory";
 import { useAuth } from "@/hooks/useAuth";
 import { useRealtimeBorrows } from "@/hooks/useRealtimeBorrows";
@@ -74,11 +75,11 @@ function BorrowSheet({ item, uid, displayName, dept, onClose }: {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-end bg-black/50" onClick={onClose}
+      className="fixed inset-0 z-[60] flex items-end bg-black/50" onClick={onClose}
     >
       <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 400 }}
-        className="w-full bg-white rounded-t-3xl p-5 max-h-[90vh] overflow-y-auto"
+        className="w-full bg-white rounded-t-3xl p-5 max-h-[90vh] overflow-y-auto pb-8"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Handle */}
@@ -177,11 +178,11 @@ function ReturnSheet({ record, uid, onClose }: { record: BorrowRecord; uid: stri
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-end bg-black/50" onClick={onClose}
+      className="fixed inset-0 z-[60] flex items-end bg-black/50" onClick={onClose}
     >
       <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 400 }}
-        className="w-full bg-white rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto"
+        className="w-full bg-white rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto pb-8"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4" />
@@ -333,18 +334,19 @@ function StaffBorrowPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      {/* Header */}
-      <div className="px-5 pt-14 pb-0 bg-white sticky top-0 z-30">
-        <h1 className="text-xl font-bold text-gray-900 mb-4">ยืม-คืน</h1>
+      {/* Unified header */}
+      <MobileHeader title="ยืม-คืน" />
 
+      {/* Sub-header: segmented + search + chips */}
+      <div className="px-4 pb-0 bg-white sticky top-14 z-20 border-b border-gray-100">
         {/* Segmented Control */}
-        <div className="flex bg-gray-100 rounded-2xl p-1 mb-4">
+        <div className="flex bg-gray-100 rounded-2xl p-1 mt-3 mb-3">
           <button onClick={() => { setTab("borrow"); setSearch(""); setCategory("all"); }}
-            className={cn("flex-1 py-2.5 text-sm font-bold rounded-xl transition-all",
+            className={cn("flex-1 py-2 text-sm font-bold rounded-xl transition-all",
               tab === "borrow" ? "bg-white text-[#1D4ED8] shadow-sm" : "text-gray-500")}
           >ยืมอุปกรณ์</button>
           <button onClick={() => { setTab("return"); setSearch(""); }}
-            className={cn("flex-1 py-2.5 text-sm font-bold rounded-xl transition-all relative",
+            className={cn("flex-1 py-2 text-sm font-bold rounded-xl transition-all relative",
               tab === "return" ? "bg-white text-emerald-600 shadow-sm" : "text-gray-500")}
           >
             คืนอุปกรณ์
@@ -361,21 +363,17 @@ function StaffBorrowPage() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input value={search} onChange={e => setSearch(e.target.value)}
             placeholder={tab === "borrow" ? "ค้นหาอุปกรณ์, รหัส..." : "ค้นหารายการ..."}
-            className="w-full pl-11 pr-4 py-3 text-sm bg-[#F8FAFC] border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+            className="w-full pl-11 pr-4 py-2.5 text-sm bg-[#F8FAFC] border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
           />
         </div>
 
-        {/* Category chips — only on borrow tab */}
+        {/* Category chips */}
         {tab === "borrow" && (
           <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-none">
             {CATEGORIES.map(c => (
               <button key={c.id} onClick={() => setCategory(c.id)}
-                className={cn(
-                  "shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all",
-                  category === c.id
-                    ? "bg-[#1D4ED8] text-white"
-                    : "bg-gray-100 text-gray-500"
-                )}
+                className={cn("shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all",
+                  category === c.id ? "bg-[#1D4ED8] text-white" : "bg-gray-100 text-gray-500")}
               >{c.label}</button>
             ))}
           </div>

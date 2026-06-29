@@ -1,16 +1,18 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowLeftRight, PackageOpen, Package, History } from "lucide-react";
+import { ArrowLeftRight, PackageOpen, Package, History, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface StaffShellProps {
   children: React.ReactNode;
 }
 
-const navItems = [
+const sideItems = [
   { label: "ยืม-คืน", icon: ArrowLeftRight, href: "/borrow" },
   { label: "เบิก", icon: PackageOpen, href: "/requisition" },
+];
+const sideItemsRight = [
   { label: "คลัง", icon: Package, href: "/inventory" },
   { label: "ประวัติ", icon: History, href: "/movements" },
 ];
@@ -19,34 +21,74 @@ export function StaffShell({ children }: StaffShellProps) {
   const pathname = usePathname();
   const router = useRouter();
 
+  const isActive = (href: string) =>
+    href === "/dashboard"
+      ? pathname === "/dashboard"
+      : pathname.startsWith(href);
+
+  const homeActive = pathname === "/dashboard";
+
   return (
     <div className="flex flex-col h-[100dvh] bg-[#F8FAFC] overflow-hidden">
       {/* Scrollable content */}
-      <main className="flex-1 overflow-y-auto pb-20">
+      <main className="flex-1 overflow-y-auto pb-24">
         {children}
       </main>
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50 safe-area-bottom">
-        <div className="flex">
-          {navItems.map((item) => {
-            const active =
-              pathname === item.href ||
-              (item.href !== "/dashboard" && pathname.startsWith(item.href));
+        <div className="flex items-end h-16">
+          {/* Left 2 */}
+          {sideItems.map((item) => {
+            const active = isActive(item.href);
             return (
               <button
                 key={item.href}
                 onClick={() => router.push(item.href)}
                 className={cn(
-                  "flex-1 flex flex-col items-center gap-1 py-3 transition-colors",
+                  "flex-1 flex flex-col items-center justify-center gap-1 h-full transition-colors",
                   active ? "text-[#1D4ED8]" : "text-gray-400"
                 )}
               >
-                <item.icon className={cn("w-6 h-6", active && "stroke-[2.5]")} />
+                <item.icon className={cn("w-5 h-5", active && "stroke-[2.5]")} />
                 <span className="text-[10px] font-semibold tracking-wide">{item.label}</span>
-                {active && (
-                  <span className="absolute bottom-0 w-8 h-0.5 bg-[#1D4ED8] rounded-t-full" />
+              </button>
+            );
+          })}
+
+          {/* Center Home */}
+          <button
+            onClick={() => router.push("/dashboard")}
+            className="flex flex-col items-center justify-center gap-1 px-4 mb-2"
+          >
+            <div className={cn(
+              "w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95",
+              homeActive
+                ? "bg-[#1D4ED8] shadow-[#1D4ED8]/40"
+                : "bg-[#1D4ED8] shadow-[#1D4ED8]/30"
+            )}>
+              <Home className={cn("w-6 h-6 text-white", homeActive && "stroke-[2.5]")} />
+            </div>
+            <span className={cn(
+              "text-[10px] font-semibold tracking-wide -mt-0.5",
+              homeActive ? "text-[#1D4ED8]" : "text-gray-400"
+            )}>หน้าหลัก</span>
+          </button>
+
+          {/* Right 2 */}
+          {sideItemsRight.map((item) => {
+            const active = isActive(item.href);
+            return (
+              <button
+                key={item.href}
+                onClick={() => router.push(item.href)}
+                className={cn(
+                  "flex-1 flex flex-col items-center justify-center gap-1 h-full transition-colors",
+                  active ? "text-[#1D4ED8]" : "text-gray-400"
                 )}
+              >
+                <item.icon className={cn("w-5 h-5", active && "stroke-[2.5]")} />
+                <span className="text-[10px] font-semibold tracking-wide">{item.label}</span>
               </button>
             );
           })}

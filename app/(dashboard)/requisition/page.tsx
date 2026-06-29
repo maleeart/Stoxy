@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
+import { MobileHeader } from "@/components/layout/MobileHeader";
 import { useInventoryItems } from "@/hooks/useInventory";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -94,26 +95,26 @@ function StaffRequisitionPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      {/* Header */}
-      <div className="px-5 pt-14 pb-0 bg-white sticky top-0 z-30">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-bold text-gray-900">เบิกของ</h1>
-          {cart.length > 0 && (
-            <button onClick={() => setShowConfirm(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 text-white rounded-xl text-sm font-bold active:scale-95 transition-transform"
-            >
-              <ShoppingCart className="w-4 h-4" />
-              {cart.length}
-            </button>
-          )}
-        </div>
+      {/* Unified header */}
+      <MobileHeader
+        title="เบิกของ"
+        actions={cart.length > 0 ? (
+          <button onClick={() => setShowConfirm(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 text-white rounded-xl text-sm font-bold active:scale-95 transition-transform"
+          >
+            <ShoppingCart className="w-4 h-4" />{cart.length}
+          </button>
+        ) : undefined}
+      />
 
+      {/* Sub-header: search + chips */}
+      <div className="px-4 pb-0 bg-white sticky top-14 z-20 border-b border-gray-100">
         {/* Search */}
-        <div className="relative mb-3">
+        <div className="relative mt-3 mb-3">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input value={search} onChange={e => setSearch(e.target.value)}
             placeholder="ค้นหาอุปกรณ์, รหัส..."
-            className="w-full pl-11 pr-4 py-3 text-sm bg-[#F8FAFC] border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+            className="w-full pl-11 pr-4 py-2.5 text-sm bg-[#F8FAFC] border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
           />
         </div>
 
@@ -188,7 +189,7 @@ function StaffRequisitionPage() {
         {cart.length > 0 && !showConfirm && (
           <motion.div
             initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }}
-            className="fixed bottom-20 left-0 right-0 px-5 z-40"
+            className="fixed bottom-24 left-0 right-0 px-5 z-[55]"
           >
             <button onClick={() => setShowConfirm(true)}
               className="w-full py-4 bg-[#1D4ED8] text-white rounded-2xl font-bold text-sm shadow-xl flex items-center justify-between px-5 active:scale-[0.98] transition-transform"
@@ -208,10 +209,10 @@ function StaffRequisitionPage() {
         {showConfirm && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 z-50" onClick={() => setShowConfirm(false)} />
+              className="fixed inset-0 bg-black/50 z-[60]" onClick={() => setShowConfirm(false)} />
             <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl px-5 pt-5 pb-8 safe-area-bottom"
+              className="fixed bottom-0 left-0 right-0 z-[60] bg-white rounded-t-3xl px-5 pt-5 pb-10 safe-area-bottom"
             >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-bold text-gray-900 text-base">ยืนยันการเบิก</h3>

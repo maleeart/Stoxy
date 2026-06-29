@@ -5,6 +5,7 @@ import {
   Clock, ShieldAlert, Activity, TrendingUp,
   PackageOpen, History, Bell, Search, ChevronRight,
 } from "lucide-react";
+import { MobileHeader } from "@/components/layout/MobileHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { useDashboardStats, useRecentMovements } from "@/hooks/useInventory";
 import { useQuery } from "@tanstack/react-query";
@@ -85,31 +86,30 @@ function StaffHome() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      {/* Top bar */}
-      <div className="px-5 pt-14 pb-4 bg-white">
-        <div className="flex items-center justify-between mb-1">
-          <div>
-            <p className="text-xs text-gray-400 font-medium">{greeting()}</p>
-            <h1 className="text-xl font-bold text-gray-900 leading-tight">
-              {stoxyUser?.displayName ?? "ผู้ใช้งาน"}
-            </h1>
-            <p className="text-xs text-gray-400 mt-0.5">{stoxyUser?.department}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => router.push("/inventory")}
-              className="w-10 h-10 rounded-2xl bg-[#F8FAFC] flex items-center justify-center"
-            >
+      {/* Unified header */}
+      <MobileHeader
+        title="หน้าหลัก"
+        actions={
+          <>
+            <button onClick={() => router.push("/inventory")}
+              className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-gray-50 active:scale-95 transition-all">
               <Search className="w-5 h-5 text-gray-500" />
             </button>
-            <button className="w-10 h-10 rounded-2xl bg-[#F8FAFC] flex items-center justify-center relative">
+            <button className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-gray-50 relative">
               <Bell className="w-5 h-5 text-gray-500" />
               {(myPending + myReturnPending) > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
               )}
             </button>
-          </div>
-        </div>
+          </>
+        }
+      />
+
+      {/* Greeting strip */}
+      <div className="px-5 py-4 bg-white border-b border-gray-50">
+        <p className="text-xs text-gray-400 font-medium">{greeting()}</p>
+        <h2 className="text-lg font-bold text-gray-900 leading-tight">{stoxyUser?.displayName ?? "ผู้ใช้งาน"}</h2>
+        {stoxyUser?.department && <p className="text-xs text-gray-400 mt-0.5">{stoxyUser.department}</p>}
 
         {/* Stats strip */}
         {(myBorrowed.length > 0 || myPending > 0) && (
