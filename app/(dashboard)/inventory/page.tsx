@@ -29,6 +29,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { MobileHeader } from "@/components/layout/MobileHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { useInventoryItems } from "@/hooks/useInventory";
+import Link from "next/link";
 import { statusConfig, formatDate, cn } from "@/lib/utils";
 import type { InventoryItem, ItemStatus } from "@/types";
 import { motion } from "framer-motion";
@@ -236,11 +237,17 @@ export default function InventoryPage() {
             {filtered.length.toLocaleString("th-TH")} รายการ
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline">ส่งออก</span>
           </button>
+          {isAdmin && (
+            <Link href="/inventory/set-units"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+              <span>กำหนดหน่วย</span>
+            </Link>
+          )}
           <button
             onClick={() => setShowAddDialog(true)}
             className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
