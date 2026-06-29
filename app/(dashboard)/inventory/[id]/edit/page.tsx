@@ -31,7 +31,6 @@ const schema = z.object({
   categoryId: z.string().min(1, "กรุณาเลือกหมวดหมู่"),
   locationId: z.string().min(1, "กรุณาระบุสถานที่"),
   minStockLevel: z.coerce.number().min(0),
-  condition: z.enum(["excellent", "good", "fair", "poor", "broken"]),
   notes: z.string().optional(),
 });
 
@@ -64,7 +63,6 @@ export default function EditItemPage({ params }: { params: Promise<{ id: string 
       categoryId: item.categoryId,
       locationId: item.locationId,
       minStockLevel: item.minStockLevel ?? 0,
-      condition: item.condition,
       notes: item.notes ?? "",
     });
   }, [item, reset]);
@@ -165,16 +163,6 @@ export default function EditItemPage({ params }: { params: Promise<{ id: string 
                 <input {...register("serialNumber")} className="input-field font-mono" />
               </div>
 
-              <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">สภาพ *</label>
-                <select {...register("condition")} className="input-field">
-                  <option value="excellent">ดีมาก</option>
-                  <option value="good">ดี</option>
-                  <option value="fair">พอใช้</option>
-                  <option value="poor">แย่</option>
-                  <option value="broken">เสีย</option>
-                </select>
-              </div>
             </div>
           </div>
 
