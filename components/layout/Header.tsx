@@ -28,18 +28,18 @@ export function Header({ title, onMenuClick }: HeaderProps) {
   }
 
   return (
-    <header className="h-14 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex items-center px-4 gap-3 shrink-0 z-40">
+    <header className="h-14 bg-white border-b border-gray-100 flex items-center px-4 gap-3 shrink-0 z-40">
       {/* Mobile menu */}
       <button
         onClick={onMenuClick}
-        className="md:hidden p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+        className="md:hidden p-1.5 rounded-lg hover:bg-gray-100"
       >
         <Menu className="w-5 h-5 text-gray-600 dark:text-gray-400" />
       </button>
 
       {/* Title */}
       {title && (
-        <h1 className="text-base font-semibold text-gray-900 dark:text-gray-100 hidden md:block">
+        <h1 className="text-base font-semibold text-gray-900 hidden md:block">
           {title}
         </h1>
       )}
@@ -50,7 +50,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
           <button
             onClick={() => router.push("/dashboard")}
             title="หน้าหลัก"
-            className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="p-2 rounded-xl hover:bg-gray-100 hover:bg-gray-100 transition-colors"
           >
             <Home className="w-4 h-4 text-gray-500" />
           </button>
@@ -59,7 +59,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
         <button
           onClick={handleRefresh}
           title="รีเฟรชข้อมูล"
-          className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          className="p-2 rounded-xl hover:bg-gray-100 hover:bg-gray-100 transition-colors"
         >
           <RefreshCw className={cn("w-4 h-4 text-gray-500", spinning && "animate-spin")} />
         </button>

@@ -16,6 +16,7 @@ interface AuthContextType {
   stoxyUser: StoxyUser | null;
   loading: boolean;
   initialized: boolean;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -23,6 +24,7 @@ const AuthContext = createContext<AuthContextType>({
   stoxyUser: null,
   loading: true,
   initialized: false,
+  refreshUser: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -50,8 +52,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return unsub;
   }, []);
 
+  async function refreshUser() {
+    if (!firebaseUser) return;
+    const u = await getStoxyUser(firebaseUser.uid);
+    if (u) setStoxyUser(u);
+  }
+
   return (
-    <AuthContext.Provider value={{ firebaseUser, stoxyUser, loading, initialized }}>
+    <AuthContext.Provider value={{ firebaseUser, stoxyUser, loading, initialized, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

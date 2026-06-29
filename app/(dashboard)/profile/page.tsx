@@ -24,7 +24,7 @@ const ROLE_COLOR: Record<string, string> = {
 };
 
 export default function ProfilePage() {
-  const { stoxyUser, loading } = useAuth();
+  const { stoxyUser, loading, refreshUser } = useAuth();
   const router = useRouter();
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
 
@@ -41,6 +41,7 @@ export default function ProfilePage() {
     setSaving(true);
     try {
       await updateStoxyUser(stoxyUser!.uid, { department: dept.trim() });
+      await refreshUser();
       toast.success("บันทึกแผนกแล้ว");
       setEditingDept(false);
     } catch {
