@@ -229,13 +229,14 @@ function ReturnSheet({ record, uid, onClose }: { record: BorrowRecord; uid: stri
 }
 
 // ── Staff Borrow Page ──────────────────────────────────────────────────────────
-// ยืมได้เฉพาะเครื่องมือ — ของสิ้นเปลืองให้ใช้เมนูเบิก
-const BORROWABLE = new Set(["tools", "meter"]);
+// ยืมได้: เครื่องมือ + มิเตอร์ + ความปลอดภัย
+const BORROWABLE = new Set(["tools", "meter", "safety"]);
 
 const CATEGORIES = [
   { id: "all", label: "ทั้งหมด" },
   { id: "tools", label: "เครื่องมือ" },
   { id: "meter", label: "มิเตอร์" },
+  { id: "safety", label: "ความปลอดภัย" },
 ];
 
 function useFavorites(uid: string) {

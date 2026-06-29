@@ -27,14 +27,13 @@ const statusBadge = {
 };
 const statusLabel = { pending: "รออนุมัติ", approved: "อนุมัติแล้ว", rejected: "ปฏิเสธ" };
 
-// เบิกได้เฉพาะของสิ้นเปลือง/ทดแทน — เครื่องมือให้ใช้เมนูยืมเท่านั้น
-const WITHDRAWABLE = new Set(["electrical", "cable", "safety", "spareparts", "others"]);
+// เบิกได้: ของสิ้นเปลือง/ทดแทน — เครื่องมือ/มิเตอร์/ความปลอดภัยใช้เมนูยืม
+const WITHDRAWABLE = new Set(["electrical", "cable", "spareparts", "others"]);
 
 const CATEGORIES = [
   { id: "all", label: "ทั้งหมด" },
   { id: "electrical", label: "ไฟฟ้า" },
   { id: "cable", label: "สายไฟ" },
-  { id: "safety", label: "ความปลอดภัย" },
   { id: "spareparts", label: "อะไหล่" },
   { id: "others", label: "อื่นๆ" },
 ];
