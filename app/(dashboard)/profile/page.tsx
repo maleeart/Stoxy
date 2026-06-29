@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { MobileHeader } from "@/components/layout/MobileHeader";
@@ -32,6 +32,11 @@ export default function ProfilePage() {
   const [dept, setDept] = useState(stoxyUser?.department ?? "");
   const [saving, setSaving] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+
+  // Sync dept state เมื่อ stoxyUser โหลดเสร็จหรืออัปเดต (guest/all roles)
+  useEffect(() => {
+    if (!editingDept) setDept(stoxyUser?.department ?? "");
+  }, [stoxyUser?.department, editingDept]);
 
   if (loading) return null;
   if (!stoxyUser) { router.replace("/login"); return null; }

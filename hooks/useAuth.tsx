@@ -7,7 +7,8 @@ import {
   useState,
   ReactNode,
 } from "react";
-import { User } from "firebase/auth";
+import { User, signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import { onAuthChange, getStoxyUser, ensureUserDoc, loadGuestInfo, clearGuestInfo } from "@/services/auth.service";
 import type { StoxyUser } from "@/types";
 
@@ -41,12 +42,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (user.isAnonymous) {
             // Guest session — build stoxyUser from localStorage
             const info = loadGuestInfo();
+            if (!info?.name) {
+              // Anonymous session ค้างแต่ไม่มี guest info → sign out ให้ login ใหม่
+              await signOut(auth);
+              return;
+            }
             setStoxyUser({
               uid: user.uid,
               email: "",
-              displayName: info?.name ?? "ผู้เยี่ยมชม",
+              displayName: info.name,
               role: "guest" as any,
-              department: info?.department ?? "",
+              department: info.department ?? "",
               isActive: true,
               createdAt: null as any,
               updatedAt: null as any,
