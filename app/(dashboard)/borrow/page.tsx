@@ -97,7 +97,6 @@ export default function BorrowPage() {
         expectedReturnDate: Timestamp.fromDate(new Date(returnDate)),
         purpose,
         status: "pending_approval",
-        approvedBy: undefined,
       } as any);
     },
     onSuccess: () => {
