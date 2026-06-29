@@ -62,7 +62,7 @@ export default function BorrowPage() {
 
   // Create form state
   const [itemId, setItemId] = useState("");
-  const [quantity, setQuantity] = useState(1);
+  const [quantityStr, setQuantityStr] = useState("1");
   const [borrowerName, setBorrowerName] = useState("");
   const [borrowerDept, setBorrowerDept] = useState("");
   const [returnDate, setReturnDate] = useState("");
@@ -85,7 +85,7 @@ export default function BorrowPage() {
   const selected = items.find((i) => i.id === itemId);
 
   function resetForm() {
-    setItemId(""); setQuantity(1); setBorrowerName("");
+    setItemId(""); setQuantityStr("1"); setBorrowerName("");
     setBorrowerDept(""); setReturnDate(""); setPurpose(""); setBorrowPhotos([]);
   }
 
@@ -107,7 +107,7 @@ export default function BorrowPage() {
         itemId: selected.id,
         itemCode: selected.code,
         itemName: selected.name,
-        quantity,
+        quantity: Math.max(1, parseInt(quantityStr) || 1),
         borrowerName,
         borrowerDepartment: borrowerDept,
         borrowerId: stoxyUser?.uid ?? "",
@@ -201,9 +201,18 @@ export default function BorrowPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">จำนวน</label>
-                  <input type="number" value={quantity}
-                    onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                    min={1} max={selected?.quantityAvailable ?? 1}
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    value={quantityStr}
+                    onChange={(e) => setQuantityStr(e.target.value)}
+                    onBlur={() => {
+                      const n = parseInt(quantityStr);
+                      const max = selected?.quantityAvailable ?? 99;
+                      setQuantityStr(String(Math.min(Math.max(1, isNaN(n) ? 1 : n), max)));
+                    }}
+                    min={1}
+                    max={selected?.quantityAvailable ?? 99}
                     className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                   />
                 </div>
