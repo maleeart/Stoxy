@@ -15,18 +15,10 @@ import {
 } from "@/services/borrow.service";
 import { formatDate, cn } from "@/lib/utils";
 import { compressImages } from "@/lib/compress";
-import type { BorrowRecord, BorrowStatus, ItemCondition } from "@/types";
+import type { BorrowRecord, BorrowStatus } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Timestamp } from "firebase/firestore";
-
-const conditions: { value: ItemCondition; label: string }[] = [
-  { value: "excellent", label: "ดีมาก" },
-  { value: "good", label: "ดี" },
-  { value: "fair", label: "พอใช้" },
-  { value: "poor", label: "แย่" },
-  { value: "broken", label: "เสีย" },
-];
 
 const tabs: { label: string; value: BorrowStatus | "all" }[] = [
   { label: "ทั้งหมด", value: "all" },
@@ -71,7 +63,6 @@ export default function BorrowPage() {
 
   // Return popup state
   const [returnRecord, setReturnRecord] = useState<BorrowRecord | null>(null);
-  const [rtCondition, setRtCondition] = useState<ItemCondition>("good");
   const [rtNotes, setRtNotes] = useState("");
   const [rtFiles, setRtFiles] = useState<File[]>([]);
   const [rtPreviews, setRtPreviews] = useState<string[]>([]);
@@ -166,13 +157,12 @@ export default function BorrowPage() {
       const photos = rtFiles.length > 0 ? await compressImages(rtFiles) : [];
       setRtCompressing(false);
       return submitReturn(returnRecord.id, {
-        condition: rtCondition, notes: rtNotes,
-        returnPhotos: photos, returnedBy: stoxyUser?.uid ?? "",
+        notes: rtNotes, returnPhotos: photos, returnedBy: stoxyUser?.uid ?? "",
       });
     },
     onSuccess: () => {
       toast.success("แจ้งคืนสำเร็จ รอแอดมินรับทราบ");
-      setReturnRecord(null); setRtNotes(""); setRtCondition("good"); setRtFiles([]); setRtPreviews([]);
+      setReturnRecord(null); setRtNotes(""); setRtFiles([]); setRtPreviews([]);
     },
     onError: (e: any) => { setRtCompressing(false); toast.error(e.message ?? "เกิดข้อผิดพลาด"); },
   });
@@ -374,20 +364,6 @@ export default function BorrowPage() {
                 </button>
               </div>
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">สภาพเมื่อคืน</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {conditions.map((c) => (
-                      <button key={c.value} type="button" onClick={() => setRtCondition(c.value)}
-                        className={`py-2 text-xs font-medium rounded-xl border transition-all ${
-                          rtCondition === c.value
-                            ? "bg-[#0d2137] text-white border-[#0d2137]"
-                            : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
-                        }`}
-                      >{c.label}</button>
-                    ))}
-                  </div>
-                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">หมายเหตุ</label>
                   <textarea value={rtNotes} onChange={(e) => setRtNotes(e.target.value)} rows={2}
@@ -600,7 +576,7 @@ export default function BorrowPage() {
                     )}
 
                     {record.status === "borrowed" && (
-                      <button onClick={() => { setReturnRecord(record); setRtCondition("good"); setRtNotes(""); setRtFiles([]); setRtPreviews([]); }}
+                      <button onClick={() => { setReturnRecord(record); setRtNotes(""); setRtFiles([]); setRtPreviews([]); }}
                         className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors"
                       >
                         <RotateCcw className="w-3.5 h-3.5" /> แจ้งคืน

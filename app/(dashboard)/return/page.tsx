@@ -10,10 +10,6 @@ import { Undo2, CheckCircle, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
-const conditionLabel: Record<string, string> = {
-  excellent: "ดีมาก", good: "ดี", fair: "พอใช้", poor: "แย่", broken: "เสีย",
-};
-
 export default function ReturnPage() {
   const { stoxyUser } = useAuth();
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
@@ -75,11 +71,8 @@ export default function ReturnPage() {
                       </span>
                     )}
                   </div>
-                  {b.returnCondition && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      สภาพ: {conditionLabel[b.returnCondition] ?? b.returnCondition}
-                      {b.returnNotes && ` · ${b.returnNotes}`}
-                    </p>
+                  {b.returnNotes && (
+                    <p className="text-xs text-gray-500 mt-1">หมายเหตุ: {b.returnNotes}</p>
                   )}
                   {(b.returnPhotos?.length ?? 0) > 0 && (
                     <div className="flex gap-2 mt-2 flex-wrap">
