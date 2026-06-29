@@ -14,7 +14,7 @@ import {
   Search, ArrowUp, ArrowDown, Minus,
 } from "lucide-react";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import type { AuditItem } from "@/types";
 
 export default function AuditDetailPage() {
@@ -84,19 +84,24 @@ export default function AuditDetailPage() {
   const diffItems = items.filter(i => i.status === "mismatch");
   const pct = items.length > 0 ? Math.round((totalCounted / items.length) * 100) : 0;
 
+  const [confirmSubmit, setConfirmSubmit] = useState(false);
+
   const submitMut = useMutation({
     mutationFn: () => {
-      const toSubmit: AuditItem[] = allItems.map(item => ({
-        itemId: item.id,
-        itemCode: item.code,
-        itemName: item.name,
-        expectedQuantity: item.quantityAvailable,
-        actualQuantity: counts[item.id] !== undefined ? Number(counts[item.id]) : undefined,
-        status: (counts[item.id] === undefined
-          ? "pending"
-          : Number(counts[item.id]) === item.quantityAvailable ? "scanned" : "mismatch") as AuditItem["status"],
-        scannedBy: stoxyUser?.uid,
-      }));
+      const toSubmit: AuditItem[] = allItems.map(item => {
+        const counted = counts[item.id] !== undefined;
+        const actual = counted ? Number(counts[item.id]) : undefined;
+        const status: AuditItem["status"] = !counted ? "pending"
+          : actual === item.quantityAvailable ? "scanned" : "mismatch";
+        // strip undefined — Firestore rejects them
+        const entry: Record<string, unknown> = {
+          itemId: item.id, itemCode: item.code, itemName: item.name,
+          expectedQuantity: item.quantityAvailable, status,
+        };
+        if (actual !== undefined) entry.actualQuantity = actual;
+        if (stoxyUser?.uid) entry.scannedBy = stoxyUser.uid;
+        return entry as AuditItem;
+      });
       return submitAuditForReview(id, toSubmit);
     },
     onSuccess: () => {
@@ -454,6 +459,7 @@ export default function AuditDetailPage() {
               <button
                 onClick={() => {
                   if (totalCounted === 0) { toast.error("กรุณานับอย่างน้อย 1 รายการ"); return; }
+                  if (totalCounted < items.length) { setConfirmSubmit(true); return; }
                   submitMut.mutate();
                 }}
                 disabled={submitMut.isPending}
@@ -466,6 +472,44 @@ export default function AuditDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Confirm submit with incomplete count */}
+      <AnimatePresence>
+        {confirmSubmit && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            onClick={() => setConfirmSubmit(false)}
+          >
+            <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+              className="bg-white rounded-3xl p-6 w-full max-w-sm space-y-4 shadow-2xl"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-amber-500" />
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-900 text-base">นับยังไม่ครบ</h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  นับแล้ว <span className="font-bold text-gray-900">{totalCounted}</span> จาก <span className="font-bold text-gray-900">{items.length}</span> รายการ
+                  — ยังเหลืออีก <span className="font-bold text-red-500">{items.length - totalCounted}</span> รายการที่ยังไม่ได้นับ
+                </p>
+                <p className="text-xs text-gray-400 mt-1">ส่งตอนนี้ได้ รายการที่ยังไม่นับจะถูกบันทึกเป็น "ยังไม่นับ"</p>
+              </div>
+              <div className="flex gap-3">
+                <button onClick={() => setConfirmSubmit(false)}
+                  className="flex-1 py-3 text-sm font-semibold text-gray-600 bg-gray-100 rounded-2xl hover:bg-gray-200 transition-colors">
+                  นับต่อก่อน
+                </button>
+                <button onClick={() => { setConfirmSubmit(false); submitMut.mutate(); }}
+                  disabled={submitMut.isPending}
+                  className="flex-1 py-3 text-sm font-semibold text-white bg-[#1D4ED8] rounded-2xl hover:bg-blue-700 disabled:opacity-50 transition-colors">
+                  ส่งเลย
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Sticky bottom: admin approve */}
       {canApprove && (
