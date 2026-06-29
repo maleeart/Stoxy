@@ -75,9 +75,9 @@ export async function exportBorrowsPDF(records: BorrowRecord[]) {
 
 // ── Excel ─────────────────────────────────────────────────────
 export function exportInventoryExcel(items: InventoryItem[]) {
-  const headers = ["รหัส", "ชื่ออุปกรณ์", "ยี่ห้อ", "รุ่น", "หมวดหมู่", "จำนวนทั้งหมด", "คงเหลือ", "ถูกยืม", "สถานะ", "สภาพ", "สถานที่", "ราคาซื้อ", "หมายเหตุ"];
+  const headers = ["รหัส", "ชื่ออุปกรณ์", "หน่วย", "ยี่ห้อ", "รุ่น", "หมวดหมู่", "จำนวนทั้งหมด", "คงเหลือ", "ถูกยืม", "สถานะ", "สภาพ", "สถานที่", "ราคาซื้อ", "หมายเหตุ"];
   const rows = items.map((i) => [
-    i.code, i.name, i.brand ?? "", i.model ?? "", i.categoryName ?? "",
+    i.code, i.name, i.unit ?? "", i.brand ?? "", i.model ?? "", i.categoryName ?? "",
     i.quantity, i.quantityAvailable, i.quantityBorrowed,
     statusLabel[i.status] ?? i.status, conditionLabel[i.condition] ?? i.condition,
     i.locationName ?? "", i.purchasePrice ?? "", i.notes ?? "",

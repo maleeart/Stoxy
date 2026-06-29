@@ -12,12 +12,15 @@ import { toast } from "sonner";
 import { generateItemCode } from "@/lib/utils";
 import { getLocations, addLocation } from "@/services/locations.service";
 
+const UNIT_OPTIONS = ["ชิ้น", "อัน", "ม้วน", "เมตร", "กล่อง", "ชุด", "แผ่น", "ขด", "โหล", "ถุง", "อื่นๆ"];
+
 const schema = z.object({
   name: z.string().min(2, "กรุณากรอกชื่ออุปกรณ์"),
   code: z.string().min(2, "กรุณากรอกรหัสอุปกรณ์"),
   brand: z.string().optional(),
   model: z.string().optional(),
   serialNumber: z.string().optional(),
+  unit: z.string().optional(),
   categoryId: z.string().min(1, "กรุณาเลือกหมวดหมู่"),
   locationId: z.string().min(1, "กรุณาระบุสถานที่"),
   quantity: z.coerce.number().min(1, "จำนวนต้องมากกว่า 0"),
@@ -67,6 +70,7 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
   const [locations, setLocations] = useState<string[]>([]);
   const [customLocation, setCustomLocation] = useState("");
   const [customLocationError, setCustomLocationError] = useState(false);
+  const [customUnit, setCustomUnit] = useState("");
 
   useEffect(() => {
     getLocations().then(setLocations);
@@ -91,11 +95,13 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
       setActiveTab("basic");
       setCustomLocation("");
       setCustomLocationError(false);
+      setCustomUnit("");
     }
   }, [open, reset]);
 
   const categoryId = watch("categoryId");
   const locationId = watch("locationId");
+  const unitValue = watch("unit");
 
   // Auto-generate code when category changes
   useEffect(() => {
@@ -116,9 +122,13 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
       data = { ...data, locationId: customLocation.trim() };
     }
 
+    // Resolve custom unit
+    const resolvedUnit = data.unit === "อื่นๆ" ? customUnit.trim() || undefined : data.unit || undefined;
+
     try {
       await createItem.mutateAsync({
         ...data,
+        unit: resolvedUnit,
         status: "available",
         quantityAvailable: data.quantity,
         quantityBorrowed: 0,
@@ -253,6 +263,26 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
                           className="input-field font-mono"
                           placeholder="SN..."
                         />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          หน่วยนับ
+                        </label>
+                        <select {...register("unit")} className="input-field">
+                          <option value="">— ไม่ระบุ —</option>
+                          {UNIT_OPTIONS.map((u) => (
+                            <option key={u} value={u}>{u}</option>
+                          ))}
+                        </select>
+                        {unitValue === "อื่นๆ" && (
+                          <input
+                            value={customUnit}
+                            onChange={(e) => setCustomUnit(e.target.value)}
+                            className="input-field mt-2"
+                            placeholder="ระบุหน่วย เช่น กิโลกรัม, ลิตร..."
+                            autoFocus
+                          />
+                        )}
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">

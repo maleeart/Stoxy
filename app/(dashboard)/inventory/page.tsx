@@ -141,9 +141,14 @@ export default function InventoryPage() {
             item.quantity > 0 ? (item.quantityAvailable / item.quantity) * 100 : 0;
           return (
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                {item.quantityAvailable}/{item.quantity}
-              </span>
+              <div>
+                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {item.quantityAvailable}/{item.quantity}
+                </span>
+                {item.unit && (
+                  <span className="ml-1 text-xs text-gray-400">{item.unit}</span>
+                )}
+              </div>
               <div className="w-14 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                 <div
                   className={cn(

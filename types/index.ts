@@ -76,6 +76,7 @@ export interface InventoryItem {
   locationId: string;
   locationName?: string;
   // Stock
+  unit?: string;        // หน่วยนับ เช่น ชิ้น, อัน, ม้วน, เมตร
   quantity: number;
   quantityAvailable: number;
   quantityBorrowed: number;

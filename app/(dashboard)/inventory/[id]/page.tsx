@@ -137,6 +137,9 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
 
           {/* Details Grid */}
           <div className="grid grid-cols-2 gap-3 mt-4">
+            {item.unit && (
+              <Info label="หน่วยนับ" value={item.unit} />
+            )}
             {item.serialNumber && (
               <Info label="ซีเรียลนัมเบอร์" value={item.serialNumber} />
             )}
