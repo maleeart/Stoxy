@@ -86,7 +86,23 @@ export default function AuditDetailPage() {
   });
 
   const approveMut = useMutation({
-    mutationFn: () => approveAudit(id, stoxyUser?.uid ?? "", stoxyUser?.displayName ?? ""),
+    mutationFn: async () => {
+      // If admin is counting directly (in_progress), save items first then approve
+      if (isInProgress) {
+        const toSave: AuditItem[] = allItems.map(item => ({
+          itemId: item.id,
+          itemCode: item.code,
+          itemName: item.name,
+          expectedQuantity: item.quantityAvailable,
+          actualQuantity: counts[item.id] !== undefined ? Number(counts[item.id]) : undefined,
+          status: (counts[item.id] === undefined ? "pending" :
+            Number(counts[item.id]) === item.quantityAvailable ? "scanned" : "mismatch") as AuditItem["status"],
+          scannedBy: stoxyUser?.uid,
+        }));
+        await submitAuditForReview(id, toSave);
+      }
+      return approveAudit(id, stoxyUser?.uid ?? "", stoxyUser?.displayName ?? "");
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["audit_sessions"] });
       qc.invalidateQueries({ queryKey: ["inventory"] });
@@ -102,7 +118,7 @@ export default function AuditDetailPage() {
   const isCompleted = status === "completed";
   const isPendingApproval = status === "pending_approval";
   const isInProgress = status === "in_progress";
-  const canCount = isInProgress && !isAdmin;
+  const canCount = isInProgress; // both staff and admin can fill counts
   const canApprove = isPendingApproval && isAdmin;
 
   if (isLoading) return (
@@ -327,7 +343,7 @@ export default function AuditDetailPage() {
         </div>
       )}
 
-      {/* Sticky bottom: staff submit */}
+      {/* Sticky bottom: counting actions */}
       {canCount && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 z-40">
           <div className="max-w-3xl mx-auto flex items-center gap-3">
@@ -337,17 +353,31 @@ export default function AuditDetailPage() {
                 {diffItems.length > 0 && <span className="text-red-500 ml-1">· ต่างกัน {diffItems.length} รายการ</span>}
               </p>
             </div>
-            <button
-              onClick={() => {
-                if (totalCounted === 0) { toast.error("กรุณานับอย่างน้อย 1 รายการ"); return; }
-                submitMut.mutate();
-              }}
-              disabled={submitMut.isPending}
-              className="flex items-center gap-2 px-5 py-3 bg-[#1D4ED8] text-white text-sm font-bold rounded-2xl hover:bg-blue-700 disabled:opacity-50 active:scale-[0.98] transition-all"
-            >
-              <CheckCircle className="w-4 h-4" />
-              {submitMut.isPending ? "กำลังส่ง..." : "ส่งให้ Admin ตรวจสอบ"}
-            </button>
+            {isAdmin ? (
+              <button
+                onClick={() => {
+                  if (totalCounted === 0) { toast.error("กรุณานับอย่างน้อย 1 รายการ"); return; }
+                  approveMut.mutate();
+                }}
+                disabled={approveMut.isPending}
+                className="flex items-center gap-2 px-5 py-3 bg-emerald-500 text-white text-sm font-bold rounded-2xl hover:bg-emerald-600 disabled:opacity-50 active:scale-[0.98] transition-all"
+              >
+                <CheckCircle className="w-4 h-4" />
+                {approveMut.isPending ? "กำลังบันทึก..." : "อนุมัติและปรับสต็อก"}
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  if (totalCounted === 0) { toast.error("กรุณานับอย่างน้อย 1 รายการ"); return; }
+                  submitMut.mutate();
+                }}
+                disabled={submitMut.isPending}
+                className="flex items-center gap-2 px-5 py-3 bg-[#1D4ED8] text-white text-sm font-bold rounded-2xl hover:bg-blue-700 disabled:opacity-50 active:scale-[0.98] transition-all"
+              >
+                <CheckCircle className="w-4 h-4" />
+                {submitMut.isPending ? "กำลังส่ง..." : "ส่งให้ Admin ตรวจสอบ"}
+              </button>
+            )}
           </div>
         </div>
       )}
