@@ -452,7 +452,7 @@ function StaffBorrowPage() {
                 </div>
               )}
             </motion.div>
-          ) : (
+          ) : tab === "return" ? (
             <motion.div key="return" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="space-y-3"
             >
