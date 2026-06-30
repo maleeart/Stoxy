@@ -11,8 +11,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { generateItemCode } from "@/lib/utils";
 import { getLocations, addLocation } from "@/services/locations.service";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
-const UNIT_OPTIONS = ["ชิ้น", "อัน", "ม้วน", "เมตร", "กล่อง", "ชุด", "แผ่น", "ขด", "โหล", "ถุง", "อื่นๆ"];
+const DEFAULT_UNITS = ["อัน", "ชุด", "ตัว", "ม้วน", "เส้น", "แผ่น", "กล่อง", "ถุง", "คู่", "ชิ้น", "ขวด"];
+
+async function getUnitOptions(): Promise<string[]> {
+  const snap = await getDoc(doc(db, "settings", "units"));
+  return snap.exists() ? (snap.data().items as string[]) : DEFAULT_UNITS;
+}
 
 const schema = z.object({
   name: z.string().min(2, "กรุณากรอกชื่ออุปกรณ์"),
@@ -61,12 +68,14 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
   const createItem = useCreateInventoryItem();
   const { data: items = [] } = useInventoryItems();
   const [locations, setLocations] = useState<string[]>([]);
+  const [unitOptions, setUnitOptions] = useState<string[]>(DEFAULT_UNITS);
   const [customLocation, setCustomLocation] = useState("");
   const [customLocationError, setCustomLocationError] = useState(false);
   const [customUnit, setCustomUnit] = useState("");
 
   useEffect(() => {
     getLocations().then(setLocations);
+    getUnitOptions().then(setUnitOptions);
   }, []);
 
   const {
@@ -266,7 +275,7 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
                         </label>
                         <select {...register("unit")} className="input-field">
                           <option value="">— ไม่ระบุ —</option>
-                          {UNIT_OPTIONS.map((u) => (
+                          {unitOptions.map((u) => (
                             <option key={u} value={u}>{u}</option>
                           ))}
                         </select>
