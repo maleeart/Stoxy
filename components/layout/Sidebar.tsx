@@ -50,6 +50,7 @@ const navItems: NavItem[] = [
   { label: "เบิกของ",     href: "/requisition",  icon: PackageOpen,     section: "ดำเนินการ", staffOnly: true },
   { label: "ยืม-คืน",    href: "/borrow",       icon: ArrowLeftRight,  section: "ดำเนินการ", staffOnly: true },
   // Workflow — admin only, some hidden from supervisor
+  { label: "เบิกของ",     href: "/requisition",  icon: PackageOpen,     section: "ดำเนินการ", adminOnly: true },
   { label: "จัดการคำขอ", href: "/operations",   icon: ClipboardCheck,  section: "ดำเนินการ", adminOnly: true },
   { label: "ต้องสั่งซื้อ",href: "/purchase",    icon: ShoppingCart,    section: "ดำเนินการ", adminOnly: true },
   { label: "เกินกำหนดคืน",href: "/return",     icon: Undo2,           section: "ดำเนินการ", adminOnly: true },
