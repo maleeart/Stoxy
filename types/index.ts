@@ -5,7 +5,7 @@
 import { Timestamp } from "firebase/firestore";
 
 // ── User & Auth ──────────────────────────────────────────────
-export type UserRole = "admin" | "manager" | "supervisor" | "staff" | "viewer";
+export type UserRole = "admin" | "manager" | "supervisor" | "staff" | "viewer" | "guest";
 
 export interface StoxyUser {
   uid: string;
