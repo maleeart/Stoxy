@@ -194,7 +194,8 @@ export type MovementType =
   | "purchase"
   | "maintenance_out"
   | "maintenance_in"
-  | "lost";
+  | "lost"
+  | "requisition";
 
 export interface StockMovement {
   id: string;
