@@ -269,8 +269,8 @@ export default function DashboardPage() {
   const pendingReqs = requisitions.filter((r) => r.status === "pending");
   const approvedReqsThisMonth = requisitions.filter((r) => {
     if (r.status !== "approved") return false;
-    const d = r.approvedAt?.toDate?.() ?? r.updatedAt?.toDate?.();
-    return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    const d = (r as any).approvedAt?.toDate?.() ?? (r as any).updatedAt?.toDate?.();
+    return d && d.getFullYear() === now.getFullYear();
   });
   const pendingAudits = auditSessions.filter((s) => s.status === "pending_approval");
   const overdueBorrows = borrows.filter(
@@ -400,7 +400,7 @@ export default function DashboardPage() {
             onClick={() => router.push("/borrow")}
           />
           <SummaryTile
-            label="ยอดเบิกแล้ว (เดือนนี้)"
+            label="ยอดเบิกแล้ว (ปีนี้)"
             value={statsLoading ? "—" : String(approvedReqsThisMonth.length)}
             icon={<CheckCircle className="w-4 h-4 text-green-500" />}
             bg="bg-green-50"

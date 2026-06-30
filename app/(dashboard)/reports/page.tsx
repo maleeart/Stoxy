@@ -1,21 +1,19 @@
 "use client";
 
 import { AppShell } from "@/components/layout/AppShell";
-import { useInventoryItems, useDashboardStats } from "@/hooks/useInventory";
+import { useInventoryItems } from "@/hooks/useInventory";
 import { useQuery } from "@tanstack/react-query";
 import { getBorrowRecords } from "@/services/borrow.service";
 import { getRecentMovements } from "@/services/inventory.service";
-import { getRequisitions } from "@/services/requisition.service";
 import {
   exportInventoryPDF, exportInventoryExcel,
   exportBorrowsPDF, exportBorrowsExcel,
   exportMovementsPDF, exportMovementsExcel,
 } from "@/lib/export";
-import { FileText, FileSpreadsheet, Package, ArrowLeftRight, Activity, Wrench, AlertTriangle, TrendingDown } from "lucide-react";
+import { FileText, FileSpreadsheet, Package, ArrowLeftRight, Activity } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function ReportsPage() {
-  const { data: stats } = useDashboardStats();
   const { data: items = [] } = useInventoryItems();
   const { data: borrows = [] } = useQuery({
     queryKey: ["borrow_records"],
@@ -25,47 +23,6 @@ export default function ReportsPage() {
     queryKey: ["movements_all"],
     queryFn: () => getRecentMovements(500),
   });
-  const { data: requisitions = [] } = useQuery({
-    queryKey: ["requisitions"],
-    queryFn: () => getRequisitions(),
-  });
-  const now = new Date();
-  const approvedReqsThisMonth = requisitions.filter((r) => {
-    if (r.status !== "approved") return false;
-    const d = (r as any).approvedAt?.toDate?.() ?? (r as any).updatedAt?.toDate?.();
-    return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-  });
-
-  const statCards = stats ? [
-    {
-      label: "กำลังถูกยืม",
-      value: stats.borrowedQuantity,
-      icon: <ArrowLeftRight className="w-4 h-4" />,
-      color: "text-blue-600",
-      bg: "bg-blue-50 dark:bg-blue-900/20",
-    },
-    {
-      label: "สต็อกต่ำ",
-      value: stats.lowStockCount,
-      icon: <TrendingDown className="w-4 h-4" />,
-      color: "text-amber-600",
-      bg: "bg-amber-50 dark:bg-amber-900/20",
-    },
-    {
-      label: "ซ่อม / สอบเทียบ",
-      value: stats.underRepairQuantity ?? 0,
-      icon: <Wrench className="w-4 h-4" />,
-      color: "text-purple-600",
-      bg: "bg-purple-50 dark:bg-purple-900/20",
-    },
-    {
-      label: "ยอดเบิกแล้ว (เดือนนี้)",
-      value: approvedReqsThisMonth.length,
-      icon: <AlertTriangle className="w-4 h-4" />,
-      color: "text-rose-600",
-      bg: "bg-rose-50 dark:bg-rose-900/20",
-    },
-  ] : [];
 
   const reports = [
     {
@@ -102,21 +59,6 @@ export default function ReportsPage() {
 
   return (
     <AppShell title="รายงาน">
-      {/* Summary Stats */}
-      {stats && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-          {statCards.map((s, i) => (
-            <div key={i} className={`rounded-2xl border border-gray-100 dark:border-gray-800 p-4 ${s.bg}`}>
-              <div className={`flex items-center gap-2 mb-2 ${s.color}`}>
-                {s.icon}
-                <span className="text-xs font-medium">{s.label}</span>
-              </div>
-              <p className={`text-3xl font-bold ${s.color}`}>{s.value}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
       <div className="mb-5">
         <h2 className="text-lg font-bold text-gray-900 dark:text-white">ส่งออกรายงาน</h2>
         <p className="text-sm text-gray-500">เลือกรูปแบบ PDF หรือ Excel</p>
