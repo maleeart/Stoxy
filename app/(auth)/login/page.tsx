@@ -73,10 +73,16 @@ export default function LoginPage() {
           <div className="flex items-center justify-center w-20 h-20 bg-yellow-400 rounded-3xl mx-auto mb-6 shadow-2xl shadow-yellow-400/30">
             <Zap className="w-10 h-10 text-[#1D4ED8]" />
           </div>
-          <h1 className="text-5xl font-bold text-white mb-2">
-            sto<span className="text-yellow-400">xy</span>
+          <h1 className="text-5xl font-bold text-white mb-3 tracking-tight" style={{ fontFamily: "var(--font-geist-sans, inherit)" }}>
+            STOXY
           </h1>
-          <p className="text-blue-200 text-lg mb-10">ระบบบริหารคลังไฟฟ้า</p>
+          <p className="text-blue-200 text-sm leading-relaxed mb-2">
+            Smart Tracking, Organization,<br />
+            e<span className="text-yellow-400 font-semibold">X</span>change &amp; Efficiency
+          </p>
+          <p className="text-yellow-400 font-semibold text-base mb-10 italic">
+            Track Smarter. Work Faster.
+          </p>
 
           <div className="grid grid-cols-2 gap-4 max-w-xs mx-auto">
             {[
@@ -106,14 +112,14 @@ export default function LoginPage() {
           className="w-full max-w-md"
         >
           {/* Mobile logo */}
-          <div className="flex items-center gap-3 mb-8 lg:hidden">
-            <div className="w-10 h-10 bg-[#1D4ED8] rounded-xl flex items-center justify-center">
-              <Zap className="w-6 h-6 text-yellow-400" />
+          <div className="flex flex-col mb-8 lg:hidden">
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-10 h-10 bg-[#1D4ED8] rounded-xl flex items-center justify-center">
+                <Zap className="w-6 h-6 text-yellow-400" />
+              </div>
+              <span className="text-2xl font-bold text-[#1D4ED8] tracking-tight" style={{ fontFamily: "var(--font-geist-sans, inherit)" }}>STOXY</span>
             </div>
-            <div className="flex items-baseline">
-              <span className="text-2xl font-bold text-[#1D4ED8]">sto</span>
-              <span className="text-2xl font-bold text-yellow-500">xy</span>
-            </div>
+            <p className="text-xs text-gray-400 pl-1">Track Smarter. Work Faster.</p>
           </div>
 
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
@@ -159,7 +165,7 @@ export default function LoginPage() {
           </button>
 
           <p className="text-center text-xs text-gray-400 mt-6">
-            Stoxy © {new Date().getFullYear()} — ระบบคลังไฟฟ้าสำหรับมืออาชีพ
+            STOXY © {new Date().getFullYear()} — Track Smarter. Work Faster.
           </p>
 
           {/* Guest Modal */}

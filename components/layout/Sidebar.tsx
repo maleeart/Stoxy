@@ -95,10 +95,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       <div className="flex items-center gap-3 px-4 py-5 border-b border-gray-100">
         <img src="/logo.png" alt="Stoxy" className="w-9 h-9 rounded-xl shrink-0 object-cover" />
         {!collapsed && (
-          <div className="flex items-baseline gap-0.5 overflow-hidden">
-            <span className="text-xl font-bold tracking-tight text-gray-900">sto</span>
-            <span className="text-xl font-bold tracking-tight text-[#1D4ED8]">xy</span>
-          </div>
+          <span className="text-xl font-bold tracking-tight text-gray-900 overflow-hidden" style={{ fontFamily: "var(--font-geist-sans, inherit)" }}>STOXY</span>
         )}
       </div>
 

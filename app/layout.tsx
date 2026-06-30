@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Sarabun } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
 import "./globals.css";
 import { Providers } from "./providers";
 
@@ -12,15 +13,15 @@ const sarabun = Sarabun({
 
 export const metadata: Metadata = {
   title: {
-    default: "Stoxy - ระบบคลังไฟฟ้า",
-    template: "%s | Stoxy",
+    default: "STOXY - Track Smarter. Work Faster.",
+    template: "%s | STOXY",
   },
-  description: "ระบบบริหารจัดการคลังอุปกรณ์ไฟฟ้า สำหรับทีมช่างและวิศวกร",
+  description: "Smart Tracking, Organization, eXchange & Efficiency",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Stoxy",
+    title: "STOXY",
   },
   keywords: ["electrical warehouse", "inventory", "คลังไฟฟ้า", "สต็อก"],
 };
@@ -38,7 +39,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="th" suppressHydrationWarning>
-      <body className={`${sarabun.variable} font-sans antialiased`}>
+      <body className={`${sarabun.variable} ${GeistSans.variable} font-sans antialiased`}>
         <Providers>{children}</Providers>
       </body>
     </html>
