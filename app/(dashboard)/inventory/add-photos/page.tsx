@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { arrayUnion, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { uploadImages } from "@/lib/upload";
+import { compressImages } from "@/lib/compress";
 import { useInventoryItems } from "@/hooks/useInventory";
 import { AppShell } from "@/components/layout/AppShell";
 import { ArrowLeft, Camera, CheckCircle, ImagePlus, Loader2, Package, Trash2, X } from "lucide-react";
@@ -49,7 +49,7 @@ export default function AddPhotosPage() {
     if (uploading[item.id]) return; // guard double-submit
     setUploading((prev) => ({ ...prev, [item.id]: true }));
     try {
-      const urls = await uploadImages(files, `inventory/${item.id}`);
+      const urls = await compressImages(files);
       await updateDoc(doc(db, "inventory_items", item.id), {
         images: arrayUnion(...urls),
       });
