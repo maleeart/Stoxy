@@ -144,7 +144,7 @@ export function exportBorrowsExcel(records: BorrowRecord[]) {
     r.itemCode, r.itemName, r.borrowerName, r.borrowerDepartment ?? "",
     r.borrowDate?.toDate().toLocaleDateString("th-TH") ?? "",
     r.expectedReturnDate?.toDate().toLocaleDateString("th-TH") ?? "",
-    r.returnDate?.toDate().toLocaleDateString("th-TH") ?? "",
+    r.actualReturnDate?.toDate().toLocaleDateString("th-TH") ?? "",
     borrowStatusLabel[r.status] ?? r.status,
   ]);
   const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
