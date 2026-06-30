@@ -1,21 +1,37 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
-import { useInventoryItem } from "@/hooks/useInventory";
+import { useInventoryItem, useDeleteInventoryItem } from "@/hooks/useInventory";
+import { useAuth } from "@/hooks/useAuth";
 import { statusConfig, formatDate, formatCurrency } from "@/lib/utils";
 import {
   ArrowLeft, Package, MapPin, Tag, Calendar, Wrench,
-  Gauge, QrCode, FileText, Edit, AlertTriangle,
+  Gauge, FileText, Edit, AlertTriangle, Trash2,
 } from "lucide-react";
 import { exportInventoryPDF } from "@/lib/export";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 
 export default function ItemDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const { stoxyUser } = useAuth();
   const { data: item, isLoading } = useInventoryItem(id);
+  const deleteMut = useDeleteInventoryItem();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
+
+  async function handleDelete() {
+    try {
+      await deleteMut.mutateAsync(id);
+      toast.success("ลบอุปกรณ์แล้ว");
+      router.push("/inventory");
+    } catch {
+      toast.error("ลบไม่สำเร็จ กรุณาลองใหม่");
+    }
+  }
 
   if (isLoading) {
     return (
@@ -230,24 +246,68 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
             </motion.div>
           )}
 
-          {/* QR Code */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4"
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <QrCode className="w-4 h-4 text-gray-500" />
-              <span className="text-sm font-semibold text-gray-900 dark:text-white">QR Code</span>
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center">
-                <QrCode className="w-12 h-12 text-gray-400" />
-              </div>
-              <p className="text-xs text-gray-400 text-center">{item.qrCode ?? item.code}</p>
-            </div>
-          </motion.div>
+          {/* Delete — admin/manager only */}
+          {isAdmin && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-white dark:bg-gray-900 rounded-2xl border border-red-100 dark:border-red-900/40 p-4"
+            >
+              <p className="text-xs text-gray-500 mb-3">ลบรายการนี้ออกจากระบบถาวร</p>
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-red-600 bg-red-50 dark:bg-red-950/30 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+                ลบอุปกรณ์
+              </button>
+            </motion.div>
+          )}
+
+          {/* Confirm delete modal */}
+          <AnimatePresence>
+            {confirmDelete && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+                onClick={() => setConfirmDelete(false)}
+              >
+                <motion.div
+                  initial={{ scale: 0.95, y: 12 }}
+                  animate={{ scale: 1, y: 0 }}
+                  exit={{ scale: 0.95, y: 12 }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-6 w-full max-w-sm"
+                >
+                  <div className="w-12 h-12 bg-red-100 dark:bg-red-950/40 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Trash2 className="w-6 h-6 text-red-600" />
+                  </div>
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white text-center mb-1">ยืนยันการลบ</h3>
+                  <p className="text-sm text-gray-500 text-center mb-6">
+                    ลบ <span className="font-medium text-gray-900 dark:text-white">{item.name}</span> ออกจากระบบถาวร ไม่สามารถกู้คืนได้
+                  </p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setConfirmDelete(false)}
+                      className="flex-1 px-4 py-2.5 text-sm font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-200 transition-colors"
+                    >
+                      ยกเลิก
+                    </button>
+                    <button
+                      onClick={handleDelete}
+                      disabled={deleteMut.isPending}
+                      className="flex-1 px-4 py-2.5 text-sm font-medium bg-red-600 text-white rounded-xl hover:bg-red-700 disabled:opacity-60 transition-colors"
+                    >
+                      {deleteMut.isPending ? "กำลังลบ..." : "ลบถาวร"}
+                    </button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </AppShell>

@@ -172,7 +172,7 @@ export async function getDashboardStats() {
     availableQuantity: items.reduce((s, i) => s + i.quantityAvailable, 0),
     borrowedQuantity: items.reduce((s, i) => s + i.quantityBorrowed, 0),
     underRepairQuantity: items.reduce((s, i) => s + i.quantityUnderRepair, 0),
-    lowStockCount: items.filter((i) => i.quantityAvailable <= i.minStockLevel).length,
+    lowStockCount: items.filter((i) => (i.minStockLevel ?? 0) > 0 && i.quantityAvailable <= i.minStockLevel!).length,
     calibrationDueCount: items.filter((i) => {
       if (!i.calibration?.nextDate) return false;
       const d = i.calibration.nextDate.toDate();
@@ -199,7 +199,7 @@ export function subscribeToLowStock(
   return onSnapshot(q, (snap) => {
     const items = snap.docs
       .map((d) => ({ id: d.id, ...d.data() } as InventoryItem))
-      .filter((i) => i.quantityAvailable <= i.minStockLevel);
+      .filter((i) => (i.minStockLevel ?? 0) > 0 && i.quantityAvailable <= i.minStockLevel!);
     callback(items);
   });
 }
