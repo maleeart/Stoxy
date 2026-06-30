@@ -22,10 +22,12 @@ async function createDocWithThaiFont(orientation: "portrait" | "landscape" = "po
 // ── PDF ───────────────────────────────────────────────────────
 export async function exportInventoryPDF(items: InventoryItem[]) {
   const doc = await createDocWithThaiFont("landscape");
+
+  // ── Page 1+: Summary table ────────────────────────────────
   doc.setFontSize(16);
   doc.text("รายงานคลังอุปกรณ์ไฟฟ้า - Stoxy", 14, 15);
   doc.setFontSize(10);
-  doc.text(`วันที่พิมพ์: ${new Date().toLocaleDateString("th-TH")}`, 14, 22);
+  doc.text(`วันที่พิมพ์: ${new Date().toLocaleDateString("th-TH")}  |  รายการทั้งหมด: ${items.length}`, 14, 22);
 
   autoTable(doc, {
     startY: 28,
@@ -43,6 +45,69 @@ export async function exportInventoryPDF(items: InventoryItem[]) {
     styles: { font: "Sarabun", fontSize: 10 },
     headStyles: { fillColor: [13, 33, 55], font: "Sarabun", fontStyle: "normal", textColor: 255 },
   });
+
+  // ── Photo pages: 3×3 grid, only items with images ─────────
+  const withPhotos = items.filter((i) => (i.images ?? []).length > 0);
+  if (withPhotos.length > 0) {
+    // landscape: 297 × 210 mm
+    const cols = 3;
+    const rows = 3;
+    const perPage = cols * rows;
+    const marginX = 14;
+    const marginY = 20;
+    const pageW = 297;
+    const pageH = 210;
+    const cellW = (pageW - marginX * 2) / cols;   // ~89 mm
+    const imgH = 48;
+    const labelH = 12;
+    const cellH = imgH + labelH + 4;
+
+    for (let p = 0; p < Math.ceil(withPhotos.length / perPage); p++) {
+      doc.addPage("landscape");
+      doc.setFont("Sarabun");
+      doc.setFontSize(13);
+      doc.text("รูปภาพอุปกรณ์", marginX, 13);
+      doc.setFontSize(9);
+      doc.text(
+        `หน้า ${p + 1} / ${Math.ceil(withPhotos.length / perPage)}  |  แสดงอุปกรณ์ที่มีรูป ${withPhotos.length} รายการ`,
+        marginX, 18,
+      );
+
+      const slice = withPhotos.slice(p * perPage, (p + 1) * perPage);
+      slice.forEach((item, idx) => {
+        const col = idx % cols;
+        const row = Math.floor(idx / cols);
+        const x = marginX + col * cellW;
+        const y = marginY + row * cellH;
+        const imgUrl = (item.images ?? [])[0];
+
+        // draw border
+        doc.setDrawColor(220, 220, 220);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(x, y, cellW - 3, cellH, 2, 2);
+
+        // draw image
+        try {
+          // base64 data URL works directly; http URLs need fetch below
+          if (imgUrl.startsWith("data:")) {
+            const fmt = imgUrl.startsWith("data:image/png") ? "PNG" : "JPEG";
+            doc.addImage(imgUrl, fmt, x + 1.5, y + 1.5, cellW - 6, imgH - 3);
+          }
+        } catch { /* skip broken image */ }
+
+        // label: code + name (truncate if long)
+        const labelY = y + imgH + 4;
+        doc.setFontSize(8);
+        doc.setTextColor(80, 80, 80);
+        doc.text(item.code, x + 2, labelY);
+        doc.setFontSize(9);
+        doc.setTextColor(20, 20, 20);
+        const name = item.name.length > 28 ? item.name.slice(0, 26) + "…" : item.name;
+        doc.text(name, x + 2, labelY + 5);
+        doc.setTextColor(0, 0, 0);
+      });
+    }
+  }
 
   doc.save(`stoxy-inventory-${dateStr()}.pdf`);
 }
