@@ -291,6 +291,8 @@ function AdminRequisitionPage() {
   const [rejectId, setRejectId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [itemId, setItemId] = useState("");
+  const [itemSearch, setItemSearch] = useState("");
+  const [showItemList, setShowItemList] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [purpose, setPurpose] = useState("");
 
@@ -315,7 +317,7 @@ function AdminRequisitionPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["requisitions"] });
       toast.success("ส่งคำขอเบิกสำเร็จ");
-      setShowForm(false); setItemId(""); setQuantity(1); setPurpose("");
+      setShowForm(false); setItemId(""); setItemSearch(""); setShowItemList(false); setQuantity(1); setPurpose("");
     },
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
   });
@@ -374,16 +376,50 @@ function AdminRequisitionPage() {
                 </button>
               </div>
               <div className="space-y-4">
-                <div>
+                <div className="relative">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">รายการที่ต้องการเบิก</label>
-                  <select value={itemId} onChange={e => setItemId(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                  >
-                    <option value="">-- เลือกรายการ --</option>
-                    {items.filter(i => i.quantityAvailable > 0).map(i => (
-                      <option key={i.id} value={i.id}>[{i.code}] {i.name} (คงเหลือ {i.quantityAvailable})</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                    <input
+                      value={selected ? `[${selected.code}] ${selected.name}` : itemSearch}
+                      onChange={e => { setItemSearch(e.target.value); setItemId(""); setShowItemList(true); }}
+                      onFocus={() => { if (!selected) setShowItemList(true); }}
+                      placeholder="ค้นหาชื่อหรือรหัสวัสดุ..."
+                      className="w-full pl-8 pr-8 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    />
+                    {(itemId || itemSearch) && (
+                      <button type="button" onClick={() => { setItemId(""); setItemSearch(""); setShowItemList(false); }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-gray-100"
+                      >
+                        <X className="w-3.5 h-3.5 text-gray-400" />
+                      </button>
+                    )}
+                  </div>
+                  {showItemList && !selected && (
+                    <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                      {items.filter(i => i.quantityAvailable > 0 && WITHDRAWABLE.has(i.categoryId) && (
+                        !itemSearch ||
+                        i.name.toLowerCase().includes(itemSearch.toLowerCase()) ||
+                        i.code.toLowerCase().includes(itemSearch.toLowerCase())
+                      )).slice(0, 20).map(i => (
+                        <button key={i.id} type="button"
+                          onClick={() => { setItemId(i.id); setItemSearch(""); setShowItemList(false); }}
+                          className="w-full text-left px-3 py-2.5 text-sm hover:bg-blue-50 dark:hover:bg-gray-800 transition-colors border-b border-gray-50 dark:border-gray-800 last:border-0"
+                        >
+                          <span className="font-mono text-xs text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded mr-2">{i.code}</span>
+                          {i.name}
+                          <span className="ml-2 text-xs text-gray-400">คงเหลือ {i.quantityAvailable}</span>
+                        </button>
+                      ))}
+                      {items.filter(i => i.quantityAvailable > 0 && WITHDRAWABLE.has(i.categoryId) && (
+                        !itemSearch ||
+                        i.name.toLowerCase().includes(itemSearch.toLowerCase()) ||
+                        i.code.toLowerCase().includes(itemSearch.toLowerCase())
+                      )).length === 0 && (
+                        <p className="px-3 py-4 text-sm text-center text-gray-400">ไม่พบวัสดุ</p>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">จำนวน</label>

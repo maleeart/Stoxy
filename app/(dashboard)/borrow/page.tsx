@@ -690,7 +690,7 @@ function AdminBorrowPage() {
                   </div>
                   {showItemList && !selected && (
                     <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg max-h-48 overflow-y-auto">
-                      {items.filter((i) => i.quantityAvailable > 0 && (
+                      {items.filter((i) => i.quantityAvailable > 0 && BORROWABLE.has(i.categoryId) && (
                         !itemSearch ||
                         i.name.toLowerCase().includes(itemSearch.toLowerCase()) ||
                         i.code.toLowerCase().includes(itemSearch.toLowerCase())
@@ -704,7 +704,7 @@ function AdminBorrowPage() {
                           <span className="ml-2 text-xs text-gray-400">คงเหลือ {i.quantityAvailable}</span>
                         </button>
                       ))}
-                      {items.filter((i) => i.quantityAvailable > 0 && (
+                      {items.filter((i) => i.quantityAvailable > 0 && BORROWABLE.has(i.categoryId) && (
                         !itemSearch ||
                         i.name.toLowerCase().includes(itemSearch.toLowerCase()) ||
                         i.code.toLowerCase().includes(itemSearch.toLowerCase())
