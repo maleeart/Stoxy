@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
+import { StaffShell } from "@/components/layout/StaffShell";
 import { MobileHeader } from "@/components/layout/MobileHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { getRecentMovements } from "@/services/inventory.service";
@@ -106,12 +107,12 @@ export default function MovementsPage() {
   // Staff: mobile-first layout with MobileHeader + padded content
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC]">
+      <StaffShell>
         <MobileHeader title="ประวัติการเคลื่อนไหว" />
         <div className="px-4 py-4">
           <MovementsList />
         </div>
-      </div>
+      </StaffShell>
     );
   }
 
