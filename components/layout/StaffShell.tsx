@@ -26,10 +26,9 @@ const VIEWER_RIGHT = [
   { label: "ประวัติ", icon: History, href: "/movements" },
 ];
 
-// Guest: ยืม-คืน + เบิก
+// Guest เห็นแค่ยืม-คืน
 const GUEST_LEFT = [
   { label: "ยืม-คืน", icon: ArrowLeftRight, href: "/borrow" },
-  { label: "เบิก", icon: PackageOpen, href: "/requisition" },
 ];
 const GUEST_RIGHT: typeof STAFF_RIGHT = [];
 
