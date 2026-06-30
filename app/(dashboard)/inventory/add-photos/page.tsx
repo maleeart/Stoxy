@@ -14,7 +14,6 @@ import type { InventoryItem } from "@/types";
 
 export default function AddPhotosPage() {
   const router = useRouter();
-  const { stoxyUser } = useAuth();
   const { data: items = [], isLoading, refetch } = useInventoryItems();
 
   // uploading: itemId → true while in-flight
