@@ -4,11 +4,7 @@ import { useState, useMemo } from "react";
 import {
   Plus,
   Search,
-  Filter,
   Download,
-  QrCode,
-  Printer,
-  MoreHorizontal,
   Eye,
   Edit,
   Trash2,
@@ -30,7 +26,9 @@ import {
 import { AppShell } from "@/components/layout/AppShell";
 import { MobileHeader } from "@/components/layout/MobileHeader";
 import { useAuth } from "@/hooks/useAuth";
-import { useInventoryItems } from "@/hooks/useInventory";
+import { useInventoryItems, useDeleteInventoryItem } from "@/hooks/useInventory";
+import { toast } from "sonner";
+import { AnimatePresence } from "framer-motion";
 import { statusConfig, formatDate, cn } from "@/lib/utils";
 import type { InventoryItem, ItemStatus } from "@/types";
 import { motion } from "framer-motion";
@@ -65,6 +63,8 @@ export default function InventoryPage() {
   const [showAddDialog, setShowAddDialog] = useState(false);
 
   const { data: items = [], isLoading } = useInventoryItems();
+  const deleteMut = useDeleteInventoryItem();
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   const filtered = useMemo(() => {
     let result = items;
@@ -80,6 +80,17 @@ export default function InventoryPage() {
         i.brand?.toLowerCase().includes(lower)
     );
   }, [items, search, statusFilter, categoryFilter]);
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    try {
+      await deleteMut.mutateAsync(deleteTarget.id);
+      toast.success("ลบอุปกรณ์แล้ว");
+      setDeleteTarget(null);
+    } catch {
+      toast.error("ลบไม่สำเร็จ กรุณาลองใหม่");
+    }
+  }
 
   const columns = useMemo<ColumnDef<InventoryItem>[]>(
     () => [
@@ -210,14 +221,21 @@ export default function InventoryPage() {
                 <Eye className="w-3.5 h-3.5 text-gray-500" />
               </button>
             </Link>
-            <Link href={`/inventory/${row.original.id}/edit`}>
-              <button className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                <Edit className="w-3.5 h-3.5 text-gray-500" />
-              </button>
-            </Link>
-            <button className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-              <QrCode className="w-3.5 h-3.5 text-gray-500" />
-            </button>
+            {isAdmin && (
+              <>
+                <Link href={`/inventory/${row.original.id}/edit`}>
+                  <button className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <Edit className="w-3.5 h-3.5 text-gray-500" />
+                  </button>
+                </Link>
+                <button
+                  onClick={() => setDeleteTarget({ id: row.original.id, name: row.original.name })}
+                  className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                </button>
+              </>
+            )}
           </div>
         ),
         size: 100,
@@ -480,6 +498,50 @@ export default function InventoryPage() {
       </div>
 
       <AddItemDialog open={showAddDialog} onClose={() => setShowAddDialog(false)} />
+
+      {/* Delete confirm */}
+      <AnimatePresence>
+        {deleteTarget && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            onClick={() => setDeleteTarget(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 12 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 12 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-6 w-full max-w-sm"
+            >
+              <div className="w-12 h-12 bg-red-100 dark:bg-red-950/40 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white text-center mb-1">ยืนยันการลบ</h3>
+              <p className="text-sm text-gray-500 text-center mb-6">
+                ลบ <span className="font-medium text-gray-900 dark:text-white">{deleteTarget.name}</span> ออกจากระบบถาวร ไม่สามารถกู้คืนได้
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setDeleteTarget(null)}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-200 transition-colors"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleteMut.isPending}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium bg-red-600 text-white rounded-xl hover:bg-red-700 disabled:opacity-60 transition-colors"
+                >
+                  {deleteMut.isPending ? "กำลังลบ..." : "ลบถาวร"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       </div>
     </AppShell>
   );
