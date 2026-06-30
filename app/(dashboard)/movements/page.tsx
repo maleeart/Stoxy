@@ -23,6 +23,7 @@ const typeLabel: Record<MovementType, string> = {
   maintenance_out: "ส่งซ่อม",
   maintenance_in: "รับคืนซ่อม",
   lost: "สูญหาย",
+  requisition: "เบิก",
 };
 
 const typeBadge: Record<MovementType, string> = {
@@ -36,6 +37,7 @@ const typeBadge: Record<MovementType, string> = {
   maintenance_out: "bg-red-100 text-red-700",
   maintenance_in: "bg-purple-100 text-purple-700",
   lost: "bg-red-100 text-red-700",
+  requisition: "bg-amber-100 text-amber-700",
 };
 
 function MovementsList() {
