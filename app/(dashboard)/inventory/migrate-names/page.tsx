@@ -22,7 +22,7 @@ export default function MigrateNamesPage() {
     setLog([]);
     try {
       // 1. Build uid → displayName map
-      const usersSnap = await getDocs(collection(db, "stoxy_users"));
+      const usersSnap = await getDocs(collection(db, "users"));
       const nameMap: Record<string, string> = {};
       usersSnap.docs.forEach((d) => {
         const u = d.data();
