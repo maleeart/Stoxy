@@ -15,7 +15,7 @@ const STAFF_LEFT = [
 ];
 const STAFF_RIGHT = [
   { label: "คลัง", icon: Package, href: "/inventory" },
-  { label: "ประวัติ", icon: History, href: "/movements" },
+  { label: "ประวัติ", icon: History, href: "/history" },
 ];
 
 // Viewer: ดูได้อย่างเดียว ไม่มีสร้างคำขอ
@@ -23,7 +23,7 @@ const VIEWER_LEFT = [
   { label: "คลัง", icon: Package, href: "/inventory" },
 ];
 const VIEWER_RIGHT = [
-  { label: "ประวัติ", icon: History, href: "/movements" },
+  { label: "ประวัติ", icon: History, href: "/history" },
 ];
 
 // Guest เห็นแค่ยืม-คืน
