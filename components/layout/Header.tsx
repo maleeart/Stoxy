@@ -24,7 +24,8 @@ export function Header({ title, onMenuClick }: HeaderProps) {
   function handleRefresh() {
     setSpinning(true);
     qc.invalidateQueries();
-    setTimeout(() => setSpinning(false), 800);
+    router.refresh();
+    setTimeout(() => setSpinning(false), 1000);
   }
 
   return (
