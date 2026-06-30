@@ -1,6 +1,7 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { ArrowLeftRight, PackageOpen, Package, History, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,7 +19,6 @@ const STAFF_RIGHT = [
   { label: "ประวัติ", icon: History, href: "/history" },
 ];
 
-// Viewer: ดูได้อย่างเดียว ไม่มีสร้างคำขอ
 const VIEWER_LEFT = [
   { label: "คลัง", icon: Package, href: "/inventory" },
 ];
@@ -26,7 +26,6 @@ const VIEWER_RIGHT = [
   { label: "ประวัติ", icon: History, href: "/history" },
 ];
 
-// Guest เห็นแค่ยืม-คืน
 const GUEST_LEFT = [
   { label: "ยืม-คืน", icon: ArrowLeftRight, href: "/borrow" },
 ];
@@ -34,7 +33,6 @@ const GUEST_RIGHT: typeof STAFF_RIGHT = [];
 
 export function StaffShell({ children }: StaffShellProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const { stoxyUser } = useAuth();
   const role = stoxyUser?.role as string;
   const isGuest = role === "guest";
@@ -44,9 +42,7 @@ export function StaffShell({ children }: StaffShellProps) {
   const sideItemsRight = isGuest ? GUEST_RIGHT : isViewer ? VIEWER_RIGHT : STAFF_RIGHT;
 
   const isActive = (href: string) =>
-    href === "/dashboard"
-      ? pathname === "/dashboard"
-      : pathname.startsWith(href);
+    href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(href);
 
   const homeActive = pathname === "/dashboard";
 
@@ -59,20 +55,18 @@ export function StaffShell({ children }: StaffShellProps) {
   }
 
   return (
-    // ใช้ flex column แทน fixed nav — ป้องกัน nav หายเพราะ framer-motion stacking context
     <div className="flex flex-col h-[100dvh] bg-[#F8FAFC]">
-      <main className="flex-1 overflow-y-auto min-h-0">
-        {children}
-      </main>
+      <main className="flex-1 overflow-y-auto min-h-0">{children}</main>
 
       <nav className="shrink-0 bg-white border-t border-gray-100 safe-area-bottom z-50">
         <div className="flex items-end h-16">
           {sideItems.map((item) => {
             const active = isActive(item.href);
             return (
-              <button
+              <Link
                 key={item.href}
-                onClick={() => router.push(item.href)}
+                href={item.href}
+                prefetch
                 className={cn(
                   "flex-1 flex flex-col items-center justify-center gap-1 h-full transition-colors",
                   active ? "text-[#1D4ED8]" : "text-gray-400"
@@ -80,15 +74,12 @@ export function StaffShell({ children }: StaffShellProps) {
               >
                 <item.icon className={cn("w-5 h-5", active && "stroke-[2.5]")} />
                 <span className="text-[10px] font-semibold tracking-wide">{item.label}</span>
-              </button>
+              </Link>
             );
           })}
 
           {/* Center Home */}
-          <button
-            onClick={() => router.push("/dashboard")}
-            className="flex flex-col items-center justify-center gap-1 px-4 mb-2"
-          >
+          <Link href="/dashboard" prefetch className="flex flex-col items-center justify-center gap-1 px-4 mb-2">
             <div className={cn(
               "w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95",
               "bg-[#1D4ED8]",
@@ -100,14 +91,15 @@ export function StaffShell({ children }: StaffShellProps) {
               "text-[10px] font-semibold tracking-wide -mt-0.5",
               homeActive ? "text-[#1D4ED8]" : "text-gray-400"
             )}>หน้าหลัก</span>
-          </button>
+          </Link>
 
           {sideItemsRight.map((item) => {
             const active = isActive(item.href);
             return (
-              <button
+              <Link
                 key={item.href}
-                onClick={() => router.push(item.href)}
+                href={item.href}
+                prefetch
                 className={cn(
                   "flex-1 flex flex-col items-center justify-center gap-1 h-full transition-colors",
                   active ? "text-[#1D4ED8]" : "text-gray-400"
@@ -115,7 +107,7 @@ export function StaffShell({ children }: StaffShellProps) {
               >
                 <item.icon className={cn("w-5 h-5", active && "stroke-[2.5]")} />
                 <span className="text-[10px] font-semibold tracking-wide">{item.label}</span>
-              </button>
+              </Link>
             );
           })}
         </div>

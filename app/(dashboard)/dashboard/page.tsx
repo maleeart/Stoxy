@@ -22,6 +22,7 @@ import {
 } from "recharts";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useHasActiveAudit } from "@/hooks/useMyAuditSessions";
 import type { StockMovement } from "@/types";
 
@@ -171,22 +172,22 @@ function StaffHome() {
           <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">เมนูด่วน</p>
           <div className="grid grid-cols-2 gap-3">
             {quickItems.map((item, i) => (
-              <motion.button
-                key={item.href}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.06 }}
-                onClick={() => router.push(item.href)}
-                className={`${item.bg} ${item.text} rounded-3xl p-4 flex flex-col items-start gap-2 active:scale-95 transition-all text-left overflow-hidden w-full shadow-sm`}
-              >
-                <div className={`w-9 h-9 rounded-2xl ${item.iconBg} flex items-center justify-center shrink-0`}>
-                  <item.icon className="w-4 h-4" />
-                </div>
-                <div className="min-w-0 w-full">
-                  <p className="font-bold text-sm leading-tight truncate">{item.label}</p>
-                  <p className={`text-xs mt-0.5 leading-tight line-clamp-2 opacity-70`}>{item.desc}</p>
-                </div>
-              </motion.button>
+              <Link key={item.href} href={item.href} prefetch>
+                <motion.div
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.06 }}
+                  className={`${item.bg} ${item.text} rounded-3xl p-4 flex flex-col items-start gap-2 active:scale-95 transition-all overflow-hidden w-full shadow-sm`}
+                >
+                  <div className={`w-9 h-9 rounded-2xl ${item.iconBg} flex items-center justify-center shrink-0`}>
+                    <item.icon className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0 w-full">
+                    <p className="font-bold text-sm leading-tight truncate">{item.label}</p>
+                    <p className="text-xs mt-0.5 leading-tight line-clamp-2 opacity-70">{item.desc}</p>
+                  </div>
+                </motion.div>
+              </Link>
             ))}
           </div>
         </div>
