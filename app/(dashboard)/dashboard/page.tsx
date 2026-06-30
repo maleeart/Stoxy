@@ -83,10 +83,10 @@ function StaffHome() {
   };
 
   const quickItems = [
-    { label: "ยืม-คืน", desc: "ยืมและแจ้งคืนอุปกรณ์", icon: ArrowLeftRight, href: "/borrow", bg: "bg-[#1D4ED8]", text: "text-white" },
-    { label: "เบิกของ", desc: "เบิกอุปกรณ์สำหรับงาน", icon: PackageOpen, href: "/requisition", bg: "bg-[#FBBF24]", text: "text-[#1D4ED8]" },
-    { label: "คลัง", desc: "ดูรายการอุปกรณ์ทั้งหมด", icon: Package, href: "/inventory", bg: "bg-white", text: "text-[#1D4ED8]", border: true },
-    { label: "ประวัติ", desc: "ประวัติการใช้งาน", icon: History, href: "/history", bg: "bg-white", text: "text-[#1D4ED8]", border: true },
+    { label: "ยืม-คืน", desc: "ยืมและแจ้งคืนอุปกรณ์", icon: ArrowLeftRight, href: "/borrow", bg: "bg-[#1D4ED8]", text: "text-white", iconBg: "bg-white/20" },
+    { label: "เบิกของ", desc: "เบิกอุปกรณ์สำหรับงาน", icon: PackageOpen, href: "/requisition", bg: "bg-amber-400", text: "text-white", iconBg: "bg-white/20" },
+    { label: "คลัง", desc: "ดูรายการอุปกรณ์ทั้งหมด", icon: Package, href: "/inventory", bg: "bg-blue-50", text: "text-blue-700", iconBg: "bg-blue-100", border: true },
+    { label: "ประวัติ", desc: "ประวัติการใช้งาน", icon: History, href: "/history", bg: "bg-purple-50", text: "text-purple-700", iconBg: "bg-purple-100", border: true },
   ];
 
   const now = new Date();
@@ -133,37 +133,34 @@ function StaffHome() {
         </div>
 
         {(myBorrowed.length > 0 || totalPendingMine > 0) && (
-          <div className="flex gap-3 mt-4 pt-4 border-t border-gray-50">
+          <div className="flex gap-3 mt-4 pt-4 border-t border-gray-100">
             {myBorrowed.length > 0 && (
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center">
-                  <ArrowLeftRight className="w-4 h-4 text-[#1D4ED8]" />
+              <div className="flex items-center gap-2.5 bg-blue-50 rounded-2xl px-3 py-2">
+                <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center">
+                  <ArrowLeftRight className="w-4 h-4 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-gray-900 leading-none">{myBorrowed.length}</p>
-                  <p className="text-xs text-gray-400">ยืมอยู่</p>
+                  <p className="text-lg font-bold text-blue-700 leading-none">{myBorrowed.length}</p>
+                  <p className="text-xs text-blue-500">ยืมอยู่</p>
                 </div>
               </div>
             )}
             {totalPendingMine > 0 && (
-              <>
-                {myBorrowed.length > 0 && <div className="w-px bg-gray-100" />}
-                <button onClick={() => router.push("/history")}
-                  className="flex items-center gap-2 active:scale-95 transition-transform"
-                >
-                  <div className="w-8 h-8 rounded-xl bg-yellow-50 flex items-center justify-center">
-                    <Clock className="w-4 h-4 text-yellow-500" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-lg font-bold text-gray-900 leading-none">{totalPendingMine}</p>
-                    <p className="text-xs text-gray-400">
-                      รออนุมัติ
-                      {myPendingBorrow > 0 && myPendingReq > 0 && ` (ยืม ${myPendingBorrow} · เบิก ${myPendingReq})`}
-                    </p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-gray-300 ml-1" />
-                </button>
-              </>
+              <button onClick={() => router.push("/history")}
+                className="flex items-center gap-2.5 bg-amber-50 rounded-2xl px-3 py-2 active:scale-95 transition-transform"
+              >
+                <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center">
+                  <Clock className="w-4 h-4 text-amber-600" />
+                </div>
+                <div className="text-left">
+                  <p className="text-lg font-bold text-amber-700 leading-none">{totalPendingMine}</p>
+                  <p className="text-xs text-amber-600">
+                    รออนุมัติ
+                    {myPendingBorrow > 0 && myPendingReq > 0 && ` · ยืม ${myPendingBorrow} เบิก ${myPendingReq}`}
+                  </p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-amber-400" />
+              </button>
             )}
           </div>
         )}
@@ -180,14 +177,14 @@ function StaffHome() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.06 }}
                 onClick={() => router.push(item.href)}
-                className={`${item.bg} ${item.text} ${item.border ? "border border-gray-100 shadow-sm" : "shadow-md"} rounded-3xl p-4 flex flex-col items-start gap-2 active:scale-95 transition-all text-left overflow-hidden w-full`}
+                className={`${item.bg} ${item.text} ${item.border ? "border border-transparent shadow-sm" : "shadow-lg"} rounded-3xl p-4 flex flex-col items-start gap-2 active:scale-95 transition-all text-left overflow-hidden w-full`}
               >
-                <div className={`w-9 h-9 rounded-2xl ${item.border ? "bg-blue-50" : "bg-white/20"} flex items-center justify-center shrink-0`}>
+                <div className={`w-9 h-9 rounded-2xl ${item.iconBg} flex items-center justify-center shrink-0`}>
                   <item.icon className="w-4 h-4" />
                 </div>
                 <div className="min-w-0 w-full">
                   <p className="font-bold text-sm leading-tight truncate">{item.label}</p>
-                  <p className={`text-xs mt-0.5 leading-tight line-clamp-2 ${item.border ? "text-gray-400" : "opacity-60"}`}>{item.desc}</p>
+                  <p className={`text-xs mt-0.5 leading-tight line-clamp-2 opacity-70`}>{item.desc}</p>
                 </div>
               </motion.button>
             ))}
@@ -212,9 +209,9 @@ function StaffHome() {
                 return (
                   <motion.div key={b.id}
                     initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
-                    className="bg-white rounded-2xl p-4 flex items-center gap-3 shadow-sm border border-gray-50">
-                    <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center shrink-0">
-                      <Package className="w-6 h-6 text-gray-300" />
+                    className="bg-white rounded-2xl p-4 flex items-center gap-3 shadow-sm border border-blue-50">
+                    <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                      <Package className="w-6 h-6 text-blue-400" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm text-gray-900 truncate">{b.itemName}</p>
@@ -238,8 +235,8 @@ function StaffHome() {
 
         {myBorrowed.length === 0 && totalPendingMine === 0 && (
           <div className="text-center py-10">
-            <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-3">
-              <Package className="w-8 h-8 text-[#1D4ED8]" />
+            <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-3">
+              <Package className="w-8 h-8 text-blue-500" />
             </div>
             <p className="text-sm font-semibold text-gray-700">ไม่มีรายการยืมอยู่</p>
             <p className="text-xs text-gray-400 mt-1">กด ยืม-คืน เพื่อเริ่มต้นใช้งาน</p>
@@ -408,30 +405,30 @@ export default function DashboardPage() {
           <SummaryTile
             label="ถูกยืมออก"
             value={statsLoading ? "—" : String(stats?.borrowedQuantity ?? 0)}
-            icon={<ArrowLeftRight className="w-4 h-4 text-amber-500" />}
-            bg="bg-amber-50"
+            icon={<ArrowLeftRight className="w-4 h-4 text-amber-600" />}
+            bg="bg-amber-100"
             onClick={() => router.push("/borrow")}
           />
           <SummaryTile
             label="ยอดเบิกแล้ว"
             value={statsLoading ? "—" : String(approvedReqsThisMonth.length)}
-            icon={<CheckCircle className="w-4 h-4 text-green-500" />}
-            bg="bg-green-50"
+            icon={<CheckCircle className="w-4 h-4 text-emerald-600" />}
+            bg="bg-emerald-100"
             onClick={() => router.push("/requisition")}
           />
           <SummaryTile
             label="เกินกำหนดคืน"
             value={String(overdueBorrows.length)}
-            icon={<Clock className="w-4 h-4 text-orange-500" />}
-            bg="bg-orange-50"
+            icon={<Clock className="w-4 h-4 text-orange-600" />}
+            bg="bg-orange-100"
             urgent={overdueBorrows.length > 0}
             onClick={() => router.push("/operations")}
           />
           <SummaryTile
             label="ต้องสั่งซื้อ"
             value={String(lowStockItems.length)}
-            icon={<AlertTriangle className="w-4 h-4 text-rose-500" />}
-            bg="bg-rose-50"
+            icon={<AlertTriangle className="w-4 h-4 text-rose-600" />}
+            bg="bg-rose-100"
             urgent={lowStockItems.length > 0}
             onClick={() => router.push("/purchase")}
           />
@@ -441,7 +438,7 @@ export default function DashboardPage() {
       {/* ── Chart + Activity ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Chart */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-5">
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-blue-100 p-5">
           <div className="mb-4 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-[#1D4ED8]" />
             <div>
@@ -466,7 +463,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent activity */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <div className="bg-white rounded-2xl border border-amber-100 p-5">
           <div className="flex items-center gap-2 mb-4">
             <Activity className="w-4 h-4 text-amber-500" />
             <h3 className="text-sm font-semibold text-gray-900">กิจกรรมล่าสุด</h3>
@@ -548,14 +545,14 @@ function SummaryTile({
   return (
     <button
       onClick={onClick}
-      className={`bg-white border rounded-2xl p-3.5 flex flex-col gap-2 active:scale-95 transition-all text-left w-full shadow-sm hover:border-gray-200 ${urgent && value !== "0" ? "border-red-100" : "border-gray-100"}`}
+      className={`${bg} rounded-2xl p-3.5 flex flex-col gap-2 active:scale-95 transition-all text-left w-full shadow-sm border ${urgent && value !== "0" ? "border-red-200" : "border-transparent"}`}
     >
-      <div className={`w-8 h-8 rounded-xl ${bg} flex items-center justify-center`}>
+      <div className="w-8 h-8 rounded-xl bg-white/60 flex items-center justify-center">
         {icon}
       </div>
       <div>
-        <p className="text-xl font-bold text-gray-900 leading-none">{value}</p>
-        <p className="text-[11px] text-gray-400 mt-0.5 leading-tight">{label}</p>
+        <p className={`text-xl font-bold leading-none ${urgent && value !== "0" ? "text-red-600" : "text-gray-900"}`}>{value}</p>
+        <p className="text-[11px] text-gray-600 mt-0.5 leading-tight font-medium">{label}</p>
       </div>
     </button>
   );
