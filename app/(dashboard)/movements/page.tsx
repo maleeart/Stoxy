@@ -102,7 +102,7 @@ function MovementsList() {
 
 export default function MovementsPage() {
   const { stoxyUser } = useAuth();
-  const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
+  const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager" || stoxyUser?.role === "supervisor";
 
   // Staff: mobile-first layout with MobileHeader + padded content
   if (!isAdmin) {

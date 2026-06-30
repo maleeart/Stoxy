@@ -28,7 +28,7 @@ const ROLE_COLOR: Record<string, string> = {
 export default function ProfilePage() {
   const { stoxyUser, loading, refreshUser } = useAuth();
   const router = useRouter();
-  const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
+  const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager" || stoxyUser?.role === "supervisor";
 
   const [editingDept, setEditingDept] = useState(false);
   const [dept, setDept] = useState(stoxyUser?.department ?? "");
