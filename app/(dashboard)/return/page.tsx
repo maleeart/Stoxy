@@ -6,7 +6,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { useRealtimeBorrows } from "@/hooks/useRealtimeBorrows";
 import { acknowledgeReturn } from "@/services/borrow.service";
 import { formatDate } from "@/lib/utils";
-import { Undo2, CheckCircle } from "lucide-react";
+import { Undo2, CheckCircle, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
