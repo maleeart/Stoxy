@@ -15,6 +15,7 @@ interface AppShellProps {
 export function AppShell({ children, title }: AppShellProps) {
   const { stoxyUser, loading } = useAuth();
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
+  const hasSidebar = isAdmin || stoxyUser?.role === "supervisor";
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -22,7 +23,7 @@ export function AppShell({ children, title }: AppShellProps) {
   if (loading) return null;
 
   // Staff gets a clean mobile-first shell
-  if (!isAdmin && stoxyUser) {
+  if (!hasSidebar && stoxyUser) {
     return <StaffShell>{children}</StaffShell>;
   }
 

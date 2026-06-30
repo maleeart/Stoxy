@@ -18,7 +18,15 @@ const STAFF_RIGHT = [
   { label: "ประวัติ", icon: History, href: "/movements" },
 ];
 
-// Guest เห็นแค่ยืม-คืน — ซ่อนแถบอื่น
+// Viewer: ดูได้อย่างเดียว ไม่มีสร้างคำขอ
+const VIEWER_LEFT = [
+  { label: "คลัง", icon: Package, href: "/inventory" },
+];
+const VIEWER_RIGHT = [
+  { label: "ประวัติ", icon: History, href: "/movements" },
+];
+
+// Guest เห็นแค่ยืม-คืน
 const GUEST_LEFT = [
   { label: "ยืม-คืน", icon: ArrowLeftRight, href: "/borrow" },
 ];
@@ -28,10 +36,12 @@ export function StaffShell({ children }: StaffShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { stoxyUser } = useAuth();
-  const isGuest = (stoxyUser?.role as string) === "guest";
+  const role = stoxyUser?.role as string;
+  const isGuest = role === "guest";
+  const isViewer = role === "viewer";
 
-  const sideItems = isGuest ? GUEST_LEFT : STAFF_LEFT;
-  const sideItemsRight = isGuest ? GUEST_RIGHT : STAFF_RIGHT;
+  const sideItems = isGuest ? GUEST_LEFT : isViewer ? VIEWER_LEFT : STAFF_LEFT;
+  const sideItemsRight = isGuest ? GUEST_RIGHT : isViewer ? VIEWER_RIGHT : STAFF_RIGHT;
 
   const isActive = (href: string) =>
     href === "/dashboard"

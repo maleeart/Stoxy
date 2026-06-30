@@ -241,6 +241,10 @@ function AdminReceiveModal({ borrowId, borrowerName, itemName, onConfirm, onCanc
 export default function OperationsPage() {
   const { stoxyUser } = useAuth();
   const qc = useQueryClient();
+
+  if (stoxyUser?.role === "supervisor") {
+    return <AppShell title="จัดการคำขอ"><div className="text-center py-24 text-gray-400">ไม่มีสิทธิ์เข้าถึงหน้านี้</div></AppShell>;
+  }
   const [tab, setTab] = useState<Tab>("borrow");
   const [rejectTarget, setRejectTarget] = useState<{ id: string; type: "borrow" | "req" } | null>(null);
   const [adjItem, setAdjItem] = useState<InventoryItem | null>(null);

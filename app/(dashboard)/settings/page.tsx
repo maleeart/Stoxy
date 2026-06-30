@@ -43,6 +43,10 @@ export default function SettingsPage() {
   const { stoxyUser } = useAuth();
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
 
+  if (stoxyUser?.role === "supervisor") {
+    return <AppShell title="ตั้งค่า"><div className="text-center py-24 text-gray-400">ไม่มีสิทธิ์เข้าถึงหน้านี้</div></AppShell>;
+  }
+
   return (
     <AppShell title="ตั้งค่า">
       <div className="max-w-lg space-y-6">

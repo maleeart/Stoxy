@@ -32,6 +32,10 @@ const statusLabel: Record<string, string> = {
 export default function AuditPage() {
   const { stoxyUser } = useAuth();
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
+
+  if (stoxyUser?.role === "supervisor") {
+    return <AppShell title="ตรวจนับ"><div className="text-center py-24 text-gray-400">ไม่มีสิทธิ์เข้าถึงหน้านี้</div></AppShell>;
+  }
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");

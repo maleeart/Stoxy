@@ -10,16 +10,21 @@ import { motion } from "framer-motion";
 import type { UserRole } from "@/types";
 
 const roles: { value: UserRole; label: string; color: string }[] = [
-  { value: "admin", label: "Admin", color: "bg-red-100 text-red-700" },
-  { value: "manager", label: "หัวหน้าช่าง", color: "bg-purple-100 text-purple-700" },
-  { value: "staff", label: "ช่าง", color: "bg-blue-100 text-blue-700" },
-  { value: "viewer", label: "ดูอย่างเดียว", color: "bg-gray-100 text-gray-700" },
+  { value: "admin",      label: "Admin",           color: "bg-red-100 text-red-700" },
+  { value: "manager",    label: "หัวหน้าช่าง",    color: "bg-purple-100 text-purple-700" },
+  { value: "supervisor", label: "Supervisor",      color: "bg-indigo-100 text-indigo-700" },
+  { value: "staff",      label: "ช่าง",            color: "bg-blue-100 text-blue-700" },
+  { value: "viewer",     label: "ดูอย่างเดียว",   color: "bg-gray-100 text-gray-700" },
 ];
 
 export default function UsersPage() {
   const { stoxyUser } = useAuth();
   const qc = useQueryClient();
   const isAdmin = stoxyUser?.role === "admin";
+
+  if (stoxyUser?.role === "supervisor") {
+    return <AppShell title="ผู้ใช้งาน"><div className="text-center py-24 text-gray-400">ไม่มีสิทธิ์เข้าถึงหน้านี้</div></AppShell>;
+  }
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["users"],

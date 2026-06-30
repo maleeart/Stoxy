@@ -37,26 +37,27 @@ interface NavItem {
   section?: string;
   adminOnly?: boolean;
   staffOnly?: boolean;
+  supervisorHidden?: boolean; // hidden from supervisor
 }
 
 const navItems: NavItem[] = [
   // Main
-  { label: "หน้าหลัก", href: "/dashboard", icon: LayoutDashboard, section: "หลัก" },
-  { label: "คลังอุปกรณ์", href: "/inventory", icon: Package, section: "หลัก" },
-  { label: "สแกน QR", href: "/scan", icon: ScanLine, section: "หลัก" },
-  // Workflow — staff only
-  { label: "เบิกของ", href: "/requisition", icon: PackageOpen, section: "ดำเนินการ", staffOnly: true },
-  { label: "ยืม-คืน", href: "/borrow", icon: ArrowLeftRight, section: "ดำเนินการ", staffOnly: true },
-  // Workflow — admin only
-  { label: "จัดการคำขอ", href: "/operations", icon: ClipboardCheck, section: "ดำเนินการ", adminOnly: true },
-  { label: "ต้องสั่งซื้อ", href: "/purchase", icon: ShoppingCart, section: "ดำเนินการ", adminOnly: true },
-  { label: "ประวัติ", href: "/movements", icon: History, section: "ดำเนินการ" },
+  { label: "หน้าหลัก",    href: "/dashboard",    icon: LayoutDashboard, section: "หลัก" },
+  { label: "คลังอุปกรณ์", href: "/inventory",    icon: Package,         section: "หลัก" },
+  { label: "สแกน QR",     href: "/scan",         icon: ScanLine,        section: "หลัก" },
+  // Workflow — staff only (hidden in sidebar for admin/supervisor)
+  { label: "เบิกของ",     href: "/requisition",  icon: PackageOpen,     section: "ดำเนินการ", staffOnly: true },
+  { label: "ยืม-คืน",    href: "/borrow",       icon: ArrowLeftRight,  section: "ดำเนินการ", staffOnly: true },
+  // Workflow — admin only, some hidden from supervisor
+  { label: "จัดการคำขอ", href: "/operations",   icon: ClipboardCheck,  section: "ดำเนินการ", adminOnly: true, supervisorHidden: true },
+  { label: "ต้องสั่งซื้อ",href: "/purchase",    icon: ShoppingCart,    section: "ดำเนินการ", adminOnly: true },
+  { label: "ประวัติ",     href: "/movements",    icon: History,         section: "ดำเนินการ" },
+  { label: "ตรวจนับ",     href: "/audit",        icon: ShieldCheck,     section: "ดำเนินการ",               supervisorHidden: true },
   // System
-  { label: "ตรวจนับ", href: "/audit", icon: ShieldCheck, section: "ดำเนินการ" },
-  { label: "รายงาน", href: "/reports", icon: FileBarChart, section: "ระบบ", adminOnly: true },
-  { label: "แจ้งเตือน", href: "/notifications", icon: Bell, section: "ระบบ", adminOnly: true },
-  { label: "ผู้ใช้งาน", href: "/users", icon: Users, section: "ระบบ", adminOnly: true },
-  { label: "ตั้งค่า", href: "/settings", icon: Settings, section: "ระบบ", adminOnly: true },
+  { label: "รายงาน",      href: "/reports",      icon: FileBarChart,    section: "ระบบ", adminOnly: true },
+  { label: "แจ้งเตือน",  href: "/notifications",icon: Bell,            section: "ระบบ", adminOnly: true },
+  { label: "ผู้ใช้งาน",  href: "/users",        icon: Users,           section: "ระบบ", adminOnly: true, supervisorHidden: true },
+  { label: "ตั้งค่า",     href: "/settings",     icon: Settings,        section: "ระบบ", adminOnly: true, supervisorHidden: true },
 ];
 
 const sections = ["หลัก", "ดำเนินการ", "ระบบ"];
@@ -72,6 +73,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const router = useRouter();
   const { total: pendingTotal } = usePendingCount();
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
+  const isSupervisor = stoxyUser?.role === "supervisor";
   const { data: hasActiveAudit = false } = useHasActiveAudit(!isAdmin ? stoxyUser?.uid : undefined);
   const [qrPopup, setQrPopup] = useState(false);
 
@@ -102,10 +104,12 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1 scrollbar-none">
         {sections.map((section) => {
+          const hasSidebar = isAdmin || isSupervisor;
           const items = navItems.filter((i) =>
             i.section === section &&
-            (!i.adminOnly || isAdmin) &&
-            (!i.staffOnly || !isAdmin) &&
+            (!i.adminOnly || hasSidebar) &&
+            (!i.staffOnly || !hasSidebar) &&
+            (!i.supervisorHidden || !isSupervisor) &&
             (i.href !== "/audit" || isAdmin || hasActiveAudit)
           );
           return (
