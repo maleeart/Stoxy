@@ -59,11 +59,14 @@ export function formatNumber(n: number): string {
 // ── String Utilities ──────────────────────────────────────────
 const CATEGORY_PREFIX: Record<string, string> = {
   meter: "MTR",
-  cable: "CBL",
   tools: "TLS",
   safety: "SFT",
+  electrical_parts: "ELP",
+  cable: "CBL",
   spareparts: "SPR",
-  others: "OTH",
+  // legacy — kept so old codes still resolve
+  electrical: "ELP",
+  others: "SPR",
 };
 
 export function getCategoryPrefix(categoryId: string): string {

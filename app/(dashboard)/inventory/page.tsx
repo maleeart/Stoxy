@@ -46,9 +46,12 @@ const statusFilters: { label: string; value: ItemStatus | "all" }[] = [
 
 const CATEGORIES = [
   { id: "all", label: "ทั้งหมด" },
-  { id: "tools", label: "เครื่องมือ" },
-  { id: "meter", label: "มิเตอร์" },
-  { id: "safety", label: "ความปลอดภัย" },
+  { id: "meter", label: "มิเตอร์วัด" },
+  { id: "tools", label: "เครื่องมือช่าง" },
+  { id: "safety", label: "PPE" },
+  { id: "electrical_parts", label: "อุปกรณ์ไฟฟ้า" },
+  { id: "cable", label: "สายและท่อ" },
+  { id: "spareparts", label: "อะไหล่และวัสดุ" },
 ];
 
 export default function InventoryPage() {

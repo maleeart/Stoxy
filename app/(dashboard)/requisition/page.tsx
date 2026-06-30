@@ -27,15 +27,14 @@ const statusBadge = {
 };
 const statusLabel = { pending: "รออนุมัติ", approved: "อนุมัติแล้ว", rejected: "ปฏิเสธ" };
 
-// เบิกได้: ของสิ้นเปลือง/ทดแทน — เครื่องมือ/มิเตอร์/ความปลอดภัยใช้เมนูยืม
-const WITHDRAWABLE = new Set(["electrical", "cable", "spareparts", "others"]);
+// เบิกได้: ของสิ้นเปลือง/ทดแทน — เครื่องมือ/มิเตอร์/PPE ใช้เมนูยืม
+const WITHDRAWABLE = new Set(["electrical_parts", "cable", "spareparts", "electrical", "others"]);
 
 const CATEGORIES = [
   { id: "all", label: "ทั้งหมด" },
-  { id: "electrical", label: "ไฟฟ้า" },
-  { id: "cable", label: "สายไฟ" },
-  { id: "spareparts", label: "อะไหล่" },
-  { id: "others", label: "อื่นๆ" },
+  { id: "electrical_parts", label: "อุปกรณ์ไฟฟ้า" },
+  { id: "cable", label: "สายและท่อ" },
+  { id: "spareparts", label: "อะไหล่และวัสดุ" },
 ];
 
 type CartItem = { itemId: string; itemCode: string; itemName: string; qty: number; maxQty: number };

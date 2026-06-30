@@ -45,12 +45,12 @@ const tabs = [
 ];
 
 const CATEGORY_LABEL: Record<string, string> = {
-  meter: "เครื่องมือวัด",
-  cable: "สายไฟ & เคเบิ้ล",
+  meter: "มิเตอร์และเครื่องวัด",
   tools: "เครื่องมือช่าง",
-  safety: "อุปกรณ์ความปลอดภัย",
-  spareparts: "Spareparts",
-  others: "อื่นๆ",
+  safety: "อุปกรณ์ PPE",
+  electrical_parts: "อุปกรณ์ไฟฟ้า",
+  cable: "สายและท่อร้อยสาย",
+  spareparts: "อะไหล่และวัสดุ",
 };
 
 const DEFAULT_VALUES = {
@@ -290,12 +290,16 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
                         </label>
                         <select {...register("categoryId")} className="input-field">
                           <option value="">เลือกหมวดหมู่</option>
-                          <option value="meter">เครื่องมือวัด</option>
-                          <option value="cable">สายไฟ & เคเบิ้ล</option>
-                          <option value="tools">เครื่องมือช่าง</option>
-                          <option value="safety">อุปกรณ์ความปลอดภัย</option>
-                          <option value="spareparts">Spareparts</option>
-                          <option value="others">อื่นๆ</option>
+                          <optgroup label="— ยืม —">
+                            <option value="meter">มิเตอร์และเครื่องวัด</option>
+                            <option value="tools">เครื่องมือช่าง</option>
+                            <option value="safety">อุปกรณ์ PPE</option>
+                          </optgroup>
+                          <optgroup label="— เบิก —">
+                            <option value="electrical_parts">อุปกรณ์ไฟฟ้า</option>
+                            <option value="cable">สายและท่อร้อยสาย</option>
+                            <option value="spareparts">อะไหล่และวัสดุ</option>
+                          </optgroup>
                         </select>
                         {errors.categoryId && (
                           <p className="text-xs text-red-500 mt-1">

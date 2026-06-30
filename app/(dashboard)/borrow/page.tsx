@@ -234,9 +234,9 @@ const BORROWABLE = new Set(["tools", "meter", "safety"]);
 
 const CATEGORIES = [
   { id: "all", label: "ทั้งหมด" },
-  { id: "tools", label: "เครื่องมือ" },
-  { id: "meter", label: "มิเตอร์" },
-  { id: "safety", label: "ความปลอดภัย" },
+  { id: "meter", label: "มิเตอร์วัด" },
+  { id: "tools", label: "เครื่องมือช่าง" },
+  { id: "safety", label: "PPE" },
 ];
 
 function useFavorites(uid: string) {
