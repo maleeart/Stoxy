@@ -5,7 +5,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/hooks/useAuth";
 import {
   MapPin, Camera, Tag, RefreshCw, UserCheck, Wrench,
-  History, Scale, Hash,
+  History, Scale, Hash, Binary,
 } from "lucide-react";
 
 const REF_ITEMS = [
@@ -19,6 +19,7 @@ const ADMIN_TOOLS = [
   { href: "/inventory/set-categories",     icon: <Tag className="w-4 h-4" />,       label: "ตั้งหมวดหมู่รายการ",           desc: "กำหนดหมวดหมู่ใหม่ทีละรายการ" },
   { href: "/inventory/migrate-categories", icon: <RefreshCw className="w-4 h-4" />, label: "Migrate หมวดหมู่",             desc: "อัปเดตหมวดหมู่เก่าให้เป็นโครงสร้างใหม่" },
   { href: "/inventory/migrate-names",      icon: <UserCheck className="w-4 h-4" />, label: "Migrate ชื่อผู้ดำเนินการ",     desc: "แปลง UID เป็น display name ในประวัติ" },
+  { href: "/inventory/recode",             icon: <Binary className="w-4 h-4" />,    label: "จัดเรียงรหัสอุปกรณ์ใหม่",     desc: "กำหนด MTR-001, TLS-001 ใหม่ตามหมวดหมู่ปัจจุบัน" },
   { href: "/settings/cleanup",             icon: <History className="w-4 h-4" />,   label: "จัดการและล้างประวัติ",         desc: "ลบประวัติยืม/คืน, เบิก, เคลื่อนไหว, audit ที่ไม่ต้องการ" },
 ];
 
