@@ -116,7 +116,7 @@ export default function NotificationsPage() {
           type: "low_stock",
           title: `สต็อกต่ำ: ${i.name}`,
           subtitle: `เหลือ ${i.quantityAvailable} / ขั้นต่ำ ${i.minStockLevel}`,
-          href: "/inventory",
+          href: "/purchase",
           urgent: i.quantityAvailable === 0,
           date: i.code,
         });

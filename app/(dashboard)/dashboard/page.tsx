@@ -376,7 +376,7 @@ export default function DashboardPage() {
                 label="สต็อกต่ำ"
                 count={lowStockItems.length}
                 bg="bg-rose-400"
-                onClick={() => router.push("/notifications")}
+                onClick={() => router.push("/purchase")}
               />
             )}
           </div>
@@ -421,7 +421,7 @@ export default function DashboardPage() {
             icon={<AlertTriangle className="w-4 h-4 text-rose-500" />}
             bg="bg-rose-50"
             urgent={lowStockItems.length > 0}
-            onClick={() => router.push("/notifications")}
+            onClick={() => router.push("/purchase")}
           />
         </div>
       </section>
