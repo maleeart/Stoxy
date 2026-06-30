@@ -7,7 +7,7 @@ import { getLocations, addLocation } from "@/services/locations.service";
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/hooks/useAuth";
-import { MapPin, Plus, Trash2, Camera, Tag, RefreshCw, UserCheck, Wrench } from "lucide-react";
+import { MapPin, Plus, Trash2, Camera, Tag, RefreshCw, UserCheck, Wrench, History } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -131,6 +131,7 @@ export default function SettingsPage() {
                 { href: "/inventory/set-categories", icon: <Tag className="w-4 h-4" />, label: "ตั้งหมวดหมู่รายการ", desc: "กำหนดหมวดหมู่ใหม่ทีละรายการ" },
                 { href: "/inventory/migrate-categories", icon: <RefreshCw className="w-4 h-4" />, label: "Migrate หมวดหมู่", desc: "อัปเดตหมวดหมู่เก่าให้เป็นโครงสร้างใหม่" },
                 { href: "/inventory/migrate-names", icon: <UserCheck className="w-4 h-4" />, label: "Migrate ชื่อผู้ดำเนินการ", desc: "แปลง UID เป็น display name ในประวัติ" },
+                { href: "/settings/cleanup", icon: <History className="w-4 h-4" />, label: "ล้างข้อมูลทดสอบ", desc: "ลบประวัติยืม/คืน, เบิก, audit ที่ไม่ต้องการ" },
               ].map((tool) => (
                 <Link
                   key={tool.href}
