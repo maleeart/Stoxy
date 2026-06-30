@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowLeftRight, PackageOpen, Package, History, Home, Camera } from "lucide-react";
+import { ArrowLeftRight, PackageOpen, Package, History, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -12,7 +12,6 @@ interface StaffShellProps {
 const STAFF_LEFT = [
   { label: "ยืม-คืน", icon: ArrowLeftRight, href: "/borrow" },
   { label: "เบิก", icon: PackageOpen, href: "/requisition" },
-  { label: "เพิ่มรูป", icon: Camera, href: "/inventory/add-photos" },
 ];
 const STAFF_RIGHT = [
   { label: "คลัง", icon: Package, href: "/inventory" },

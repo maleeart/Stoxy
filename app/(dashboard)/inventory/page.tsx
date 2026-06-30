@@ -256,32 +256,34 @@ export default function InventoryPage() {
             {filtered.length.toLocaleString("th-TH")} รายการ
           </p>
         </div>
-        {isAdmin && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={() => exportInventoryExcel(selectedItems.length > 0 ? selectedItems : filtered)}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
-            >
-              <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">
-                {selectedItems.length > 0 ? `ส่งออก (${selectedItems.length})` : "ส่งออก"}
-              </span>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Link href="/inventory/add-photos">
+            <button className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
+              <Camera className="w-4 h-4" />
+              <span className="hidden sm:inline">เพิ่มรูป</span>
             </button>
-            <Link href="/inventory/add-photos">
-              <button className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
-                <Camera className="w-4 h-4" />
-                <span className="hidden sm:inline">เพิ่มรูป</span>
+          </Link>
+          {isAdmin && (
+            <>
+              <button
+                onClick={() => exportInventoryExcel(selectedItems.length > 0 ? selectedItems : filtered)}
+                className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                <span className="hidden sm:inline">
+                  {selectedItems.length > 0 ? `ส่งออก (${selectedItems.length})` : "ส่งออก"}
+                </span>
               </button>
-            </Link>
-            <button
-              onClick={() => setShowAddDialog(true)}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
-            >
-              <Plus className="w-4 h-4" />
-              เพิ่มอุปกรณ์
-            </button>
-          </div>
-        )}
+              <button
+                onClick={() => setShowAddDialog(true)}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
+              >
+                <Plus className="w-4 h-4" />
+                เพิ่มอุปกรณ์
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Filters */}
