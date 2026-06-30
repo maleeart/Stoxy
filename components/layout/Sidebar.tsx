@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   ShoppingCart,
   PackageOpen,
+  Undo2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -51,6 +52,7 @@ const navItems: NavItem[] = [
   // Workflow — admin only, some hidden from supervisor
   { label: "จัดการคำขอ", href: "/operations",   icon: ClipboardCheck,  section: "ดำเนินการ", adminOnly: true, supervisorHidden: true },
   { label: "ต้องสั่งซื้อ",href: "/purchase",    icon: ShoppingCart,    section: "ดำเนินการ", adminOnly: true },
+  { label: "เกินกำหนดคืน",href: "/return",     icon: Undo2,           section: "ดำเนินการ", adminOnly: true },
   { label: "ประวัติ",     href: "/movements",    icon: History,         section: "ดำเนินการ" },
   { label: "ตรวจนับ",     href: "/audit",        icon: ShieldCheck,     section: "ดำเนินการ",               supervisorHidden: true },
   // System

@@ -13,6 +13,7 @@ import { motion } from "framer-motion";
 export default function ReturnPage() {
   const { stoxyUser } = useAuth();
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
+  const isSupervisor = stoxyUser?.role === "supervisor";
   const { allRecords, isLoading } = useRealtimeBorrows();
   const returnPending = allRecords.filter((b) => b.status === "return_pending");
 
@@ -84,8 +85,13 @@ export default function ReturnPage() {
                     </div>
                   )}
                 </div>
-                {isAdmin && (
-                  <button onClick={() => acknowledgeMut.mutate(b.id)} disabled={acknowledgeMut.isPending}
+                {(isAdmin || isSupervisor) && (
+                  <button
+                    onClick={() => isSupervisor
+                      ? toast.error("สำหรับ Admin / ผู้จัดการ เท่านั้น")
+                      : acknowledgeMut.mutate(b.id)
+                    }
+                    disabled={acknowledgeMut.isPending}
                     className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-purple-600 text-white rounded-xl hover:bg-purple-700 disabled:opacity-50 transition-colors shrink-0"
                   >
                     <CheckCircle className="w-4 h-4" /> รับทราบ
