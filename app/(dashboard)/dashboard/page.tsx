@@ -45,7 +45,7 @@ function buildWeeklyData(movements: StockMovement[]) {
     const d = new Date(today);
     d.setDate(today.getDate() - (6 - i));
     const dateStr = d.toDateString();
-    const day = movements.filter((m) => m.createdAt.toDate().toDateString() === dateStr);
+    const day = movements.filter((m) => m.createdAt?.toDate().toDateString() === dateStr);
     return {
       day: dayNames[d.getDay()],
       ยืม: day.filter((m) => m.type === "borrow" || m.type === "adjustment_out").length,
@@ -386,21 +386,7 @@ export default function DashboardPage() {
       {/* ── Stock summary ── */}
       <section className="mb-6">
         <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">ภาพรวมสต็อก</h3>
-        <div className="grid grid-cols-3 gap-3">
-          <SummaryTile
-            label="อุปกรณ์ทั้งหมด"
-            value={statsLoading ? "—" : String(stats?.totalItems ?? 0)}
-            icon={<Package className="w-4 h-4 text-[#1D4ED8]" />}
-            bg="bg-blue-50"
-            onClick={() => router.push("/inventory")}
-          />
-          <SummaryTile
-            label="พร้อมใช้งาน"
-            value={statsLoading ? "—" : String(stats?.availableQuantity ?? 0)}
-            icon={<CheckCircle className="w-4 h-4 text-emerald-500" />}
-            bg="bg-emerald-50"
-            onClick={() => router.push("/inventory")}
-          />
+        <div className="grid grid-cols-2 gap-3">
           <SummaryTile
             label="ถูกยืมออก"
             value={statsLoading ? "—" : String(stats?.borrowedQuantity ?? 0)}

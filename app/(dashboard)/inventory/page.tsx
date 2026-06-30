@@ -13,6 +13,7 @@ import {
   Edit,
   Trash2,
   Package,
+  Camera,
 } from "lucide-react";
 import {
   useReactTable,
@@ -24,6 +25,7 @@ import {
   ColumnDef,
   SortingState,
   ColumnFiltersState,
+  RowSelectionState,
 } from "@tanstack/react-table";
 import { AppShell } from "@/components/layout/AppShell";
 import { MobileHeader } from "@/components/layout/MobileHeader";
@@ -34,6 +36,7 @@ import type { InventoryItem, ItemStatus } from "@/types";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { AddItemDialog } from "@/components/inventory/AddItemDialog";
+import { exportInventoryExcel } from "@/lib/export";
 
 const statusFilters: { label: string; value: ItemStatus | "all" }[] = [
   { label: "ทั้งหมด", value: "all" },
@@ -41,12 +44,21 @@ const statusFilters: { label: string; value: ItemStatus | "all" }[] = [
   { label: "ถูกยืม", value: "borrowed" },
 ];
 
+const CATEGORIES = [
+  { id: "all", label: "ทั้งหมด" },
+  { id: "tools", label: "เครื่องมือ" },
+  { id: "meter", label: "มิเตอร์" },
+  { id: "safety", label: "ความปลอดภัย" },
+];
+
 export default function InventoryPage() {
   const { stoxyUser } = useAuth();
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<ItemStatus | "all">("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [showAddDialog, setShowAddDialog] = useState(false);
 
   const { data: items = [], isLoading } = useInventoryItems();
@@ -54,6 +66,7 @@ export default function InventoryPage() {
   const filtered = useMemo(() => {
     let result = items;
     if (statusFilter !== "all") result = result.filter((i) => i.status === statusFilter);
+    if (categoryFilter !== "all") result = result.filter((i) => i.categoryId === categoryFilter);
     if (!search) return result;
     const lower = search.toLowerCase();
     return result.filter(
@@ -63,7 +76,7 @@ export default function InventoryPage() {
         i.serialNumber?.toLowerCase().includes(lower) ||
         i.brand?.toLowerCase().includes(lower)
     );
-  }, [items, search, statusFilter]);
+  }, [items, search, statusFilter, categoryFilter]);
 
   const columns = useMemo<ColumnDef<InventoryItem>[]>(
     () => [
@@ -213,14 +226,18 @@ export default function InventoryPage() {
   const table = useReactTable({
     data: filtered,
     columns,
-    state: { sorting },
+    state: { sorting, rowSelection },
     onSortingChange: setSorting,
+    onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    enableRowSelection: true,
     initialState: { pagination: { pageSize: 20 } },
   });
+
+  const selectedItems = table.getSelectedRowModel().rows.map((r) => r.original);
 
   return (
     <AppShell title="คลังอุปกรณ์">
@@ -237,11 +254,22 @@ export default function InventoryPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <button className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
+          <button
+            onClick={() => exportInventoryExcel(selectedItems.length > 0 ? selectedItems : filtered)}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
+          >
             <Download className="w-4 h-4" />
-            <span className="hidden sm:inline">ส่งออก</span>
+            <span className="hidden sm:inline">
+              {selectedItems.length > 0 ? `ส่งออก (${selectedItems.length})` : "ส่งออก"}
+            </span>
           </button>
 
+          <Link href="/inventory/add-photos">
+            <button className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
+              <Camera className="w-4 h-4" />
+              <span className="hidden sm:inline">เพิ่มรูป</span>
+            </button>
+          </Link>
           <button
             onClick={() => setShowAddDialog(true)}
             className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
@@ -253,29 +281,48 @@ export default function InventoryPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="ค้นหา ชื่อ รหัส ยี่ห้อ ซีเรียล..."
-            className="w-full pl-9 pr-4 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
-          />
+      <div className="flex flex-col gap-3 mb-4">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="ค้นหา ชื่อ รหัส ยี่ห้อ ซีเรียล..."
+              className="w-full pl-9 pr-4 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+            />
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {statusFilters.map((f) => (
+              <button
+                key={f.value}
+                onClick={() => setStatusFilter(f.value)}
+                className={cn(
+                  "px-3 py-2 text-xs font-medium rounded-xl border transition-all",
+                  statusFilter === f.value
+                    ? "bg-[#1D4ED8] text-white border-[#1D4ED8]"
+                    : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                )}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          {statusFilters.map((f) => (
+        {/* Category chips */}
+        <div className="flex gap-2 overflow-x-auto scrollbar-none">
+          {CATEGORIES.map((c) => (
             <button
-              key={f.value}
-              onClick={() => setStatusFilter(f.value)}
+              key={c.id}
+              onClick={() => setCategoryFilter(c.id)}
               className={cn(
-                "px-3 py-2 text-xs font-medium rounded-xl border transition-all",
-                statusFilter === f.value
-                  ? "bg-[#1D4ED8] text-white border-[#1D4ED8]"
-                  : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                "shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all",
+                categoryFilter === c.id
+                  ? "bg-[#1D4ED8] text-white"
+                  : "bg-white dark:bg-gray-900 text-gray-500 border border-gray-200 dark:border-gray-700"
               )}
             >
-              {f.label}
+              {c.label}
             </button>
           ))}
         </div>
