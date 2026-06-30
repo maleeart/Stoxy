@@ -11,14 +11,16 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const ROLE_LABEL: Record<string, string> = {
-  admin: "ผู้ดูแลระบบ",
+  admin: "Admin",
   manager: "ผู้จัดการ",
-  staff: "พนักงาน",
-  viewer: "ผู้ดู",
+  supervisor: "ผู้บริหาร",
+  staff: "ช่าง",
+  viewer: "ผู้ดูข้อมูล",
 };
 const ROLE_COLOR: Record<string, string> = {
   admin: "bg-red-100 text-red-700",
   manager: "bg-purple-100 text-purple-700",
+  supervisor: "bg-indigo-100 text-indigo-700",
   staff: "bg-blue-100 text-blue-700",
   viewer: "bg-gray-100 text-gray-600",
 };

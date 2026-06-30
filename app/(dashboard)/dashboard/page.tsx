@@ -240,7 +240,7 @@ function StaffHome() {
 // ── Admin dashboard ─────────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const { stoxyUser } = useAuth();
-  const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
+  const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager" || stoxyUser?.role === "supervisor";
   const router = useRouter();
 
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
