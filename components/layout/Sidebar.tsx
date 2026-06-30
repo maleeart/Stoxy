@@ -76,7 +76,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const { total: pendingTotal } = usePendingCount();
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
   const isSupervisor = stoxyUser?.role === "supervisor";
-  const { data: hasActiveAudit = false } = useHasActiveAudit(!isAdmin ? stoxyUser?.uid : undefined);
+  const { data: hasActiveAudit = false } = useHasActiveAudit(!isAdmin && !isSupervisor ? stoxyUser?.uid : undefined);
   const [qrPopup, setQrPopup] = useState(false);
 
   async function handleLogout() {

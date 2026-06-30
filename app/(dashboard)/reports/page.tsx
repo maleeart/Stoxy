@@ -42,7 +42,7 @@ export default function ReportsPage() {
     },
     {
       label: "ซ่อม / สอบเทียบ",
-      value: (stats as any).underRepairCount ?? 0,
+      value: stats.underRepairQuantity ?? 0,
       icon: <Wrench className="w-4 h-4" />,
       color: "text-purple-600",
       bg: "bg-purple-50 dark:bg-purple-900/20",
