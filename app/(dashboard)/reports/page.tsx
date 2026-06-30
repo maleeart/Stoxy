@@ -5,6 +5,7 @@ import { useInventoryItems, useDashboardStats } from "@/hooks/useInventory";
 import { useQuery } from "@tanstack/react-query";
 import { getBorrowRecords } from "@/services/borrow.service";
 import { getRecentMovements } from "@/services/inventory.service";
+import { getRequisitions } from "@/services/requisition.service";
 import {
   exportInventoryPDF, exportInventoryExcel,
   exportBorrowsPDF, exportBorrowsExcel,
@@ -23,6 +24,16 @@ export default function ReportsPage() {
   const { data: movements = [] } = useQuery({
     queryKey: ["movements_all"],
     queryFn: () => getRecentMovements(500),
+  });
+  const { data: requisitions = [] } = useQuery({
+    queryKey: ["requisitions"],
+    queryFn: () => getRequisitions(),
+  });
+  const now = new Date();
+  const approvedReqsThisMonth = requisitions.filter((r) => {
+    if (r.status !== "approved") return false;
+    const d = (r as any).approvedAt?.toDate?.() ?? (r as any).updatedAt?.toDate?.();
+    return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   });
 
   const statCards = stats ? [
@@ -48,8 +59,8 @@ export default function ReportsPage() {
       bg: "bg-purple-50 dark:bg-purple-900/20",
     },
     {
-      label: "รออนุมัติ",
-      value: borrows.filter((b) => b.status === "pending_approval").length,
+      label: "ยอดเบิกแล้ว (เดือนนี้)",
+      value: approvedReqsThisMonth.length,
       icon: <AlertTriangle className="w-4 h-4" />,
       color: "text-rose-600",
       bg: "bg-rose-50 dark:bg-rose-900/20",

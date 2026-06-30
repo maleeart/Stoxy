@@ -267,6 +267,11 @@ export default function DashboardPage() {
 
   const pendingBorrows = borrows.filter((b) => b.status === "pending_approval");
   const pendingReqs = requisitions.filter((r) => r.status === "pending");
+  const approvedReqsThisMonth = requisitions.filter((r) => {
+    if (r.status !== "approved") return false;
+    const d = r.approvedAt?.toDate?.() ?? r.updatedAt?.toDate?.();
+    return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
   const pendingAudits = auditSessions.filter((s) => s.status === "pending_approval");
   const overdueBorrows = borrows.filter(
     (b) => b.status === "borrowed" && b.expectedReturnDate.toDate() < now
@@ -395,17 +400,11 @@ export default function DashboardPage() {
             onClick={() => router.push("/borrow")}
           />
           <SummaryTile
-            label="คืนแล้ว (เดือนนี้)"
-            value={statsLoading ? "—" : String(
-              borrows.filter(b => {
-                if (b.status !== "returned" || !b.actualReturnDate) return false;
-                const d = b.actualReturnDate.toDate();
-                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-              }).length
-            )}
+            label="ยอดเบิกแล้ว (เดือนนี้)"
+            value={statsLoading ? "—" : String(approvedReqsThisMonth.length)}
             icon={<CheckCircle className="w-4 h-4 text-green-500" />}
             bg="bg-green-50"
-            onClick={() => router.push("/movements")}
+            onClick={() => router.push("/requisition")}
           />
           <SummaryTile
             label="เกินกำหนดคืน"
