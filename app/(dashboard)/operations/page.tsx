@@ -100,7 +100,7 @@ function AdjustSheet({ item, onClose }: { item: InventoryItem; onClose: () => vo
             className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
           />
         </div>
-        <button onClick={() => mut.mutate()} disabled={!reason.trim() || mut.isPending}
+        <button onClick={() => guard(() => mut.mutate())} disabled={!reason.trim() || mut.isPending}
           className={`w-full py-4 text-white font-bold rounded-2xl disabled:opacity-50 active:scale-[0.98] transition-transform ${isOut ? "bg-red-500" : "bg-emerald-500"}`}
         >
           {mut.isPending ? "กำลังบันทึก..." : isOut ? `จ่ายออก ${qty} ชิ้น` : `รับเข้า ${qty} ชิ้น`}
@@ -241,10 +241,8 @@ function AdminReceiveModal({ borrowId, borrowerName, itemName, onConfirm, onCanc
 export default function OperationsPage() {
   const { stoxyUser } = useAuth();
   const qc = useQueryClient();
-
-  if (stoxyUser?.role === "supervisor") {
-    return <AppShell title="จัดการคำขอ"><div className="text-center py-24 text-gray-400">ไม่มีสิทธิ์เข้าถึงหน้านี้</div></AppShell>;
-  }
+  const isSupervisor = stoxyUser?.role === "supervisor";
+  const guard = (fn: () => void) => isSupervisor ? toast.error("สำหรับ Admin / ผู้จัดการ เท่านั้น") : fn();
   const [tab, setTab] = useState<Tab>("borrow");
   const [rejectTarget, setRejectTarget] = useState<{ id: string; type: "borrow" | "req" } | null>(null);
   const [adjItem, setAdjItem] = useState<InventoryItem | null>(null);
@@ -382,11 +380,11 @@ export default function OperationsPage() {
                         )}
                       </div>
                       <div className="flex gap-2 shrink-0">
-                        <button onClick={() => setRejectTarget({ id: b.id, type: "borrow" })}
+                        <button onClick={() => guard(() => setRejectTarget({ id: b.id, type: "borrow" }))}
                           className="p-2 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 transition-colors">
                           <XCircle className="w-5 h-5" />
                         </button>
-                        <button onClick={() => approveBorrow.mutate(b.id)} disabled={approveBorrow.isPending}
+                        <button onClick={() => guard(() => approveBorrow.mutate(b.id))} disabled={approveBorrow.isPending}
                           className="p-2 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors disabled:opacity-50">
                           <CheckCircle className="w-5 h-5" />
                         </button>
@@ -439,7 +437,7 @@ export default function OperationsPage() {
                           </div>
                         )}
                       </div>
-                      <button onClick={() => acknowledgeRet.mutate(b.id)} disabled={acknowledgeRet.isPending}
+                      <button onClick={() => guard(() => acknowledgeRet.mutate(b.id))} disabled={acknowledgeRet.isPending}
                         className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold bg-purple-600 text-white rounded-xl hover:bg-purple-700 disabled:opacity-50 transition-colors shrink-0"
                       >
                         <CheckCircle className="w-4 h-4" /> รับทราบ
@@ -527,11 +525,11 @@ export default function OperationsPage() {
                       )}
                     </div>
                     <div className="flex gap-2 shrink-0">
-                      <button onClick={() => setRejectTarget({ id: req.id, type: "req" })}
+                      <button onClick={() => guard(() => setRejectTarget({ id: req.id, type: "req" }))}
                         className="p-2 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 transition-colors">
                         <XCircle className="w-5 h-5" />
                       </button>
-                      <button onClick={() => approveReq.mutate(req.id)} disabled={approveReq.isPending}
+                      <button onClick={() => guard(() => approveReq.mutate(req.id))} disabled={approveReq.isPending}
                         className="p-2 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors disabled:opacity-50">
                         <CheckCircle className="w-5 h-5" />
                       </button>
