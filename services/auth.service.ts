@@ -154,6 +154,13 @@ export const rolePermissions: Record<UserRole, string[]> = {
     "audit.read",
     "reports.read",
   ],
+  supervisor: [
+    "inventory.read",
+    "borrow.read",
+    "adjustment.read",
+    "audit.read",
+    "reports.read",
+  ],
   viewer: ["inventory.read", "borrow.read", "reports.read"],
 };
 

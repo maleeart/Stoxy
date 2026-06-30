@@ -10,11 +10,11 @@ import { motion } from "framer-motion";
 import type { UserRole } from "@/types";
 
 const roles: { value: UserRole; label: string; color: string }[] = [
-  { value: "admin",      label: "Admin",           color: "bg-red-100 text-red-700" },
-  { value: "manager",    label: "หัวหน้าช่าง",    color: "bg-purple-100 text-purple-700" },
-  { value: "supervisor", label: "Supervisor",      color: "bg-indigo-100 text-indigo-700" },
-  { value: "staff",      label: "ช่าง",            color: "bg-blue-100 text-blue-700" },
-  { value: "viewer",     label: "ดูอย่างเดียว",   color: "bg-gray-100 text-gray-700" },
+  { value: "admin",      label: "Admin",         color: "bg-red-100 text-red-700" },
+  { value: "manager",    label: "ผู้จัดการ",     color: "bg-purple-100 text-purple-700" },
+  { value: "supervisor", label: "ผู้บริหาร",     color: "bg-indigo-100 text-indigo-700" },
+  { value: "staff",      label: "ช่าง",          color: "bg-blue-100 text-blue-700" },
+  { value: "viewer",     label: "ผู้ดูข้อมูล",  color: "bg-gray-100 text-gray-700" },
 ];
 
 export default function UsersPage() {

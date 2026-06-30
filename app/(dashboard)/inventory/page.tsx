@@ -256,31 +256,32 @@ export default function InventoryPage() {
             {filtered.length.toLocaleString("th-TH")} รายการ
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={() => exportInventoryExcel(selectedItems.length > 0 ? selectedItems : filtered)}
-            className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
-          >
-            <Download className="w-4 h-4" />
-            <span className="hidden sm:inline">
-              {selectedItems.length > 0 ? `ส่งออก (${selectedItems.length})` : "ส่งออก"}
-            </span>
-          </button>
-
-          <Link href="/inventory/add-photos">
-            <button className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
-              <Camera className="w-4 h-4" />
-              <span className="hidden sm:inline">เพิ่มรูป</span>
+        {isAdmin && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => exportInventoryExcel(selectedItems.length > 0 ? selectedItems : filtered)}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              <span className="hidden sm:inline">
+                {selectedItems.length > 0 ? `ส่งออก (${selectedItems.length})` : "ส่งออก"}
+              </span>
             </button>
-          </Link>
-          <button
-            onClick={() => setShowAddDialog(true)}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
-          >
-            <Plus className="w-4 h-4" />
-            เพิ่มอุปกรณ์
-          </button>
-        </div>
+            <Link href="/inventory/add-photos">
+              <button className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
+                <Camera className="w-4 h-4" />
+                <span className="hidden sm:inline">เพิ่มรูป</span>
+              </button>
+            </Link>
+            <button
+              onClick={() => setShowAddDialog(true)}
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
+            >
+              <Plus className="w-4 h-4" />
+              เพิ่มอุปกรณ์
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Filters */}
@@ -328,8 +329,69 @@ export default function InventoryPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+      {/* Mobile card list */}
+      <div className="block md:hidden space-y-2.5">
+        {isLoading ? (
+          Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-24 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 animate-pulse" />
+          ))
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-16 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800">
+            <Package className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+            <p className="text-sm text-gray-400">ไม่พบรายการอุปกรณ์</p>
+          </div>
+        ) : (
+          filtered.map((item, i) => {
+            const pct = item.quantity > 0 ? (item.quantityAvailable / item.quantity) * 100 : 0;
+            const s = item.status as keyof typeof statusConfig;
+            const cfg = statusConfig[s] ?? { badge: "bg-gray-100 text-gray-600", label: s };
+            return (
+              <motion.div key={item.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}>
+                <Link href={`/inventory/${item.id}`}>
+                  <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-3.5 active:bg-gray-50 transition-colors">
+                    <div className="flex items-start gap-3">
+                      {/* Image */}
+                      <div className="w-14 h-14 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
+                        {item.images?.[0] ? (
+                          <img src={item.images[0]} alt={item.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <Package className="w-6 h-6 text-gray-300" />
+                        )}
+                      </div>
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <div className="min-w-0">
+                            <p className="font-semibold text-gray-900 dark:text-white text-sm leading-snug line-clamp-1">{item.name}</p>
+                            {item.brand && <p className="text-xs text-gray-400">{item.brand}</p>}
+                          </div>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${cfg.badge}`}>{cfg.label}</span>
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap mb-2">
+                          <span className="font-mono text-xs font-semibold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded">{item.code}</span>
+                          {item.categoryName && <span className="text-xs text-gray-400">{item.categoryName}</span>}
+                          {item.locationName && <span className="text-xs text-gray-400">· {item.locationName}</span>}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 shrink-0">
+                            {item.quantityAvailable}/{item.quantity}{item.unit ? ` ${item.unit}` : ""}
+                          </span>
+                          <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                            <div className={cn("h-full rounded-full transition-all", pct > 50 ? "bg-emerald-500" : pct > 20 ? "bg-yellow-500" : "bg-red-500")} style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden md:block bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
