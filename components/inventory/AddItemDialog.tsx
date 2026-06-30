@@ -13,7 +13,7 @@ import { generateItemCode } from "@/lib/utils";
 import { getLocations, addLocation } from "@/services/locations.service";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { uploadImages } from "@/lib/upload";
+import { compressImages } from "@/lib/compress";
 
 const DEFAULT_UNITS = ["อัน", "ชุด", "ตัว", "ม้วน", "เส้น", "แผ่น", "กล่อง", "ถุง", "คู่", "ชิ้น", "ขวด"];
 
@@ -135,7 +135,7 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
 
     try {
       const images = photoFiles.length
-        ? await uploadImages(photoFiles, "inventory")
+        ? await compressImages(photoFiles)
         : [];
       await createItem.mutateAsync({
         ...data,
@@ -220,7 +220,7 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
 
             {/* Form */}
             <form
-              onSubmit={handleSubmit(onSubmit)}
+              onSubmit={(e) => e.preventDefault()}
               className="flex flex-col flex-1 overflow-hidden"
             >
               <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
@@ -481,7 +481,8 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
                     </button>
                   ) : (
                     <button
-                      type="submit"
+                      type="button"
+                      onClick={handleSubmit(onSubmit)}
                       disabled={createItem.isPending}
                       className="flex items-center gap-2 px-5 py-2 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-60"
                     >
