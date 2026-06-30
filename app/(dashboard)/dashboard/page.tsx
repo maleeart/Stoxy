@@ -83,10 +83,10 @@ function StaffHome() {
   };
 
   const quickItems = [
-    { label: "ยืม-คืน", desc: "ยืมและแจ้งคืนอุปกรณ์", icon: ArrowLeftRight, href: "/borrow", bg: "bg-[#1D4ED8]", text: "text-white", iconBg: "bg-white/20" },
-    { label: "เบิกของ", desc: "เบิกอุปกรณ์สำหรับงาน", icon: PackageOpen, href: "/requisition", bg: "bg-amber-400", text: "text-white", iconBg: "bg-white/20" },
-    { label: "คลัง", desc: "ดูรายการอุปกรณ์ทั้งหมด", icon: Package, href: "/inventory", bg: "bg-blue-50", text: "text-blue-700", iconBg: "bg-blue-100", border: true },
-    { label: "ประวัติ", desc: "ประวัติการใช้งาน", icon: History, href: "/history", bg: "bg-purple-50", text: "text-purple-700", iconBg: "bg-purple-100", border: true },
+    { label: "ยืม-คืน", desc: "ยืมและแจ้งคืนอุปกรณ์", icon: ArrowLeftRight, href: "/borrow", bg: "bg-blue-100", text: "text-blue-700", iconBg: "bg-white/60" },
+    { label: "เบิกของ", desc: "เบิกอุปกรณ์สำหรับงาน", icon: PackageOpen, href: "/requisition", bg: "bg-amber-100", text: "text-amber-700", iconBg: "bg-white/60" },
+    { label: "คลัง", desc: "ดูรายการอุปกรณ์ทั้งหมด", icon: Package, href: "/inventory", bg: "bg-emerald-100", text: "text-emerald-700", iconBg: "bg-white/60" },
+    { label: "ประวัติ", desc: "ประวัติการใช้งาน", icon: History, href: "/history", bg: "bg-purple-100", text: "text-purple-700", iconBg: "bg-white/60" },
   ];
 
   const now = new Date();
@@ -177,7 +177,7 @@ function StaffHome() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.06 }}
                 onClick={() => router.push(item.href)}
-                className={`${item.bg} ${item.text} ${item.border ? "border border-transparent shadow-sm" : "shadow-lg"} rounded-3xl p-4 flex flex-col items-start gap-2 active:scale-95 transition-all text-left overflow-hidden w-full`}
+                className={`${item.bg} ${item.text} rounded-3xl p-4 flex flex-col items-start gap-2 active:scale-95 transition-all text-left overflow-hidden w-full shadow-sm`}
               >
                 <div className={`w-9 h-9 rounded-2xl ${item.iconBg} flex items-center justify-center shrink-0`}>
                   <item.icon className="w-4 h-4" />
