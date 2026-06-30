@@ -13,13 +13,12 @@ import { getLocations } from "@/services/locations.service";
 import { useState } from "react";
 
 const CATEGORY_LABEL: Record<string, string> = {
-  electrical: "วัสดุ-อุปกรณ์ไฟฟ้า",
-  meter: "เครื่องมือวัด",
-  cable: "สายไฟ & เคเบิ้ล",
+  meter: "มิเตอร์และเครื่องวัด",
   tools: "เครื่องมือช่าง",
-  safety: "อุปกรณ์ความปลอดภัย",
-  spareparts: "Spareparts",
-  others: "อื่นๆ",
+  safety: "อุปกรณ์ PPE",
+  electrical_parts: "อุปกรณ์ไฟฟ้า",
+  cable: "สายและท่อร้อยสาย",
+  spareparts: "อะไหล่และวัสดุ",
 };
 
 const schema = z.object({
@@ -130,9 +129,16 @@ export default function EditItemPage({ params }: { params: Promise<{ id: string 
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">หมวดหมู่ *</label>
                 <select {...register("categoryId")} className="input-field">
                   <option value="">เลือกหมวดหมู่</option>
-                  {Object.entries(CATEGORY_LABEL).map(([k, v]) => (
-                    <option key={k} value={k}>{v}</option>
-                  ))}
+                  <optgroup label="— ยืม —">
+                    <option value="meter">มิเตอร์และเครื่องวัด</option>
+                    <option value="tools">เครื่องมือช่าง</option>
+                    <option value="safety">อุปกรณ์ PPE</option>
+                  </optgroup>
+                  <optgroup label="— เบิก —">
+                    <option value="electrical_parts">อุปกรณ์ไฟฟ้า</option>
+                    <option value="cable">สายและท่อร้อยสาย</option>
+                    <option value="spareparts">อะไหล่และวัสดุ</option>
+                  </optgroup>
                 </select>
               </div>
 
