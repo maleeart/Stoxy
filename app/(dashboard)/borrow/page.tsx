@@ -7,6 +7,7 @@ import {
   Package, CheckCircle, ArrowLeftRight, ChevronRight, Plus, Minus, Star, ShoppingCart,
 } from "lucide-react";
 import { createRequisition, getMyRequisitions } from "@/services/requisition.service";
+import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { MobileHeader } from "@/components/layout/MobileHeader";
 import { useInventoryItems } from "@/hooks/useInventory";
@@ -536,6 +537,7 @@ type ReqCart = { itemId: string; itemCode: string; itemName: string; qty: number
 
 function GuestBorrowPage() {
   const { stoxyUser } = useAuth();
+  const router = useRouter();
   const { data: items = [] } = useInventoryItems();
   const { allRecords, isLoading } = useRealtimeBorrows();
   const qc = useQueryClient();
@@ -622,13 +624,24 @@ function GuestBorrowPage() {
     <div className="min-h-screen bg-[#F8FAFC]">
       <MobileHeader
         title="ยืม / เบิก"
-        actions={tab === "requisition" && cart.length > 0 ? (
-          <button onClick={() => setShowConfirm(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 text-white rounded-xl text-sm font-bold active:scale-95 transition-transform"
-          >
-            <ShoppingCart className="w-4 h-4" />{cart.length}
-          </button>
-        ) : undefined}
+        actions={
+          <div className="flex items-center gap-1">
+            {tab === "requisition" && cart.length > 0 && (
+              <button onClick={() => setShowConfirm(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 text-white rounded-xl text-sm font-bold active:scale-95 transition-transform"
+              >
+                <ShoppingCart className="w-4 h-4" />{cart.length}
+              </button>
+            )}
+            <button onClick={() => router.push("/profile")}
+              className="w-9 h-9 rounded-full bg-[#1D4ED8] flex items-center justify-center active:scale-95 transition-transform ml-1"
+            >
+              <span className="text-xs font-bold text-white">
+                {stoxyUser?.displayName?.charAt(0)?.toUpperCase() ?? "G"}
+              </span>
+            </button>
+          </div>
+        }
       />
 
       <div className="px-4 pb-0 bg-white sticky top-14 z-20 border-b border-gray-100">
