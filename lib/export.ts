@@ -73,6 +73,43 @@ export async function exportBorrowsPDF(records: BorrowRecord[]) {
   doc.save(`stoxy-borrows-${dateStr()}.pdf`);
 }
 
+export function exportBorrowsExcel(records: BorrowRecord[]) {
+  const headers = ["รหัสอุปกรณ์", "ชื่ออุปกรณ์", "ผู้ยืม", "แผนก", "วันที่ยืม", "กำหนดคืน", "วันที่คืน", "สถานะ"];
+  const rows = records.map((r) => [
+    r.itemCode, r.itemName, r.borrowerName, r.borrowerDepartment ?? "",
+    r.borrowDate?.toDate().toLocaleDateString("th-TH") ?? "",
+    r.expectedReturnDate?.toDate().toLocaleDateString("th-TH") ?? "",
+    r.returnDate?.toDate().toLocaleDateString("th-TH") ?? "",
+    borrowStatusLabel[r.status] ?? r.status,
+  ]);
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Borrows");
+  saveExcel(wb, `stoxy-borrows-${dateStr()}.xlsx`);
+}
+
+export async function exportMovementsPDF(movements: StockMovement[]) {
+  const doc = await createDocWithThaiFont("landscape");
+  doc.setFontSize(16);
+  doc.text("ประวัติการเคลื่อนไหวสต็อก - Stoxy", 14, 15);
+  doc.setFontSize(10);
+  doc.text(`วันที่พิมพ์: ${new Date().toLocaleDateString("th-TH")}`, 14, 22);
+  autoTable(doc, {
+    startY: 28,
+    head: [["วันที่", "รหัส", "ชื่ออุปกรณ์", "ประเภท", "ก่อน", "เปลี่ยนแปลง", "หลัง", "เหตุผล", "ผู้ดำเนินการ"]],
+    body: movements.map((m) => [
+      m.createdAt?.toDate().toLocaleDateString("th-TH") ?? "",
+      m.itemCode, m.itemName,
+      movementTypeLabel[m.type] ?? m.type,
+      m.quantityBefore, m.quantityChange, m.quantityAfter,
+      m.reason ?? "", m.performedByName,
+    ]),
+    styles: { font: "Sarabun", fontSize: 9 },
+    headStyles: { fillColor: [13, 33, 55], font: "Sarabun", fontStyle: "normal", textColor: 255 },
+  });
+  doc.save(`stoxy-movements-${dateStr()}.pdf`);
+}
+
 // ── Excel ─────────────────────────────────────────────────────
 export function exportInventoryExcel(items: InventoryItem[]) {
   const headers = ["รหัส", "ชื่ออุปกรณ์", "ยี่ห้อ", "รุ่น", "หมวดหมู่", "จำนวนทั้งหมด", "คงเหลือ", "ถูกยืม", "หน่วย", "สถานะ", "สถานที่", "ราคาซื้อ", "หมายเหตุ"];

@@ -5,8 +5,12 @@ import { useInventoryItems, useDashboardStats } from "@/hooks/useInventory";
 import { useQuery } from "@tanstack/react-query";
 import { getBorrowRecords } from "@/services/borrow.service";
 import { getRecentMovements } from "@/services/inventory.service";
-import { exportInventoryPDF, exportBorrowsPDF, exportInventoryExcel, exportMovementsExcel } from "@/lib/export";
-import { FileText, FileSpreadsheet, Download, Package, ArrowLeftRight, Activity } from "lucide-react";
+import {
+  exportInventoryPDF, exportInventoryExcel,
+  exportBorrowsPDF, exportBorrowsExcel,
+  exportMovementsPDF, exportMovementsExcel,
+} from "@/lib/export";
+import { FileText, FileSpreadsheet, Package, ArrowLeftRight, Activity, Wrench, AlertTriangle, TrendingDown } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function ReportsPage() {
@@ -21,10 +25,41 @@ export default function ReportsPage() {
     queryFn: () => getRecentMovements(500),
   });
 
+  const statCards = stats ? [
+    {
+      label: "กำลังถูกยืม",
+      value: stats.borrowedQuantity,
+      icon: <ArrowLeftRight className="w-4 h-4" />,
+      color: "text-blue-600",
+      bg: "bg-blue-50 dark:bg-blue-900/20",
+    },
+    {
+      label: "สต็อกต่ำ",
+      value: stats.lowStockCount,
+      icon: <TrendingDown className="w-4 h-4" />,
+      color: "text-amber-600",
+      bg: "bg-amber-50 dark:bg-amber-900/20",
+    },
+    {
+      label: "ซ่อม / สอบเทียบ",
+      value: (stats as any).underRepairCount ?? 0,
+      icon: <Wrench className="w-4 h-4" />,
+      color: "text-purple-600",
+      bg: "bg-purple-50 dark:bg-purple-900/20",
+    },
+    {
+      label: "รออนุมัติ",
+      value: borrows.filter((b) => b.status === "pending_approval").length,
+      icon: <AlertTriangle className="w-4 h-4" />,
+      color: "text-rose-600",
+      bg: "bg-rose-50 dark:bg-rose-900/20",
+    },
+  ] : [];
+
   const reports = [
     {
       title: "รายงานคลังอุปกรณ์",
-      description: `${items.length} รายการอุปกรณ์ทั้งหมด`,
+      description: `${items.length} รายการ`,
       icon: <Package className="w-5 h-5 text-blue-600" />,
       bg: "bg-blue-50 dark:bg-blue-900/20",
       actions: [
@@ -39,6 +74,7 @@ export default function ReportsPage() {
       bg: "bg-emerald-50 dark:bg-emerald-900/20",
       actions: [
         { label: "PDF", icon: <FileText className="w-4 h-4" />, fn: () => exportBorrowsPDF(borrows) },
+        { label: "Excel", icon: <FileSpreadsheet className="w-4 h-4" />, fn: () => exportBorrowsExcel(borrows) },
       ],
     },
     {
@@ -47,6 +83,7 @@ export default function ReportsPage() {
       icon: <Activity className="w-5 h-5 text-purple-600" />,
       bg: "bg-purple-50 dark:bg-purple-900/20",
       actions: [
+        { label: "PDF", icon: <FileText className="w-4 h-4" />, fn: () => exportMovementsPDF(movements) },
         { label: "Excel", icon: <FileSpreadsheet className="w-4 h-4" />, fn: () => exportMovementsExcel(movements) },
       ],
     },
@@ -57,26 +94,23 @@ export default function ReportsPage() {
       {/* Summary Stats */}
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-          {[
-            { label: "รายการทั้งหมด", value: stats.totalItems },
-            { label: "พร้อมใช้งาน", value: stats.availableQuantity },
-            { label: "ถูกยืม", value: stats.borrowedQuantity },
-            { label: "สต็อกต่ำ", value: stats.lowStockCount },
-          ].map((s, i) => (
-            <div key={i} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4 text-center">
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{s.value}</p>
-              <p className="text-xs text-gray-500 mt-1">{s.label}</p>
+          {statCards.map((s, i) => (
+            <div key={i} className={`rounded-2xl border border-gray-100 dark:border-gray-800 p-4 ${s.bg}`}>
+              <div className={`flex items-center gap-2 mb-2 ${s.color}`}>
+                {s.icon}
+                <span className="text-xs font-medium">{s.label}</span>
+              </div>
+              <p className={`text-3xl font-bold ${s.color}`}>{s.value}</p>
             </div>
           ))}
         </div>
       )}
 
       <div className="mb-5">
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white">รายงาน</h2>
-        <p className="text-sm text-gray-500">ส่งออกข้อมูลเป็น PDF หรือ Excel</p>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white">ส่งออกรายงาน</h2>
+        <p className="text-sm text-gray-500">เลือกรูปแบบ PDF หรือ Excel</p>
       </div>
 
-      {/* Report Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {reports.map((r, i) => (
           <motion.div
@@ -100,7 +134,6 @@ export default function ReportsPage() {
                 >
                   {a.icon}
                   {a.label}
-                  <Download className="w-3 h-3 text-gray-400" />
                 </button>
               ))}
             </div>
