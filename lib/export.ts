@@ -58,9 +58,9 @@ export async function exportInventoryPDF(items: InventoryItem[]) {
     const pageW = 297;
     const pageH = 210;
     const cellW = (pageW - marginX * 2) / cols;   // ~89 mm
-    const imgH = 48;
-    const labelH = 12;
-    const cellH = imgH + labelH + 4;
+    const imgH = 42;
+    const labelH = 10;
+    const cellH = imgH + labelH + 2;
 
     for (let p = 0; p < Math.ceil(withPhotos.length / perPage); p++) {
       doc.addPage("landscape");
