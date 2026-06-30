@@ -19,7 +19,7 @@ const ADMIN_TOOLS = [
   { href: "/inventory/set-categories",     icon: <Tag className="w-4 h-4" />,       label: "ตั้งหมวดหมู่รายการ",           desc: "กำหนดหมวดหมู่ใหม่ทีละรายการ" },
   { href: "/inventory/migrate-categories", icon: <RefreshCw className="w-4 h-4" />, label: "Migrate หมวดหมู่",             desc: "อัปเดตหมวดหมู่เก่าให้เป็นโครงสร้างใหม่" },
   { href: "/inventory/migrate-names",      icon: <UserCheck className="w-4 h-4" />, label: "Migrate ชื่อผู้ดำเนินการ",     desc: "แปลง UID เป็น display name ในประวัติ" },
-  { href: "/settings/cleanup",             icon: <History className="w-4 h-4" />,   label: "ล้างข้อมูลทดสอบ",             desc: "ลบประวัติยืม/คืน, เบิก, audit ที่ไม่ต้องการ" },
+  { href: "/settings/cleanup",             icon: <History className="w-4 h-4" />,   label: "จัดการและล้างประวัติ",         desc: "ลบประวัติยืม/คืน, เบิก, เคลื่อนไหว, audit ที่ไม่ต้องการ" },
 ];
 
 function NavCard({ href, icon, label, desc, color = "bg-orange-50 text-orange-500" }: {

@@ -2,6 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
+import { MobileHeader } from "@/components/layout/MobileHeader";
+import { useAuth } from "@/hooks/useAuth";
 import { getRecentMovements } from "@/services/inventory.service";
 import { exportMovementsExcel } from "@/lib/export";
 import { formatDateTime } from "@/lib/utils";
@@ -35,19 +37,17 @@ const typeBadge: Record<MovementType, string> = {
   lost: "bg-red-100 text-red-700",
 };
 
-export default function MovementsPage() {
+function MovementsList() {
   const { data: movements = [], isLoading } = useQuery({
     queryKey: ["movements_all"],
     queryFn: () => getRecentMovements(200),
   });
 
   return (
-    <AppShell title="ประวัติเคลื่อนไหว">
-      <div className="flex items-center justify-between mb-5">
-        <div>
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">ประวัติการเคลื่อนไหวสต็อก</h2>
-          <p className="text-sm text-gray-500">{movements.length} รายการล่าสุด</p>
-        </div>
+    <>
+      {/* Toolbar */}
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-sm text-gray-500">{movements.length} รายการล่าสุด</p>
         <button
           onClick={() => exportMovementsExcel(movements)}
           className="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
@@ -83,7 +83,7 @@ export default function MovementsPage() {
               </span>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{m.itemName}</p>
-                <p className="text-xs text-gray-400 truncate">{m.reason || m.itemCode}</p>
+                <p className="text-xs text-gray-400 truncate">{m.performedByName || m.reason || m.itemCode}</p>
               </div>
               <div className="text-right shrink-0">
                 <p className={`text-sm font-bold ${m.quantityChange > 0 ? "text-emerald-600" : "text-red-600"}`}>
@@ -91,13 +91,37 @@ export default function MovementsPage() {
                 </p>
                 <p className="text-xs text-gray-400">{m.quantityBefore} → {m.quantityAfter}</p>
               </div>
-              <p className="text-xs text-gray-400 shrink-0 hidden sm:block w-32 text-right">
-                {formatDateTime(m.createdAt)}
-              </p>
             </motion.div>
           ))
         )}
       </div>
+    </>
+  );
+}
+
+export default function MovementsPage() {
+  const { stoxyUser } = useAuth();
+  const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
+
+  // Staff: mobile-first layout with MobileHeader + padded content
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC]">
+        <MobileHeader title="ประวัติการเคลื่อนไหว" />
+        <div className="px-4 py-4">
+          <MovementsList />
+        </div>
+      </div>
+    );
+  }
+
+  // Admin: AppShell handles header + padding
+  return (
+    <AppShell title="ประวัติเคลื่อนไหว">
+      <div className="flex items-center gap-2 mb-5">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white">ประวัติการเคลื่อนไหวสต็อก</h2>
+      </div>
+      <MovementsList />
     </AppShell>
   );
 }

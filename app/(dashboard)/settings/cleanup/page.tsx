@@ -10,7 +10,7 @@ import { Trash2, ArrowLeft, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import type { Timestamp } from "firebase/firestore";
 
-type Tab = "borrows" | "requisitions" | "audits";
+type Tab = "borrows" | "requisitions" | "audits" | "movements";
 
 interface Row {
   id: string;
@@ -20,9 +20,10 @@ interface Row {
 }
 
 const TABS: { key: Tab; label: string; col: string }[] = [
-  { key: "borrows", label: "ยืม/คืน", col: "borrow_records" },
-  { key: "requisitions", label: "เบิก", col: "requisitions" },
-  { key: "audits", label: "Audit", col: "audit_sessions" },
+  { key: "borrows",     label: "ยืม/คืน",  col: "borrow_records" },
+  { key: "requisitions",label: "เบิก",      col: "requisitions" },
+  { key: "audits",      label: "Audit",     col: "audit_sessions" },
+  { key: "movements",   label: "เคลื่อนไหว", col: "stock_movements" },
 ];
 
 function toDateStr(ts: Timestamp | undefined): string {
@@ -43,11 +44,17 @@ function mapRow(col: string, d: { id: string } & Record<string, any>): Row {
     sub: `${d.requesterName ?? "-"} · ${d.status ?? "-"} · จำนวน ${d.quantity ?? "-"}`,
     date: toDateStr(d.createdAt),
   };
-  // audit_sessions
-  return {
+  if (col === "audit_sessions") return {
     id: d.id,
     label: d.name ?? "(ไม่มีชื่อ)",
     sub: `สถานะ: ${d.status ?? "-"}`,
+    date: toDateStr(d.createdAt),
+  };
+  // stock_movements
+  return {
+    id: d.id,
+    label: `${d.itemName ?? "-"} (${d.itemCode ?? "-"})`,
+    sub: `${d.type ?? "-"} · ${d.performedByName ?? d.performedBy ?? "-"} · ${d.quantityChange > 0 ? "+" : ""}${d.quantityChange ?? 0}`,
     date: toDateStr(d.createdAt),
   };
 }
