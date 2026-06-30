@@ -14,7 +14,7 @@ export default function PurchasePage() {
   const lowStock = useMemo(
     () =>
       items
-        .filter((i) => i.quantityAvailable <= (i.minStockLevel ?? 0))
+        .filter((i) => (i.minStockLevel ?? 0) > 0 && i.quantityAvailable <= i.minStockLevel!)
         .sort((a, b) => a.quantityAvailable - b.quantityAvailable),
     [items]
   );

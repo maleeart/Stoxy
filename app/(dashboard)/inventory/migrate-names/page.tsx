@@ -29,11 +29,11 @@ export default function MigrateNamesPage() {
         if (u.uid && u.displayName) nameMap[u.uid] = u.displayName;
       });
 
-      // 2. Find movements where performedByName === performedBy (still a UID)
+      // 2. Find movements where performedByName is itself a UID (key in nameMap)
       const movSnap = await getDocs(collection(db, "stock_movements"));
       const toFix = movSnap.docs.filter((d) => {
         const m = d.data();
-        return m.performedByName === m.performedBy && nameMap[m.performedBy];
+        return m.performedByName && nameMap[m.performedByName];
       });
 
       if (toFix.length === 0) {
@@ -46,7 +46,7 @@ export default function MigrateNamesPage() {
       for (let i = 0; i < toFix.length; i += 500) {
         const batch = writeBatch(db);
         toFix.slice(i, i + 500).forEach((d) => {
-          const uid = d.data().performedBy as string;
+          const uid = d.data().performedByName as string;
           const name = nameMap[uid];
           batch.update(doc(db, "stock_movements", d.id), { performedByName: name });
           lines.push(`${d.data().itemName} : ${uid} → ${name}`);
