@@ -1,12 +1,12 @@
 ﻿"use client";
 
 import { useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import {
   Search, X, Camera, Clock, RotateCcw, Loader2, MapPin,
   Package, CheckCircle, ArrowLeftRight, ChevronRight, Plus, Minus, Star, ShoppingCart,
 } from "lucide-react";
-import { createRequisition } from "@/services/requisition.service";
+import { createRequisition, getMyRequisitions } from "@/services/requisition.service";
 import { AppShell } from "@/components/layout/AppShell";
 import { MobileHeader } from "@/components/layout/MobileHeader";
 import { useInventoryItems } from "@/hooks/useInventory";
@@ -542,7 +542,14 @@ function GuestBorrowPage() {
   const uid = stoxyUser?.uid ?? "";
   const { favs, toggle: toggleFav } = useFavorites(uid);
 
-  const [tab, setTab] = useState<"borrow" | "requisition">("borrow");
+  const [tab, setTab] = useState<"borrow" | "requisition" | "history">("borrow");
+
+  const { data: myReqs = [] } = useQuery({
+    queryKey: ["requisitions", "mine", uid],
+    queryFn: () => getMyRequisitions(uid),
+    enabled: !!uid,
+  });
+  const myBorrowHistory = allRecords.filter(b => b.borrowerId === uid);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [borrowItem, setBorrowItem] = useState<InventoryItem | null>(null);
@@ -635,34 +642,40 @@ function GuestBorrowPage() {
             className={cn("flex-1 py-2 text-sm font-bold rounded-xl transition-all",
               tab === "requisition" ? "bg-white text-amber-500 shadow-sm" : "text-gray-500")}
           >เบิกของ</button>
+          <button onClick={() => setTab("history")}
+            className={cn("flex-1 py-2 text-sm font-bold rounded-xl transition-all",
+              tab === "history" ? "bg-white text-emerald-600 shadow-sm" : "text-gray-500")}
+          >ประวัติ</button>
         </div>
 
-        {/* Search */}
-        <div className="relative mb-3">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          {tab === "borrow" ? (
-            <input value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="ค้นหาอุปกรณ์, รหัส..."
-              className="w-full pl-11 pr-4 py-2.5 text-sm bg-[#F8FAFC] border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
-            />
-          ) : (
-            <input value={reqSearch} onChange={e => setReqSearch(e.target.value)}
-              placeholder="ค้นหาวัสดุ, รหัส..."
-              className="w-full pl-11 pr-4 py-2.5 text-sm bg-[#F8FAFC] border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
-            />
-          )}
-        </div>
-
-        {/* Category chips */}
-        <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-none">
-          {(tab === "borrow" ? CATEGORIES : REQ_CATEGORIES).map(c => (
-            <button key={c.id}
-              onClick={() => tab === "borrow" ? setCategory(c.id) : setReqCategory(c.id)}
-              className={cn("shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all",
-                (tab === "borrow" ? category : reqCategory) === c.id ? "bg-[#1D4ED8] text-white" : "bg-gray-100 text-gray-500")}
-            >{c.label}</button>
-          ))}
-        </div>
+        {/* Search + chips (hidden on history tab) */}
+        {tab !== "history" && (
+          <>
+            <div className="relative mb-3">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              {tab === "borrow" ? (
+                <input value={search} onChange={e => setSearch(e.target.value)}
+                  placeholder="ค้นหาอุปกรณ์, รหัส..."
+                  className="w-full pl-11 pr-4 py-2.5 text-sm bg-[#F8FAFC] border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                />
+              ) : (
+                <input value={reqSearch} onChange={e => setReqSearch(e.target.value)}
+                  placeholder="ค้นหาวัสดุ, รหัส..."
+                  className="w-full pl-11 pr-4 py-2.5 text-sm bg-[#F8FAFC] border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                />
+              )}
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-none">
+              {(tab === "borrow" ? CATEGORIES : REQ_CATEGORIES).map(c => (
+                <button key={c.id}
+                  onClick={() => tab === "borrow" ? setCategory(c.id) : setReqCategory(c.id)}
+                  className={cn("shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all",
+                    (tab === "borrow" ? category : reqCategory) === c.id ? "bg-[#1D4ED8] text-white" : "bg-gray-100 text-gray-500")}
+                >{c.label}</button>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       <div className="px-5 py-4 pb-32 space-y-3">
@@ -701,6 +714,65 @@ function GuestBorrowPage() {
                   ))}
                 </div>
               )}
+            </motion.div>
+          ) : tab === "history" ? (
+            <motion.div key="history" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
+              {/* Borrow history */}
+              <div>
+                <p className="text-xs font-bold text-[#1D4ED8] uppercase tracking-wider mb-2">รายการยืม ({myBorrowHistory.length})</p>
+                {myBorrowHistory.length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-4">ไม่มีประวัติการยืม</p>
+                ) : (
+                  <div className="space-y-2">
+                    {myBorrowHistory.slice().reverse().map((b, i) => (
+                      <motion.div key={b.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}
+                        className="bg-white rounded-2xl p-3.5 border border-gray-50 shadow-sm flex items-center gap-3"
+                      >
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                          <ArrowLeftRight className="w-5 h-5 text-[#1D4ED8]" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 line-clamp-1">{b.itemName}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">{formatDate(b.createdAt)} · จำนวน {b.quantity}</p>
+                        </div>
+                        <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium shrink-0", statusBadge[b.status] ?? "bg-gray-100 text-gray-600")}>
+                          {statusLabel[b.status] ?? b.status}
+                        </span>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {/* Requisition history */}
+              <div>
+                <p className="text-xs font-bold text-amber-500 uppercase tracking-wider mb-2">รายการเบิก ({myReqs.length})</p>
+                {myReqs.length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-4">ไม่มีประวัติการเบิก</p>
+                ) : (
+                  <div className="space-y-2">
+                    {[...myReqs].reverse().map((r, i) => (
+                      <motion.div key={r.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}
+                        className="bg-white rounded-2xl p-3.5 border border-gray-50 shadow-sm flex items-center gap-3"
+                      >
+                        <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
+                          <Package className="w-5 h-5 text-amber-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 line-clamp-1">{r.itemName}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">จำนวน {r.quantity}</p>
+                        </div>
+                        <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium shrink-0",
+                          r.status === "approved" ? "bg-emerald-100 text-emerald-700" :
+                          r.status === "rejected" ? "bg-red-100 text-red-700" :
+                          "bg-yellow-100 text-yellow-700"
+                        )}>
+                          {r.status === "approved" ? "อนุมัติแล้ว" : r.status === "rejected" ? "ปฏิเสธ" : "รออนุมัติ"}
+                        </span>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </motion.div>
           ) : (
             <motion.div key="requisition" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-3">
