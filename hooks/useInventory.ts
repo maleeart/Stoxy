@@ -29,8 +29,9 @@ export function useInventoryItems(filter?: FilterState) {
     queryKey: inventoryKeys.list(filter),
     queryFn: () => getInventoryItems(filter),
     select: (data) => data.items,
-    refetchInterval: 30_000,
-    refetchOnWindowFocus: true,
+    staleTime: 1000 * 60 * 3,   // 3 min — avoid refetch on every nav
+    refetchInterval: 1000 * 60 * 5, // 5 min background refresh
+    refetchOnWindowFocus: false,
     retry: 1,
   });
 }
@@ -55,6 +56,8 @@ export function useRecentMovements(count = 10) {
   return useQuery({
     queryKey: inventoryKeys.movements(),
     queryFn: () => getRecentMovements(count),
+    staleTime: 1000 * 60 * 2,
+    refetchOnWindowFocus: false,
   });
 }
 

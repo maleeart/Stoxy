@@ -147,7 +147,7 @@ function StaffRequisitionPage() {
               >
                 <div className="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center shrink-0 overflow-hidden">
                   {item.images?.[0]
-                    ? <img src={item.images[0]} alt={item.name} className="w-full h-full object-cover" />
+                    ? <img src={item.images[0]} alt={item.name} className="w-full h-full object-cover" loading="lazy" />
                     : <Package className="w-7 h-7 text-amber-500" />}
                 </div>
                 <div className="flex-1 min-w-0">
