@@ -284,50 +284,47 @@ export default function InventoryPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col gap-3 mb-4">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="ค้นหา ชื่อ รหัส ยี่ห้อ ซีเรียล..."
-              className="w-full pl-9 pr-4 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
-            />
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            {statusFilters.map((f) => (
-              <button
-                key={f.value}
-                onClick={() => setStatusFilter(f.value)}
-                className={cn(
-                  "px-3 py-2 text-xs font-medium rounded-xl border transition-all",
-                  statusFilter === f.value
-                    ? "bg-[#1D4ED8] text-white border-[#1D4ED8]"
-                    : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-300"
-                )}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
+      <div className="flex flex-col gap-2 mb-4">
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="ค้นหา ชื่อ รหัส ยี่ห้อ ซีเรียล..."
+            className="w-full pl-9 pr-4 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+          />
         </div>
-        {/* Category chips */}
-        <div className="flex gap-2 overflow-x-auto scrollbar-none">
-          {CATEGORIES.map((c) => (
+        {/* Status + Category */}
+        <div className="flex gap-2 flex-wrap items-center">
+          {statusFilters.map((f) => (
             <button
-              key={c.id}
-              onClick={() => setCategoryFilter(c.id)}
+              key={f.value}
+              onClick={() => setStatusFilter(f.value)}
               className={cn(
-                "shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all",
-                categoryFilter === c.id
-                  ? "bg-[#1D4ED8] text-white"
-                  : "bg-white dark:bg-gray-900 text-gray-500 border border-gray-200 dark:border-gray-700"
+                "px-3 py-1.5 text-xs font-medium rounded-xl border transition-all",
+                statusFilter === f.value
+                  ? "bg-[#1D4ED8] text-white border-[#1D4ED8]"
+                  : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700"
               )}
             >
-              {c.label}
+              {f.label}
             </button>
           ))}
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className={cn(
+              "ml-auto px-3 py-1.5 text-xs font-medium rounded-xl border transition-all appearance-none cursor-pointer",
+              categoryFilter !== "all"
+                ? "bg-[#1D4ED8] text-white border-[#1D4ED8]"
+                : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700"
+            )}
+          >
+            {CATEGORIES.map((c) => (
+              <option key={c.id} value={c.id}>{c.label}</option>
+            ))}
+          </select>
         </div>
       </div>
 
