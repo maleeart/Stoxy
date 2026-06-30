@@ -54,11 +54,6 @@ export default function ReportsPage() {
 
   return (
     <AppShell title="รายงาน">
-      <div className="mb-5">
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white">รายงาน</h2>
-        <p className="text-sm text-gray-500">ส่งออกข้อมูลเป็น PDF หรือ Excel</p>
-      </div>
-
       {/* Summary Stats */}
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
@@ -75,6 +70,11 @@ export default function ReportsPage() {
           ))}
         </div>
       )}
+
+      <div className="mb-5">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white">รายงาน</h2>
+        <p className="text-sm text-gray-500">ส่งออกข้อมูลเป็น PDF หรือ Excel</p>
+      </div>
 
       {/* Report Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
