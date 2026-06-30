@@ -84,7 +84,7 @@ export async function exportInventoryPDF(items: InventoryItem[]) {
         // draw border
         doc.setDrawColor(220, 220, 220);
         doc.setLineWidth(0.3);
-        doc.roundedRect(x, y, cellW - 3, cellH, 2, 2);
+        doc.roundedRect(x, y, cellW - 3, cellH, 2, 2, "S");
 
         // draw image
         try {
