@@ -9,7 +9,7 @@ import { useInventoryItems } from "@/hooks/useInventory";
 import { AppShell } from "@/components/layout/AppShell";
 import { ArrowLeft, Camera, CheckCircle, ImagePlus, Loader2, Package, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import type { InventoryItem } from "@/types";
 
 export default function AddPhotosPage() {
