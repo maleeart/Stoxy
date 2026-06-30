@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { X, Package, Loader2 } from "lucide-react";
+import { X, Package, Loader2, ImagePlus, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCreateInventoryItem, useInventoryItems } from "@/hooks/useInventory";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,6 +13,7 @@ import { generateItemCode } from "@/lib/utils";
 import { getLocations, addLocation } from "@/services/locations.service";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { uploadImages } from "@/lib/upload";
 
 const DEFAULT_UNITS = ["อัน", "ชุด", "ตัว", "ม้วน", "เส้น", "แผ่น", "กล่อง", "ถุง", "คู่", "ชิ้น", "ขวด"];
 
@@ -45,6 +46,7 @@ interface AddItemDialogProps {
 const tabs = [
   { id: "basic", label: "ข้อมูลพื้นฐาน" },
   { id: "stock", label: "สต็อก & สถานที่" },
+  { id: "photos", label: "รูปภาพ" },
 ];
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -72,6 +74,8 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
   const [customLocation, setCustomLocation] = useState("");
   const [customLocationError, setCustomLocationError] = useState(false);
   const [customUnit, setCustomUnit] = useState("");
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>();
 
   useEffect(() => {
     getLocations().then(setLocations);
@@ -98,6 +102,8 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
       setCustomLocation("");
       setCustomLocationError(false);
       setCustomUnit("");
+      setPhotoFiles([]);
+      setPhotoPreviews([]);
     }
   }, [open, reset]);
 
@@ -128,9 +134,13 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
     const resolvedUnit = data.unit === "อื่นๆ" ? customUnit.trim() || undefined : data.unit || undefined;
 
     try {
+      const images = photoFiles.length
+        ? await uploadImages(photoFiles, "inventory")
+        : [];
       await createItem.mutateAsync({
         ...data,
         unit: resolvedUnit,
+        images,
         condition: "good" as const,
         requiresCalibration: false,
         requiresMaintenance: false,
@@ -316,6 +326,52 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
                   </>
                 )}
 
+                {/* Photos Tab */}
+                {activeTab === "photos" && (
+                  <div className="space-y-3">
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                      รูปภาพอุปกรณ์ (ไม่บังคับ)
+                    </label>
+                    <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl p-6 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                      <ImagePlus className="w-7 h-7 text-gray-400" />
+                      <span className="text-sm text-gray-500">แตะเพื่อเลือกรูป</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files ?? []);
+                          setPhotoFiles((prev) => [...prev, ...files]);
+                          setPhotoPreviews((prev) => [
+                            ...(prev ?? []),
+                            ...files.map((f) => URL.createObjectURL(f)),
+                          ]);
+                        }}
+                      />
+                    </label>
+                    {photoPreviews && photoPreviews.length > 0 && (
+                      <div className="grid grid-cols-3 gap-2">
+                        {photoPreviews.map((src, i) => (
+                          <div key={i} className="relative aspect-square">
+                            <img src={src} className="w-full h-full object-cover rounded-xl" />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPhotoFiles((p) => p.filter((_, j) => j !== i));
+                                setPhotoPreviews((p) => (p ?? []).filter((_, j) => j !== i));
+                              }}
+                              className="absolute top-1 right-1 p-1 bg-black/50 rounded-full"
+                            >
+                              <Trash2 className="w-3 h-3 text-white" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Stock Tab */}
                 {activeTab === "stock" && (
                   <div className="space-y-4">
@@ -405,21 +461,19 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
                   ยกเลิก
                 </button>
                 <div className="flex gap-2">
-                  {activeTab === "stock" && (
+                  {activeTab !== "basic" && (
                     <button
                       type="button"
-                      onClick={() => setActiveTab("basic")}
+                      onClick={() => setActiveTab(activeTab === "photos" ? "stock" : "basic")}
                       className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 transition-colors"
                     >
                       ย้อนกลับ
                     </button>
                   )}
-                  {activeTab !== "technical" ? (
+                  {activeTab !== "photos" ? (
                     <button
                       type="button"
-                      onClick={() =>
-                        setActiveTab(activeTab === "basic" ? "stock" : "technical")
-                      }
+                      onClick={() => setActiveTab(activeTab === "basic" ? "stock" : "photos")}
                       className="px-4 py-2 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors"
                     >
                       ถัดไป
@@ -430,9 +484,7 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
                       disabled={createItem.isPending}
                       className="flex items-center gap-2 px-5 py-2 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-60"
                     >
-                      {createItem.isPending && (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      )}
+                      {createItem.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
                       บันทึกอุปกรณ์
                     </button>
                   )}
