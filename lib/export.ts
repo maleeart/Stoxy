@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import type { InventoryItem, BorrowRecord, StockMovement } from "@/types";
+import type { Requisition } from "@/services/requisition.service";
 
 // Load & register Sarabun (Thai) font into a jsPDF instance
 async function createDocWithThaiFont(orientation: "portrait" | "landscape" = "portrait"): Promise<jsPDF> {
@@ -167,7 +168,7 @@ export async function exportMovementsPDF(movements: StockMovement[]) {
       m.itemCode, m.itemName,
       movementTypeLabel[m.type] ?? m.type,
       m.quantityBefore, m.quantityChange, m.quantityAfter,
-      m.reason ?? "", m.performedByName,
+      m.reason ?? "", m.subjectName ?? m.performedByName,
     ]),
     styles: { font: "Sarabun", fontSize: 9 },
     headStyles: { fillColor: [13, 33, 55], font: "Sarabun", fontStyle: "normal", textColor: 255 },
@@ -199,13 +200,48 @@ export function exportMovementsExcel(movements: StockMovement[]) {
     movementTypeLabel[m.type] ?? m.type,
     m.quantityBefore, m.quantityChange, m.quantityAfter,
     m.reason ?? "",
-    m.performedByName,
+    m.subjectName ?? m.performedByName,
   ]);
 
   const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Movements");
   saveExcel(wb, `stoxy-movements-${dateStr()}.xlsx`);
+}
+
+export async function exportRequisitionsPDF(reqs: Requisition[]) {
+  const doc = await createDocWithThaiFont("landscape");
+  doc.setFontSize(16);
+  doc.text("รายงานการเบิกวัสดุ - Stoxy", 14, 15);
+  doc.setFontSize(10);
+  doc.text(`วันที่พิมพ์: ${new Date().toLocaleDateString("th-TH")}`, 14, 22);
+  autoTable(doc, {
+    startY: 28,
+    head: [["วันที่", "รหัสอุปกรณ์", "ชื่ออุปกรณ์", "จำนวน", "ผู้เบิก", "วัตถุประสงค์", "สถานะ"]],
+    body: reqs.map((r) => [
+      r.createdAt?.toDate().toLocaleDateString("th-TH") ?? "",
+      r.itemCode, r.itemName, r.quantity,
+      r.requesterName, r.purpose,
+      r.status === "approved" ? "อนุมัติ" : r.status === "rejected" ? "ปฏิเสธ" : "รออนุมัติ",
+    ]),
+    styles: { font: "Sarabun", fontSize: 9 },
+    headStyles: { fillColor: [13, 33, 55], font: "Sarabun", fontStyle: "normal", textColor: 255 },
+  });
+  doc.save(`stoxy-requisitions-${dateStr()}.pdf`);
+}
+
+export function exportRequisitionsExcel(reqs: Requisition[]) {
+  const headers = ["วันที่", "รหัสอุปกรณ์", "ชื่ออุปกรณ์", "จำนวน", "ผู้เบิก", "วัตถุประสงค์", "สถานะ"];
+  const rows = reqs.map((r) => [
+    r.createdAt?.toDate().toLocaleDateString("th-TH") ?? "",
+    r.itemCode, r.itemName, r.quantity,
+    r.requesterName, r.purpose,
+    r.status === "approved" ? "อนุมัติ" : r.status === "rejected" ? "ปฏิเสธ" : "รออนุมัติ",
+  ]);
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Requisitions");
+  saveExcel(wb, `stoxy-requisitions-${dateStr()}.xlsx`);
 }
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -220,6 +256,7 @@ const movementTypeLabel: Record<string, string> = {
   maintenance_out: "ส่งซ่อม",
   maintenance_in: "รับคืนจากซ่อม",
   lost: "สูญหาย",
+  requisition: "เบิก",
 };
 
 const statusLabel: Record<string, string> = {

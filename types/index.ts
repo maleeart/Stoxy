@@ -211,6 +211,7 @@ export interface StockMovement {
   reason?: string;
   performedBy: string;
   performedByName: string;
+  subjectName?: string; // ผู้ยืม / ผู้เบิก
   createdAt: Timestamp;
 }
 

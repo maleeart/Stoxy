@@ -5,12 +5,14 @@ import { useInventoryItems } from "@/hooks/useInventory";
 import { useQuery } from "@tanstack/react-query";
 import { getBorrowRecords } from "@/services/borrow.service";
 import { getRecentMovements } from "@/services/inventory.service";
+import { getRequisitions } from "@/services/requisition.service";
 import {
   exportInventoryPDF, exportInventoryExcel,
   exportBorrowsPDF, exportBorrowsExcel,
   exportMovementsPDF, exportMovementsExcel,
+  exportRequisitionsPDF, exportRequisitionsExcel,
 } from "@/lib/export";
-import { FileText, FileSpreadsheet, Package, ArrowLeftRight, Activity } from "lucide-react";
+import { FileText, FileSpreadsheet, Package, ArrowLeftRight, Activity, PackageOpen } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function ReportsPage() {
@@ -22,6 +24,10 @@ export default function ReportsPage() {
   const { data: movements = [] } = useQuery({
     queryKey: ["movements_all"],
     queryFn: () => getRecentMovements(500),
+  });
+  const { data: requisitions = [] } = useQuery({
+    queryKey: ["requisitions_all"],
+    queryFn: () => getRequisitions(),
   });
 
   const reports = [
@@ -53,6 +59,16 @@ export default function ReportsPage() {
       actions: [
         { label: "PDF", icon: <FileText className="w-4 h-4" />, fn: () => exportMovementsPDF(movements) },
         { label: "Excel", icon: <FileSpreadsheet className="w-4 h-4" />, fn: () => exportMovementsExcel(movements) },
+      ],
+    },
+    {
+      title: "รายงานการเบิกวัสดุ",
+      description: `${requisitions.length} รายการ`,
+      icon: <PackageOpen className="w-5 h-5 text-amber-600" />,
+      bg: "bg-amber-50 dark:bg-amber-900/20",
+      actions: [
+        { label: "PDF", icon: <FileText className="w-4 h-4" />, fn: () => exportRequisitionsPDF(requisitions) },
+        { label: "Excel", icon: <FileSpreadsheet className="w-4 h-4" />, fn: () => exportRequisitionsExcel(requisitions) },
       ],
     },
   ];

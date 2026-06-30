@@ -85,15 +85,16 @@ export async function approveRequisition(id: string, approverId: string, approve
     itemId: req.itemId,
     itemCode: req.itemCode,
     itemName: req.itemName,
-    type: "adjustment_out",
+    type: "requisition",
     quantityBefore: item.quantityAvailable,
     quantityChange: -req.quantity,
     quantityAfter: item.quantityAvailable - req.quantity,
     referenceId: id,
     referenceType: "requisition",
-    reason: `เบิกโดย ${req.requesterName}: ${req.purpose}`,
+    reason: req.purpose,
     performedBy: approverId,
     performedByName: approverName || approverId,
+    subjectName: req.requesterName,
   });
 }
 

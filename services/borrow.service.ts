@@ -95,6 +95,7 @@ export async function approveBorrowRequest(borrowId: string, approverId: string,
     reason: borrow.purpose,
     performedBy: approverId,
     performedByName: approverName || approverId,
+    subjectName: borrow.borrowerName,
   });
 }
 
