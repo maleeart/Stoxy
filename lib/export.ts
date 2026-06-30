@@ -29,10 +29,11 @@ export async function exportInventoryPDF(items: InventoryItem[]) {
 
   autoTable(doc, {
     startY: 28,
-    head: [["รหัส", "ชื่ออุปกรณ์", "ยี่ห้อ", "หมวดหมู่", "คงเหลือ/ทั้งหมด", "สถานะ", "สภาพ", "สถานที่"]],
+    head: [["รหัส", "ชื่ออุปกรณ์", "หน่วย", "ยี่ห้อ", "หมวดหมู่", "คงเหลือ/ทั้งหมด", "สถานะ", "สภาพ", "สถานที่"]],
     body: items.map((i) => [
       i.code,
       i.name,
+      i.unit ?? "-",
       i.brand ?? "-",
       i.categoryName ?? "-",
       `${i.quantityAvailable}/${i.quantity}`,

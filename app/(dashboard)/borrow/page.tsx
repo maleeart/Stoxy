@@ -608,7 +608,7 @@ function AdminBorrowPage() {
   });
 
   const acknowledgeMut = useMutation({
-    mutationFn: (id: string) => acknowledgeReturn(id, stoxyUser?.uid ?? ""),
+    mutationFn: (id: string) => acknowledgeReturn(id, stoxyUser?.uid ?? "", stoxyUser?.displayName),
     onSuccess: () => toast.success("รับทราบการคืนแล้ว"),
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
   });

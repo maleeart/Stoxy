@@ -281,7 +281,7 @@ export default function OperationsPage() {
   });
 
   const acknowledgeRet = useMutation({
-    mutationFn: (id: string) => acknowledgeReturn(id, stoxyUser?.uid ?? ""),
+    mutationFn: (id: string) => acknowledgeReturn(id, stoxyUser?.uid ?? "", stoxyUser?.displayName),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["borrows"] }); toast.success("รับทราบการคืนแล้ว"); },
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
   });
@@ -289,7 +289,7 @@ export default function OperationsPage() {
   const adminReceive = useMutation({
     mutationFn: async ({ id, notes, photos }: { id: string; notes: string; photos: File[] }) => {
       const urls = photos.length > 0 ? await uploadImages(photos, "return-photos") : [];
-      return adminReceiveReturn(id, stoxyUser?.uid ?? "", notes || undefined, urls);
+      return adminReceiveReturn(id, stoxyUser?.uid ?? "", notes || undefined, urls, stoxyUser?.displayName);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["borrows"] });

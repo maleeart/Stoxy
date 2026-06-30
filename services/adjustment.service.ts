@@ -23,6 +23,7 @@ export async function createAdjustment(
     quantityAdjusted: number;
     reason: string;
     createdBy: string;
+    createdByName?: string;
   }
 ): Promise<void> {
   const itemRef = doc(db, "inventory_items", data.itemId);
@@ -73,6 +74,6 @@ export async function createAdjustment(
     referenceType: "adjustment",
     reason: data.reason,
     performedBy: data.createdBy,
-    performedByName: data.createdBy,
+    performedByName: data.createdByName || data.createdBy,
   });
 }

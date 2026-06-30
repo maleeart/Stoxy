@@ -17,7 +17,7 @@ export default function ReturnPage() {
   const returnPending = allRecords.filter((b) => b.status === "return_pending");
 
   const acknowledgeMut = useMutation({
-    mutationFn: (id: string) => acknowledgeReturn(id, stoxyUser?.uid ?? ""),
+    mutationFn: (id: string) => acknowledgeReturn(id, stoxyUser?.uid ?? "", stoxyUser?.displayName),
     onSuccess: () => toast.success("รับทราบการคืนแล้ว ปิดรายการสำเร็จ"),
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
   });

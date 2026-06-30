@@ -171,7 +171,7 @@ export async function submitReturn(
   });
 }
 
-export async function acknowledgeReturn(borrowId: string, adminId: string): Promise<void> {
+export async function acknowledgeReturn(borrowId: string, adminId: string, adminName?: string): Promise<void> {
   const borrowRef = doc(db, BORROWS_COLLECTION, borrowId);
   const borrowSnap = await getDoc(borrowRef);
   if (!borrowSnap.exists()) throw new Error("ไม่พบรายการ");
@@ -209,12 +209,12 @@ export async function acknowledgeReturn(borrowId: string, adminId: string): Prom
     referenceType: "borrow",
     reason: `คืนโดย ${borrow.borrowerName}`,
     performedBy: adminId,
-    performedByName: adminId,
+    performedByName: adminName || adminId,
   });
 }
 
 // Admin รับของคืนโดยตรง (สำหรับ guest หรือกรณีที่ไม่ได้แจ้งคืนผ่านแอพ)
-export async function adminReceiveReturn(borrowId: string, adminId: string, notes?: string, returnPhotos?: string[]): Promise<void> {
+export async function adminReceiveReturn(borrowId: string, adminId: string, notes?: string, returnPhotos?: string[], adminName?: string): Promise<void> {
   const borrowRef = doc(db, BORROWS_COLLECTION, borrowId);
   const borrowSnap = await getDoc(borrowRef);
   if (!borrowSnap.exists()) throw new Error("ไม่พบรายการ");
@@ -257,6 +257,6 @@ export async function adminReceiveReturn(borrowId: string, adminId: string, note
     referenceType: "borrow",
     reason: `รับคืนโดย admin${notes ? ` (${notes})` : ""}`,
     performedBy: adminId,
-    performedByName: adminId,
+    performedByName: adminName || adminId,
   });
 }
