@@ -162,6 +162,7 @@ export const rolePermissions: Record<UserRole, string[]> = {
     "reports.read",
   ],
   viewer: ["inventory.read", "borrow.read", "reports.read"],
+  guest: ["inventory.read", "borrow.read", "borrow.write", "requisition.read", "requisition.write"],
 };
 
 export function hasPermission(role: UserRole, permission: string): boolean {
