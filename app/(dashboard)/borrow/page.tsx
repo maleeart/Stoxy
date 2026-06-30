@@ -263,8 +263,10 @@ function ItemCard({ item, isFav, onFav, onBorrow }: {
 }) {
   return (
     <div className="bg-white rounded-2xl p-4 border border-gray-50 shadow-sm flex items-center gap-3">
-      <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0">
-        <Package className="w-7 h-7 text-[#1D4ED8]" />
+      <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0 overflow-hidden">
+        {item.images?.[0]
+          ? <img src={item.images[0]} alt={item.name} className="w-full h-full object-cover" />
+          : <Package className="w-7 h-7 text-[#1D4ED8]" />}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-start gap-1">
@@ -798,8 +800,10 @@ function GuestBorrowPage() {
                     <motion.div key={item.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.015 }}
                       className="bg-white rounded-2xl p-4 border border-gray-50 shadow-sm flex items-center gap-3"
                     >
-                      <div className="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center shrink-0">
-                        <Package className="w-7 h-7 text-amber-500" />
+                      <div className="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center shrink-0 overflow-hidden">
+                        {item.images?.[0]
+                          ? <img src={item.images[0]} alt={item.name} className="w-full h-full object-cover" />
+                          : <Package className="w-7 h-7 text-amber-500" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2">{item.name}</p>
