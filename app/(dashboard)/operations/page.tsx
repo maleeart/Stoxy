@@ -27,6 +27,8 @@ type AdjType = "adjustment_in" | "adjustment_out";
 
 function AdjustSheet({ item, onClose }: { item: InventoryItem; onClose: () => void }) {
   const { stoxyUser } = useAuth();
+  const isSupervisor = stoxyUser?.role === "supervisor";
+  const guard = (fn: () => void) => isSupervisor ? toast.error("สำหรับ Admin / ผู้จัดการ เท่านั้น") : fn();
   const qc = useQueryClient();
   const [type, setType] = useState<AdjType>("adjustment_in");
   const [qty, setQty] = useState(1);
