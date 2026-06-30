@@ -25,10 +25,7 @@ const schema = z.object({
   locationId: z.string().min(1, "กรุณาระบุสถานที่"),
   quantity: z.coerce.number().min(1, "จำนวนต้องมากกว่า 0"),
   minStockLevel: z.coerce.number().min(0),
-  condition: z.enum(["excellent", "good", "fair", "poor", "broken"]),
   notes: z.string().optional(),
-  requiresCalibration: z.boolean(),
-  requiresMaintenance: z.boolean(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -41,7 +38,6 @@ interface AddItemDialogProps {
 const tabs = [
   { id: "basic", label: "ข้อมูลพื้นฐาน" },
   { id: "stock", label: "สต็อก & สถานที่" },
-  { id: "technical", label: "เทคนิค" },
 ];
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -57,9 +53,6 @@ const DEFAULT_VALUES = {
   code: "",
   quantity: 1,
   minStockLevel: 1,
-  condition: "good" as const,
-  requiresCalibration: false,
-  requiresMaintenance: false,
 };
 
 export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
@@ -129,6 +122,9 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
       await createItem.mutateAsync({
         ...data,
         unit: resolvedUnit,
+        condition: "good" as const,
+        requiresCalibration: false,
+        requiresMaintenance: false,
         status: "available",
         quantityAvailable: data.quantity,
         quantityBorrowed: 0,
@@ -307,18 +303,6 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
                           </p>
                         )}
                       </div>
-                      <div className="col-span-2">
-                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          สภาพ *
-                        </label>
-                        <select {...register("condition")} className="input-field">
-                          <option value="excellent">ดีมาก</option>
-                          <option value="good">ดี</option>
-                          <option value="fair">พอใช้</option>
-                          <option value="poor">แย่</option>
-                          <option value="broken">เสีย</option>
-                        </select>
-                      </div>
                     </div>
                   </>
                 )}
@@ -400,45 +384,6 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
                   </div>
                 )}
 
-                {/* Technical Tab */}
-                {activeTab === "technical" && (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-purple-50 dark:bg-purple-950/30 rounded-xl border border-purple-100 dark:border-purple-900">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">
-                          ต้องสอบเทียบ
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          ตั้งค่าวันสอบเทียบครั้งถัดไป
-                        </p>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          {...register("requiresCalibration")}
-                          className="sr-only peer"
-                        />
-                        <div className="w-10 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:bg-purple-600 after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all" />
-                      </label>
-                    </div>
-                    <div className="flex items-center justify-between p-4 bg-orange-50 dark:bg-orange-950/30 rounded-xl border border-orange-100 dark:border-orange-900">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">
-                          ต้องซ่อมบำรุง
-                        </p>
-                        <p className="text-xs text-gray-500">ตั้งค่าการซ่อมบำรุงป้องกัน</p>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          {...register("requiresMaintenance")}
-                          className="sr-only peer"
-                        />
-                        <div className="w-10 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:bg-orange-600 after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all" />
-                      </label>
-                    </div>
-                  </div>
-                )}
               </div>
 
               {/* Footer */}
@@ -451,14 +396,10 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
                   ยกเลิก
                 </button>
                 <div className="flex gap-2">
-                  {activeTab !== "basic" && (
+                  {activeTab === "stock" && (
                     <button
                       type="button"
-                      onClick={() =>
-                        setActiveTab(
-                          activeTab === "technical" ? "stock" : "basic"
-                        )
-                      }
+                      onClick={() => setActiveTab("basic")}
                       className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 transition-colors"
                     >
                       ย้อนกลับ

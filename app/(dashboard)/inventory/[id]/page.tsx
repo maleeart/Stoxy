@@ -127,7 +127,7 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
               <span>ถูกยืม: {item.quantityBorrowed}</span>
               <span>ซ่อม: {item.quantityUnderRepair}</span>
             </div>
-            {item.quantityAvailable <= item.minStockLevel && (
+            {(item.minStockLevel ?? 0) > 0 && item.quantityAvailable <= item.minStockLevel && (
               <div className="flex items-center gap-1.5 mt-2 text-xs text-red-600">
                 <AlertTriangle className="w-3.5 h-3.5" />
                 สต็อกต่ำกว่าขั้นต่ำ ({item.minStockLevel})
