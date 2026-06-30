@@ -9,7 +9,7 @@ import {
 import { AppShell } from "@/components/layout/AppShell";
 import { MobileHeader } from "@/components/layout/MobileHeader";
 import { useInventoryItems } from "@/hooks/useInventory";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, useRole } from "@/hooks/useAuth";
 import { useRealtimeBorrows } from "@/hooks/useRealtimeBorrows";
 import {
   createBorrowRequest, approveBorrowRequest, rejectBorrowRequest,
@@ -51,6 +51,8 @@ function BorrowSheet({ item, uid, displayName, dept, onClose }: {
   const [photos, setPhotos] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [compressing, setCompressing] = useState(false);
+  const role = useRole();
+  const guard = (fn: () => void) => role === "viewer" ? toast.error("ไม่มีสิทธิ์ดำเนินการ") : fn();
 
   const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
   const minDate = tomorrow.toISOString().split("T")[0];
@@ -146,7 +148,7 @@ function BorrowSheet({ item, uid, displayName, dept, onClose }: {
             )}
           </div>
 
-          <button onClick={() => mut.mutate()} disabled={!returnDate || !purpose.trim() || mut.isPending || compressing}
+          <button onClick={() => guard(() => mut.mutate())} disabled={!returnDate || !purpose.trim() || mut.isPending || compressing}
             className="w-full py-4 bg-[#1D4ED8] text-white font-bold rounded-2xl disabled:opacity-50 flex items-center justify-center gap-2 text-base active:scale-[0.98] transition-transform"
           >
             {(compressing || mut.isPending) && <Loader2 className="w-5 h-5 animate-spin" />}
@@ -164,6 +166,8 @@ function ReturnSheet({ record, uid, onClose }: { record: BorrowRecord; uid: stri
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [compressing, setCompressing] = useState(false);
+  const role = useRole();
+  const guard = (fn: () => void) => role === "viewer" ? toast.error("ไม่มีสิทธิ์ดำเนินการ") : fn();
 
   const mut = useMutation({
     mutationFn: async () => {
@@ -216,7 +220,7 @@ function ReturnSheet({ record, uid, onClose }: { record: BorrowRecord; uid: stri
               </div>
             )}
           </div>
-          <button onClick={() => mut.mutate()} disabled={mut.isPending || compressing}
+          <button onClick={() => guard(() => mut.mutate())} disabled={mut.isPending || compressing}
             className="w-full py-4 bg-emerald-500 text-white font-bold rounded-2xl disabled:opacity-50 flex items-center justify-center gap-2 text-base active:scale-[0.98] transition-transform"
           >
             {(compressing || mut.isPending) && <Loader2 className="w-5 h-5 animate-spin" />}
@@ -531,6 +535,8 @@ const adminTabs: { label: string; value: BorrowStatus | "all" }[] = [
 
 function AdminBorrowPage() {
   const { stoxyUser } = useAuth();
+  const role = useRole();
+  const guard = (fn: () => void) => role === "viewer" ? toast.error("ไม่มีสิทธิ์ดำเนินการ") : fn();
   const { data: items = [] } = useInventoryItems();
   const [tab, setTab] = useState<BorrowStatus | "all">("all");
   const [search, setSearch] = useState("");
@@ -720,7 +726,7 @@ function AdminBorrowPage() {
                     </div>
                   )}
                 </div>
-                <button onClick={() => createMut.mutate()} disabled={!itemId || !borrowerName.trim() || !returnDate || !purpose.trim() || createMut.isPending || compressing}
+                <button onClick={() => guard(() => createMut.mutate())} disabled={!itemId || !borrowerName.trim() || !returnDate || !purpose.trim() || createMut.isPending || compressing}
                   className="w-full py-2.5 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl disabled:opacity-50 hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
                 >
                   {(compressing || createMut.isPending) && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -747,7 +753,7 @@ function AdminBorrowPage() {
                 placeholder="ระบุเหตุผล..." className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none mb-3"
               />
               <div className="flex gap-2">
-                <button onClick={() => rejectMut.mutate()} disabled={!rejectReason.trim() || rejectMut.isPending}
+                <button onClick={() => guard(() => rejectMut.mutate())} disabled={!rejectReason.trim() || rejectMut.isPending}
                   className="flex-1 py-2 text-sm font-medium bg-red-600 text-white rounded-xl disabled:opacity-50">ยืนยัน</button>
                 <button onClick={() => setRejectId(null)} className="px-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl">ยกเลิก</button>
               </div>
@@ -797,7 +803,7 @@ function AdminBorrowPage() {
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => returnMut.mutate()} disabled={returnMut.isPending || rtCompressing}
+                  <button onClick={() => guard(() => returnMut.mutate())} disabled={returnMut.isPending || rtCompressing}
                     className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium bg-emerald-600 text-white rounded-xl disabled:opacity-50"
                   >
                     {(rtCompressing || returnMut.isPending) && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -914,7 +920,7 @@ function AdminBorrowPage() {
                     <div className="space-y-1">
                       {record.status === "pending_approval" && (
                         <>
-                          <button onClick={() => approveMut.mutate(record.id)} disabled={approveMut.isPending}
+                          <button onClick={() => guard(() => approveMut.mutate(record.id))} disabled={approveMut.isPending}
                             className="flex items-center gap-1 text-xs px-2.5 py-1 bg-emerald-600 text-white rounded-lg disabled:opacity-50 w-full justify-center">
                             <CheckCircle className="w-3 h-3" />อนุมัติ
                           </button>
@@ -931,7 +937,7 @@ function AdminBorrowPage() {
                         </button>
                       )}
                       {record.status === "return_pending" && (
-                        <button onClick={() => acknowledgeMut.mutate(record.id)} disabled={acknowledgeMut.isPending}
+                        <button onClick={() => guard(() => acknowledgeMut.mutate(record.id))} disabled={acknowledgeMut.isPending}
                           className="flex items-center gap-1 text-xs px-2.5 py-1 bg-purple-600 text-white rounded-lg disabled:opacity-50 w-full justify-center">
                           รับทราบ
                         </button>

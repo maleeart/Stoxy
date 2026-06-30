@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { MobileHeader } from "@/components/layout/MobileHeader";
 import { useInventoryItems } from "@/hooks/useInventory";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, useRole } from "@/hooks/useAuth";
 import {
   createRequisition, getRequisitions, getMyRequisitions,
   approveRequisition, rejectRequisition,
@@ -42,6 +42,8 @@ type CartItem = { itemId: string; itemCode: string; itemName: string; qty: numbe
 // ── Staff Requisition Page (shopping cart) ─────────────────────────────────────
 function StaffRequisitionPage() {
   const { stoxyUser } = useAuth();
+  const role = useRole();
+  const guard = (fn: () => void) => role === "viewer" ? toast.error("ไม่มีสิทธิ์ดำเนินการ") : fn();
   const qc = useQueryClient();
   const { data: items = [] } = useInventoryItems();
 
@@ -263,7 +265,7 @@ function StaffRequisitionPage() {
                 />
               </div>
 
-              <button onClick={() => submitMut.mutate()}
+              <button onClick={() => guard(() => submitMut.mutate())}
                 disabled={!purpose.trim() || submitMut.isPending}
                 className="w-full py-3.5 bg-[#1D4ED8] text-white font-bold text-sm rounded-2xl disabled:opacity-50 active:scale-[0.98] transition-transform"
               >
@@ -280,6 +282,8 @@ function StaffRequisitionPage() {
 // ── Admin Requisition Page (existing flow) ─────────────────────────────────────
 function AdminRequisitionPage() {
   const { stoxyUser } = useAuth();
+  const role = useRole();
+  const guard = (fn: () => void) => role === "viewer" ? toast.error("ไม่มีสิทธิ์ดำเนินการ") : fn();
   const qc = useQueryClient();
 
   const [showForm, setShowForm] = useState(false);
@@ -397,7 +401,7 @@ function AdminRequisitionPage() {
                     className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none"
                   />
                 </div>
-                <button onClick={() => createMut.mutate()}
+                <button onClick={() => guard(() => createMut.mutate())}
                   disabled={!itemId || !purpose.trim() || createMut.isPending}
                   className="w-full py-2.5 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl disabled:opacity-50 hover:bg-blue-700 transition-colors"
                 >
@@ -426,7 +430,7 @@ function AdminRequisitionPage() {
                 className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none mb-3"
               />
               <div className="flex gap-2">
-                <button onClick={() => rejectMut.mutate()}
+                <button onClick={() => guard(() => rejectMut.mutate())}
                   disabled={!rejectReason.trim() || rejectMut.isPending}
                   className="flex-1 py-2 text-sm font-medium bg-red-600 text-white rounded-xl disabled:opacity-50 hover:bg-red-700 transition-colors"
                 >ยืนยันปฏิเสธ</button>
@@ -487,7 +491,7 @@ function AdminRequisitionPage() {
                   <p className="text-xs text-gray-400">{formatDateTime(req.createdAt)}</p>
                   {req.status === "pending" && (
                     <div className="flex gap-1.5 mt-2">
-                      <button onClick={() => approveMut.mutate(req.id)} disabled={approveMut.isPending}
+                      <button onClick={() => guard(() => approveMut.mutate(req.id))} disabled={approveMut.isPending}
                         className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors"
                       ><CheckCircle className="w-3.5 h-3.5" />อนุมัติ</button>
                       <button onClick={() => setRejectId(req.id)}
