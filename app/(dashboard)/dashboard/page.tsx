@@ -48,8 +48,8 @@ function buildWeeklyData(movements: StockMovement[]) {
     const day = movements.filter((m) => m.createdAt?.toDate().toDateString() === dateStr);
     return {
       day: dayNames[d.getDay()],
-      ยืม: day.filter((m) => m.type === "borrow" || m.type === "adjustment_out").length,
-      คืน: day.filter((m) => m.type === "return" || m.type === "adjustment_in").length,
+      ยืม: day.filter((m) => m.type === "borrow").length,
+      เบิก: day.filter((m) => m.type === "requisition").length,
     };
   });
 }
@@ -433,7 +433,7 @@ export default function DashboardPage() {
             <TrendingUp className="w-4 h-4 text-[#1D4ED8]" />
             <div>
               <h3 className="text-sm font-semibold text-gray-900">การเคลื่อนไหว 7 วันล่าสุด</h3>
-              <p className="text-xs text-gray-400 mt-0.5">ยืม/เบิก vs คืน/รับเข้า</p>
+              <p className="text-xs text-gray-400 mt-0.5">ยืมอุปกรณ์ vs เบิกวัสดุ</p>
             </div>
             <button onClick={() => router.push("/movements")}
               className="ml-auto flex items-center gap-1 text-xs font-semibold text-[#1D4ED8]">
@@ -447,7 +447,7 @@ export default function DashboardPage() {
               <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} allowDecimals={false} />
               <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid #e5e7eb", fontSize: "12px" }} />
               <Bar dataKey="ยืม" fill="#1D4ED8" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="คืน" fill="#FBBF24" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="เบิก" fill="#FBBF24" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
