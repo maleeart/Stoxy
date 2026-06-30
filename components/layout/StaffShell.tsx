@@ -50,6 +50,14 @@ export function StaffShell({ children }: StaffShellProps) {
 
   const homeActive = pathname === "/dashboard";
 
+  if (isGuest) {
+    return (
+      <div className="flex flex-col h-[100dvh] bg-[#F8FAFC]">
+        <main className="flex-1 overflow-y-auto min-h-0">{children}</main>
+      </div>
+    );
+  }
+
   return (
     // ใช้ flex column แทน fixed nav — ป้องกัน nav หายเพราะ framer-motion stacking context
     <div className="flex flex-col h-[100dvh] bg-[#F8FAFC]">
