@@ -293,19 +293,10 @@ function ItemCard({ item, isFav, onFav, onBorrow }: {
 
 function StaffBorrowPage() {
   const { stoxyUser } = useAuth();
-  const role = stoxyUser?.role;
-  const router = useRouter();
   const { data: items = [] } = useInventoryItems();
   const { allRecords, isLoading } = useRealtimeBorrows();
   const uid = stoxyUser?.uid ?? "";
   const { favs, toggle: toggleFav } = useFavorites(uid);
-  const canRequisition = role !== "viewer" && role !== "supervisor";
-
-  const { data: myReqs = [] } = useQuery({
-    queryKey: ["requisitions", "mine", uid],
-    queryFn: () => getMyRequisitions(uid),
-    enabled: !!uid && canRequisition,
-  });
 
   const [tab, setTab] = useState<"borrow" | "return">("borrow");
   const [search, setSearch] = useState("");
@@ -401,32 +392,6 @@ function StaffBorrowPage() {
             <motion.div key="borrow" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="space-y-4"
             >
-              {/* Pending summary banner */}
-              {(() => {
-                const pendingBorrow = allRecords.filter(b => b.borrowerId === uid && b.status === "pending_approval").length;
-                const pendingReq = myReqs.filter(r => r.status === "pending").length;
-                const total = pendingBorrow + pendingReq;
-                if (total === 0) return null;
-                return (
-                  <button onClick={() => router.push("/history")}
-                    className="w-full flex items-center justify-between bg-yellow-50 border border-yellow-200 rounded-2xl px-4 py-3 active:scale-[0.98] transition-transform"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Clock className="w-5 h-5 text-yellow-600 shrink-0" />
-                      <div className="text-left">
-                        <p className="text-sm font-bold text-yellow-800">รออนุมัติ {total} รายการ</p>
-                        <p className="text-xs text-yellow-600">
-                          {pendingBorrow > 0 && `ยืม ${pendingBorrow}`}
-                          {pendingBorrow > 0 && pendingReq > 0 && " · "}
-                          {pendingReq > 0 && `เบิก ${pendingReq}`}
-                          {" · ดูประวัติทั้งหมด"}
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-yellow-500 shrink-0" />
-                  </button>
-                );
-              })()}
               {/* When not searching: show Favorites + Recent sections first */}
               {!isSearching && category === "all" && (
                 <>

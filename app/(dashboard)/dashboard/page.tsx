@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { formatRelative, cn } from "@/lib/utils";
 import { AppShell } from "@/components/layout/AppShell";
 import { getBorrowRecords } from "@/services/borrow.service";
-import { getRequisitions } from "@/services/requisition.service";
+import { getRequisitions, getMyRequisitions } from "@/services/requisition.service";
 import { getAuditSessions } from "@/services/audit.service";
 import { useRealtimeBorrows } from "@/hooks/useRealtimeBorrows";
 import { useInventoryItems } from "@/hooks/useInventory";
@@ -58,15 +58,22 @@ function buildWeeklyData(movements: StockMovement[]) {
 function StaffHome() {
   const { stoxyUser } = useAuth();
   const router = useRouter();
-  const { data: hasActiveAudit = false } = useHasActiveAudit(stoxyUser?.uid);
+  const uid = stoxyUser?.uid ?? "";
+  const role = stoxyUser?.role;
+  const canRequisition = role !== "viewer" && role !== "supervisor";
+  const { data: hasActiveAudit = false } = useHasActiveAudit(uid);
   const { allRecords } = useRealtimeBorrows();
 
-  const myBorrowed = allRecords.filter(
-    (b) => b.status === "borrowed" && b.borrowerId === stoxyUser?.uid
-  );
-  const myPending = allRecords.filter(
-    (b) => b.status === "pending_approval" && b.borrowerId === stoxyUser?.uid
-  ).length;
+  const myBorrowed = allRecords.filter(b => b.status === "borrowed" && b.borrowerId === uid);
+  const myPendingBorrow = allRecords.filter(b => b.status === "pending_approval" && b.borrowerId === uid).length;
+
+  const { data: myReqs = [] } = useQuery({
+    queryKey: ["requisitions", "mine", uid],
+    queryFn: () => getMyRequisitions(uid),
+    enabled: !!uid && canRequisition,
+  });
+  const myPendingReq = myReqs.filter(r => r.status === "pending").length;
+  const totalPendingMine = myPendingBorrow + myPendingReq;
 
   const greeting = () => {
     const h = new Date().getHours();
@@ -79,7 +86,7 @@ function StaffHome() {
     { label: "ยืม-คืน", desc: "ยืมและแจ้งคืนอุปกรณ์", icon: ArrowLeftRight, href: "/borrow", bg: "bg-[#1D4ED8]", text: "text-white" },
     { label: "เบิกของ", desc: "เบิกอุปกรณ์สำหรับงาน", icon: PackageOpen, href: "/requisition", bg: "bg-[#FBBF24]", text: "text-[#1D4ED8]" },
     { label: "คลัง", desc: "ดูรายการอุปกรณ์ทั้งหมด", icon: Package, href: "/inventory", bg: "bg-white", text: "text-[#1D4ED8]", border: true },
-    { label: "ประวัติ", desc: "ประวัติการใช้งาน", icon: History, href: "/movements", bg: "bg-white", text: "text-[#1D4ED8]", border: true },
+    { label: "ประวัติ", desc: "ประวัติการใช้งาน", icon: History, href: "/history", bg: "bg-white", text: "text-[#1D4ED8]", border: true },
   ];
 
   const now = new Date();
@@ -125,7 +132,7 @@ function StaffHome() {
           )}
         </div>
 
-        {(myBorrowed.length > 0 || myPending > 0) && (
+        {(myBorrowed.length > 0 || totalPendingMine > 0) && (
           <div className="flex gap-3 mt-4 pt-4 border-t border-gray-50">
             {myBorrowed.length > 0 && (
               <div className="flex items-center gap-2">
@@ -138,18 +145,24 @@ function StaffHome() {
                 </div>
               </div>
             )}
-            {myPending > 0 && (
+            {totalPendingMine > 0 && (
               <>
                 {myBorrowed.length > 0 && <div className="w-px bg-gray-100" />}
-                <div className="flex items-center gap-2">
+                <button onClick={() => router.push("/history")}
+                  className="flex items-center gap-2 active:scale-95 transition-transform"
+                >
                   <div className="w-8 h-8 rounded-xl bg-yellow-50 flex items-center justify-center">
                     <Clock className="w-4 h-4 text-yellow-500" />
                   </div>
-                  <div>
-                    <p className="text-lg font-bold text-gray-900 leading-none">{myPending}</p>
-                    <p className="text-xs text-gray-400">รออนุมัติ</p>
+                  <div className="text-left">
+                    <p className="text-lg font-bold text-gray-900 leading-none">{totalPendingMine}</p>
+                    <p className="text-xs text-gray-400">
+                      รออนุมัติ
+                      {myPendingBorrow > 0 && myPendingReq > 0 && ` (ยืม ${myPendingBorrow} · เบิก ${myPendingReq})`}
+                    </p>
                   </div>
-                </div>
+                  <ChevronRight className="w-4 h-4 text-gray-300 ml-1" />
+                </button>
               </>
             )}
           </div>
@@ -223,7 +236,7 @@ function StaffHome() {
           </div>
         )}
 
-        {myBorrowed.length === 0 && myPending === 0 && (
+        {myBorrowed.length === 0 && totalPendingMine === 0 && (
           <div className="text-center py-10">
             <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-3">
               <Package className="w-8 h-8 text-[#1D4ED8]" />
