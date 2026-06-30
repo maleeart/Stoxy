@@ -390,10 +390,7 @@ export default function DashboardPage() {
 
       {/* ── Stock summary ── */}
       <section className="mb-6">
-        <div className="flex items-baseline gap-2 mb-3">
-          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">ภาพรวมสต็อก</h3>
-          <span className="text-xs text-gray-400">ปีนี้</span>
-        </div>
+        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">ภาพรวมสต็อก</h3>
         <div className="grid grid-cols-2 gap-3">
           <SummaryTile
             label="ถูกยืมออก"
