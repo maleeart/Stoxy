@@ -158,8 +158,8 @@ export default function NotificationsPage() {
       {/* Header summary */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h2 className="text-lg font-bold text-gray-900">การแจ้งเตือน</h2>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">การแจ้งเตือน</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
             {sorted.length} รายการรอดำเนินการ
             {urgentCount > 0 && (
               <span className="ml-2 text-xs font-semibold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
@@ -172,12 +172,12 @@ export default function NotificationsPage() {
       </div>
 
       {sorted.length === 0 ? (
-        <div className="text-center py-24 bg-white rounded-3xl border border-gray-100">
-          <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
+        <div className="text-center py-24 bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700">
+          <div className="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center mx-auto mb-4">
             <CheckCircle2 className="w-8 h-8 text-emerald-500" />
           </div>
-          <p className="text-sm font-semibold text-gray-700">ทุกอย่างเรียบร้อย</p>
-          <p className="text-xs text-gray-400 mt-1">ไม่มีรายการที่ต้องดำเนินการ</p>
+          <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">ทุกอย่างเรียบร้อย</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">ไม่มีรายการที่ต้องดำเนินการ</p>
         </div>
       ) : (
         <div className="space-y-2.5">
@@ -188,8 +188,8 @@ export default function NotificationsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.04 }}
               onClick={() => router.push(n.href)}
-              className={`w-full text-left bg-white rounded-2xl border p-4 flex items-center gap-3.5 active:scale-[0.98] transition-all hover:border-gray-200 shadow-sm ${
-                n.urgent ? "border-red-100 shadow-red-50" : "border-gray-100"
+              className={`w-full text-left bg-white dark:bg-gray-800 rounded-2xl border p-4 flex items-center gap-3.5 active:scale-[0.98] transition-all hover:border-gray-200 dark:hover:border-gray-600 shadow-sm ${
+                n.urgent ? "border-red-100 dark:border-red-900/40 shadow-red-50" : "border-gray-100 dark:border-gray-700"
               }`}
             >
               {/* Icon */}
@@ -201,14 +201,14 @@ export default function NotificationsPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
                   <span className={`text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-md ${
-                    n.urgent ? "bg-red-50 text-red-500" : "bg-gray-100 text-gray-500"
+                    n.urgent ? "bg-red-50 dark:bg-red-900/40 text-red-500" : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
                   }`}>
                     {labelMap[n.type]}
                   </span>
                   {n.urgent && <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />}
                 </div>
-                <p className="text-sm font-semibold text-gray-900 truncate">{n.title}</p>
-                <p className="text-xs text-gray-400 truncate mt-0.5">{n.subtitle}</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{n.title}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5">{n.subtitle}</p>
               </div>
 
               {/* Date + arrow */}

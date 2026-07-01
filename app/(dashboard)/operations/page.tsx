@@ -57,49 +57,49 @@ function AdjustSheet({ item, onClose }: { item: InventoryItem; onClose: () => vo
     >
       <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 350 }}
-        className="w-full bg-white rounded-t-3xl p-6 space-y-5"
+        className="w-full bg-white dark:bg-gray-800 rounded-t-3xl p-6 space-y-5"
         onClick={e => e.stopPropagation()}
       >
-        <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto" />
+        <div className="w-10 h-1 bg-gray-200 dark:bg-gray-600 rounded-full mx-auto" />
         <div>
-          <h3 className="font-bold text-gray-900 text-base">ปรับสต็อก</h3>
-          <p className="text-sm text-gray-500 mt-0.5 truncate">{item.name}</p>
+          <h3 className="font-bold text-gray-900 dark:text-white text-base">ปรับสต็อก</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 truncate">{item.name}</p>
           <p className="text-xs text-gray-400 mt-0.5">
-            คงเหลือปัจจุบัน: <span className="font-semibold text-gray-700">{item.quantityAvailable}</span>
+            คงเหลือปัจจุบัน: <span className="font-semibold text-gray-700 dark:text-gray-200">{item.quantityAvailable}</span>
           </p>
         </div>
-        <div className="flex bg-gray-100 rounded-2xl p-1">
+        <div className="flex bg-gray-100 dark:bg-gray-700 rounded-2xl p-1">
           <button onClick={() => setType("adjustment_in")}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${!isOut ? "bg-white text-emerald-600 shadow-sm" : "text-gray-400"}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${!isOut ? "bg-white dark:bg-gray-600 text-emerald-600 shadow-sm" : "text-gray-400 dark:text-gray-500"}`}
           >
             <ArrowDownCircle className="w-4 h-4" />รับเข้า
           </button>
           <button onClick={() => setType("adjustment_out")}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${isOut ? "bg-white text-red-500 shadow-sm" : "text-gray-400"}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${isOut ? "bg-white dark:bg-gray-600 text-red-500 shadow-sm" : "text-gray-400 dark:text-gray-500"}`}
           >
             <ArrowUpCircle className="w-4 h-4" />จ่ายออก
           </button>
         </div>
         <div>
-          <label className="text-sm font-semibold text-gray-700 mb-2 block">จำนวน</label>
+          <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">จำนวน</label>
           <div className="flex items-center gap-4">
             <button onClick={() => setQty(q => Math.max(1, q - 1))}
-              className="w-11 h-11 rounded-2xl bg-gray-100 flex items-center justify-center active:scale-95 transition-transform">
-              <Minus className="w-5 h-5 text-gray-600" />
+              className="w-11 h-11 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center active:scale-95 transition-transform">
+              <Minus className="w-5 h-5 text-gray-600 dark:text-gray-300" />
             </button>
-            <span className="text-2xl font-bold text-gray-900 min-w-[2.5rem] text-center">{qty}</span>
+            <span className="text-2xl font-bold text-gray-900 dark:text-white min-w-[2.5rem] text-center">{qty}</span>
             <button onClick={() => setQty(q => isOut ? Math.min(item.quantityAvailable, q + 1) : q + 1)}
-              className="w-11 h-11 rounded-2xl bg-gray-100 flex items-center justify-center active:scale-95 transition-transform">
-              <Plus className="w-5 h-5 text-gray-600" />
+              className="w-11 h-11 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center active:scale-95 transition-transform">
+              <Plus className="w-5 h-5 text-gray-600 dark:text-gray-300" />
             </button>
           </div>
           {isOut && <p className="text-xs text-gray-400 mt-1">จ่ายออกได้สูงสุด {item.quantityAvailable}</p>}
         </div>
         <div>
-          <label className="text-sm font-semibold text-gray-700 mb-2 block">เหตุผล / หมายเหตุ *</label>
+          <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">เหตุผล / หมายเหตุ *</label>
           <textarea value={reason} onChange={e => setReason(e.target.value)} rows={2}
             placeholder={isOut ? "เช่น คืนของเหลือจากการเบิก, ของเสียหาย..." : "เช่น รับของเข้าใหม่, ของที่คืนกลับมา..."}
-            className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
+            className="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-600 rounded-2xl bg-gray-50 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
           />
         </div>
         <button onClick={() => guard(() => mut.mutate())} disabled={!reason.trim() || mut.isPending}
@@ -124,16 +124,16 @@ function RejectModal({ onConfirm, onCancel, isPending }: {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onCancel}
     >
       <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
-        className="bg-white rounded-3xl p-6 w-full max-w-sm space-y-4 shadow-2xl"
+        className="bg-white dark:bg-gray-800 rounded-3xl p-6 w-full max-w-sm space-y-4 shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
-        <h3 className="font-bold text-gray-900 text-base">ระบุเหตุผลการปฏิเสธ</h3>
+        <h3 className="font-bold text-gray-900 dark:text-white text-base">ระบุเหตุผลการปฏิเสธ</h3>
         <textarea value={reason} onChange={e => setReason(e.target.value)} rows={3}
           placeholder="เช่น สต็อกไม่เพียงพอ, ไม่ถูกต้องตามขั้นตอน..."
-          className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-500/20 resize-none"
+          className="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-600 rounded-2xl bg-gray-50 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 resize-none"
         />
         <div className="flex gap-3">
-          <button onClick={onCancel} className="flex-1 py-3 text-sm font-semibold text-gray-600 bg-gray-100 rounded-2xl hover:bg-gray-200 transition-colors">
+          <button onClick={onCancel} className="flex-1 py-3 text-sm font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
             ยกเลิก
           </button>
           <button onClick={() => reason.trim() && onConfirm(reason.trim())} disabled={!reason.trim() || isPending}
@@ -182,26 +182,26 @@ function AdminReceiveModal({ borrowId, borrowerName, itemName, onConfirm, onCanc
     >
       <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 350 }}
-        className="w-full bg-white rounded-t-3xl p-6 space-y-4"
+        className="w-full bg-white dark:bg-gray-800 rounded-t-3xl p-6 space-y-4"
         onClick={e => e.stopPropagation()}
       >
-        <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto" />
+        <div className="w-10 h-1 bg-gray-200 dark:bg-gray-600 rounded-full mx-auto" />
         <div>
-          <h3 className="font-bold text-gray-900 text-base">รับของคืน</h3>
-          <p className="text-sm text-gray-500 mt-0.5 truncate">{itemName}</p>
-          <p className="text-xs text-gray-400">ผู้ยืม: {borrowerName}</p>
+          <h3 className="font-bold text-gray-900 dark:text-white text-base">รับของคืน</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 truncate">{itemName}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">ผู้ยืม: {borrowerName}</p>
         </div>
 
         <div>
-          <label className="text-sm font-semibold text-gray-700 mb-2 block">หมายเหตุ (ไม่บังคับ)</label>
+          <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">หมายเหตุ (ไม่บังคับ)</label>
           <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
             placeholder="เช่น สภาพดี, มีรอยขีดข่วนเล็กน้อย..."
-            className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500/20 resize-none"
+            className="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-600 rounded-2xl bg-gray-50 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 resize-none"
           />
         </div>
 
         <div>
-          <label className="text-sm font-semibold text-gray-700 mb-2 block">ถ่ายรูปประกอบ (ไม่บังคับ)</label>
+          <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">ถ่ายรูปประกอบ (ไม่บังคับ)</label>
           {previews.length > 0 && (
             <div className="flex gap-2 mb-3 flex-wrap">
               {previews.map((src, i) => (
@@ -225,7 +225,7 @@ function AdminReceiveModal({ borrowId, borrowerName, itemName, onConfirm, onCanc
         </div>
 
         <div className="flex gap-3 pt-1">
-          <button onClick={onCancel} className="flex-1 py-3 text-sm font-semibold text-gray-600 bg-gray-100 rounded-2xl hover:bg-gray-200 transition-colors">
+          <button onClick={onCancel} className="flex-1 py-3 text-sm font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
             ยกเลิก
           </button>
           <button onClick={() => onConfirm(notes.trim(), photos)} disabled={isPending}
@@ -325,16 +325,16 @@ export default function OperationsPage() {
   return (
     <AppShell title="จัดการคำขอ">
       <div className="mb-5">
-        <h2 className="text-lg font-bold text-gray-900">จัดการคำขอ & สต็อก</h2>
-        <p className="text-sm text-gray-500">อนุมัติ/ปฏิเสธคำขอ และปรับปรุงสต็อก</p>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white">จัดการคำขอ & สต็อก</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400">อนุมัติ/ปฏิเสธคำขอ และปรับปรุงสต็อก</p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6 bg-gray-100 p-1 rounded-2xl">
+      <div className="flex gap-2 mb-6 bg-gray-100 dark:bg-gray-700 p-1 rounded-2xl">
         {tabs.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-              tab === t.id ? "bg-white text-[#1D4ED8] shadow-sm" : "text-gray-500 hover:text-gray-700"
+              tab === t.id ? "bg-white dark:bg-gray-600 text-[#1D4ED8] shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
             }`}
           >
             {t.icon}
@@ -353,7 +353,7 @@ export default function OperationsPage() {
         <div className="space-y-6">
           {/* Pending approval */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
               <Clock className="w-4 h-4 text-blue-500" />
               รออนุมัติ ({pendingBorrows.length})
             </h3>
@@ -363,16 +363,16 @@ export default function OperationsPage() {
                 {pendingBorrows.map((b, i) => (
                   <motion.div key={b.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.04 }}
-                    className="bg-white rounded-2xl border border-blue-100 p-4"
+                    className="bg-white dark:bg-gray-800 rounded-2xl border border-blue-100 dark:border-blue-900/40 p-4"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700">รออนุมัติ</span>
-                          <span className="font-mono text-xs text-blue-700 bg-blue-50 px-2 py-0.5 rounded">{b.itemCode}</span>
+                          <span className="font-mono text-xs text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/40 px-2 py-0.5 rounded">{b.itemCode}</span>
                         </div>
-                        <p className="font-semibold text-sm text-gray-900 truncate">{b.itemName}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">
+                        <p className="font-semibold text-sm text-gray-900 dark:text-white truncate">{b.itemName}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                           {b.borrowerName} · {b.borrowerDepartment} · จำนวน {b.quantity}
                         </p>
                         {b.borrowDate && (
@@ -400,7 +400,7 @@ export default function OperationsPage() {
 
           {/* Return pending */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
               <Undo2 className="w-4 h-4 text-purple-500" />
               รอรับทราบการคืน ({returnPending.length})
             </h3>
@@ -409,16 +409,16 @@ export default function OperationsPage() {
                 {returnPending.map((b, i) => (
                   <motion.div key={b.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.04 }}
-                    className="bg-white rounded-2xl border border-purple-100 p-4"
+                    className="bg-white dark:bg-gray-800 rounded-2xl border border-purple-100 dark:border-purple-900/40 p-4"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-purple-100 text-purple-700">รอรับทราบ</span>
-                          <span className="font-mono text-xs text-blue-700 bg-blue-50 px-2 py-0.5 rounded">{b.itemCode}</span>
+                          <span className="font-mono text-xs text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/40 px-2 py-0.5 rounded">{b.itemCode}</span>
                         </div>
-                        <p className="font-semibold text-sm text-gray-900 truncate">{b.itemName}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">
+                        <p className="font-semibold text-sm text-gray-900 dark:text-white truncate">{b.itemName}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                           {b.borrowerName} · {b.borrowerDepartment} · จำนวน {b.quantity}
                         </p>
                         {b.actualReturnDate && (
@@ -453,7 +453,7 @@ export default function OperationsPage() {
 
           {/* Active borrows — admin รับของคืนโดยตรง */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
               <ArrowLeftRight className="w-4 h-4 text-orange-500" />
               ยืมอยู่ ({activeBorrows.length})
             </h3>
@@ -462,16 +462,16 @@ export default function OperationsPage() {
                 {activeBorrows.map((b, i) => (
                   <motion.div key={b.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.04 }}
-                    className="bg-white rounded-2xl border border-orange-100 p-4"
+                    className="bg-white dark:bg-gray-800 rounded-2xl border border-orange-100 dark:border-orange-900/40 p-4"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-orange-100 text-orange-700">ยืมอยู่</span>
-                          <span className="font-mono text-xs text-blue-700 bg-blue-50 px-2 py-0.5 rounded">{b.itemCode}</span>
+                          <span className="font-mono text-xs text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/40 px-2 py-0.5 rounded">{b.itemCode}</span>
                         </div>
-                        <p className="font-semibold text-sm text-gray-900 truncate">{b.itemName}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">
+                        <p className="font-semibold text-sm text-gray-900 dark:text-white truncate">{b.itemName}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                           {b.borrowerName} · {b.borrowerDepartment} · จำนวน {b.quantity}
                         </p>
                         {b.borrowDate && (
@@ -508,7 +508,7 @@ export default function OperationsPage() {
               {pendingReqs.map((req, i) => (
                 <motion.div key={req.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.04 }}
-                  className="bg-white rounded-2xl border border-amber-100 p-4"
+                  className="bg-white dark:bg-gray-800 rounded-2xl border border-amber-100 dark:border-amber-900/40 p-4"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
@@ -518,8 +518,8 @@ export default function OperationsPage() {
                           <span className="font-mono text-xs text-blue-700 bg-blue-50 px-2 py-0.5 rounded">{req.itemCode}</span>
                         )}
                       </div>
-                      <p className="font-semibold text-sm text-gray-900 truncate">{req.itemName}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">
+                      <p className="font-semibold text-sm text-gray-900 dark:text-white truncate">{req.itemName}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                         {req.requesterName} · จำนวน: {req.quantity}
                       </p>
                       {req.purpose && (
@@ -551,7 +551,7 @@ export default function OperationsPage() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input value={search} onChange={e => setSearch(e.target.value)}
               placeholder="ค้นหาอุปกรณ์, รหัส..."
-              className="w-full pl-11 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              className="w-full pl-11 pr-4 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             />
           </div>
           <div className="flex gap-4 mb-4">
@@ -568,14 +568,14 @@ export default function OperationsPage() {
               filteredItems.map((item, i) => (
                 <motion.div key={item.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.01 }}
-                  className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center gap-3"
+                  className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-4 flex items-center gap-3"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-gray-900 truncate">{item.name}</p>
+                    <p className="font-semibold text-sm text-gray-900 dark:text-white truncate">{item.name}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="font-mono text-xs text-blue-600">{item.code}</span>
                       <span className="text-xs text-gray-400">
-                        คงเหลือ: <span className={`font-semibold ${item.quantityAvailable <= item.minStockLevel ? "text-red-500" : "text-gray-700"}`}>
+                        คงเหลือ: <span className={`font-semibold ${item.quantityAvailable <= item.minStockLevel ? "text-red-500" : "text-gray-700 dark:text-gray-200"}`}>
                           {item.quantityAvailable}
                         </span>
                       </span>
@@ -623,7 +623,7 @@ function Skeleton() {
   return (
     <div className="space-y-3">
       {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="h-20 bg-gray-100 rounded-2xl animate-pulse" />
+        <div key={i} className="h-20 bg-gray-100 dark:bg-gray-700 rounded-2xl animate-pulse" />
       ))}
     </div>
   );
@@ -631,8 +631,8 @@ function Skeleton() {
 
 function Empty({ label }: { label: string }) {
   return (
-    <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
-      <p className="text-sm text-gray-400">{label}</p>
+    <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
+      <p className="text-sm text-gray-400 dark:text-gray-500">{label}</p>
     </div>
   );
 }

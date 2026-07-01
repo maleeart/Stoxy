@@ -153,7 +153,7 @@ export default function AuditDetailPage() {
   if (isLoading) return (
     <AppShell title="ตรวจนับ">
       <div className="space-y-3 animate-pulse">
-        {Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-16 bg-gray-100 rounded-2xl" />)}
+        {Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-16 bg-gray-100 dark:bg-gray-700 rounded-2xl" />)}
       </div>
     </AppShell>
   );
@@ -187,14 +187,14 @@ export default function AuditDetailPage() {
       {isAdmin && (
       <div className="mb-5">
         <button onClick={() => router.push("/audit")}
-          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors mb-3">
+          className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors mb-3">
           <ArrowLeft className="w-4 h-4" /> กลับ
         </button>
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-bold text-gray-900">{session.name}</h2>
-            {session.description && <p className="text-sm text-gray-500 mt-0.5">{session.description}</p>}
-            <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{session.name}</h2>
+            {session.description && <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{session.description}</p>}
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1">
               <Clock className="w-3 h-3" />
               {isCompleted
                 ? `เสร็จสิ้น: ${formatDate(session.endDate!)}`
@@ -212,20 +212,20 @@ export default function AuditDetailPage() {
 
       {/* Staff waiting banner */}
       {isPendingApproval && !isAdmin && (
-        <div className="bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3 mb-5 flex items-center gap-3">
+        <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-100 dark:border-amber-800 rounded-2xl px-4 py-3 mb-5 flex items-center gap-3">
           <Clock className="w-5 h-5 text-amber-500 shrink-0" />
-          <p className="text-sm text-amber-800 font-medium">ส่งผลแล้ว รอ Admin ตรวจสอบและอนุมัติ</p>
+          <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">ส่งผลแล้ว รอ Admin ตรวจสอบและอนุมัติ</p>
         </div>
       )}
 
       {/* Admin approve banner */}
       {canApprove && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-4 mb-5">
+        <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-2xl px-4 py-4 mb-5">
           <div className="flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="text-sm font-bold text-amber-800 mb-0.5">รอการอนุมัติจาก Admin</p>
-              <p className="text-xs text-amber-600">
+              <p className="text-sm font-bold text-amber-800 dark:text-amber-200 mb-0.5">รอการอนุมัติจาก Admin</p>
+              <p className="text-xs text-amber-600 dark:text-amber-400">
                 ช่างส่งผลนับแล้ว มี <span className="font-bold">{diffItems.length} รายการ</span> ที่จำนวนต่างจากระบบ
                 {diffItems.length > 0 && ` — สต็อกจะถูกปรับอัตโนมัติหลังอนุมัติ`}
               </p>
@@ -237,14 +237,14 @@ export default function AuditDetailPage() {
       {/* Stats */}
       <div className="grid grid-cols-4 gap-2 mb-5">
         {[
-          { label: "ทั้งหมด", value: items.length, color: "text-gray-900" },
+          { label: "ทั้งหมด", value: items.length, color: "text-gray-900 dark:text-white" },
           { label: "นับแล้ว", value: totalCounted, color: "text-blue-600" },
           { label: "ตรงกัน", value: matched, color: "text-emerald-600" },
           { label: "ต่างกัน", value: diffItems.length, color: diffItems.length > 0 ? "text-red-500" : "text-gray-400" },
         ].map(s => (
-          <div key={s.label} className="bg-white rounded-2xl border border-gray-100 p-3 text-center">
+          <div key={s.label} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-3 text-center">
             <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{s.label}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{s.label}</p>
           </div>
         ))}
       </div>
@@ -252,11 +252,11 @@ export default function AuditDetailPage() {
       {/* Progress bar */}
       {!isCompleted && (
         <div className="mb-5">
-          <div className="flex justify-between text-xs text-gray-500 mb-1.5">
+          <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1.5">
             <span>ความคืบหน้า</span>
             <span>{totalCounted}/{items.length} ({pct}%)</span>
           </div>
-          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
             <div className="h-full bg-[#1D4ED8] rounded-full transition-all" style={{ width: `${pct}%` }} />
           </div>
         </div>
@@ -265,13 +265,13 @@ export default function AuditDetailPage() {
       {/* Diff summary (admin approve view) */}
       {(canApprove || isCompleted) && diffItems.length > 0 && (
         <div className="mb-5">
-          <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+          <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-amber-500" />
             รายการที่จำนวนต่างกัน ({diffItems.length})
           </h3>
-          <div className="bg-white rounded-2xl border border-amber-100 overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-amber-100 dark:border-amber-900/40 overflow-hidden">
             {/* Table header */}
-            <div className="grid grid-cols-[1fr_auto_auto_auto] gap-3 px-4 py-2 bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-500">
+            <div className="grid grid-cols-[1fr_auto_auto_auto] gap-3 px-4 py-2 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 text-xs font-semibold text-gray-500 dark:text-gray-400">
               <span>รายการ</span>
               <span className="text-center w-14">ระบบ</span>
               <span className="text-center w-14">นับได้</span>
@@ -281,13 +281,13 @@ export default function AuditDetailPage() {
               const diff = (item.actualQuantity ?? 0) - item.expectedQuantity;
               return (
                 <div key={item.itemId}
-                  className={`grid grid-cols-[1fr_auto_auto_auto] gap-3 px-4 py-3 items-center ${i < diffItems.length - 1 ? "border-b border-gray-50" : ""}`}>
+                  className={`grid grid-cols-[1fr_auto_auto_auto] gap-3 px-4 py-3 items-center ${i < diffItems.length - 1 ? "border-b border-gray-50 dark:border-gray-700" : ""}`}>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{item.itemName}</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{item.itemName}</p>
                     <p className="font-mono text-xs text-blue-600">{item.itemCode}</p>
                   </div>
-                  <span className="w-14 text-center text-sm text-gray-500">{item.expectedQuantity}</span>
-                  <span className="w-14 text-center text-sm font-bold text-gray-900">{item.actualQuantity ?? "—"}</span>
+                  <span className="w-14 text-center text-sm text-gray-500 dark:text-gray-400">{item.expectedQuantity}</span>
+                  <span className="w-14 text-center text-sm font-bold text-gray-900 dark:text-white">{item.actualQuantity ?? "—"}</span>
                   <span className={`w-14 flex items-center justify-center gap-0.5 text-sm font-bold rounded-lg py-1 ${
                     diff > 0 ? "text-emerald-700 bg-emerald-50" : "text-red-600 bg-red-50"
                   }`}>
@@ -312,7 +312,7 @@ export default function AuditDetailPage() {
                 className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full border transition-colors ${
                   selectedCategory === "all"
                     ? "bg-[#1D4ED8] text-white border-[#1D4ED8]"
-                    : "bg-white text-gray-500 border-gray-200"
+                    : "bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600"
                 }`}
               >
                 ทั้งหมด ({items.length})
@@ -328,7 +328,7 @@ export default function AuditDetailPage() {
                     className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-full border transition-colors ${
                       selectedCategory === cat.id
                         ? "bg-[#1D4ED8] text-white border-[#1D4ED8]"
-                        : "bg-white text-gray-500 border-gray-200"
+                        : "bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600"
                     }`}
                   >
                     {cat.name} ({count})
@@ -349,12 +349,12 @@ export default function AuditDetailPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input value={search} onChange={e => setSearch(e.target.value)}
                 placeholder="ค้นหาชื่อ, รหัส..."
-                className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
             <button onClick={() => setShowDiffOnly(v => !v)}
               className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium rounded-xl border transition-colors ${
-                showDiffOnly ? "bg-red-50 border-red-200 text-red-600" : "bg-white border-gray-200 text-gray-600"
+                showDiffOnly ? "bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800 text-red-600" : "bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300"
               }`}>
               <AlertTriangle className="w-4 h-4" />
               ต่างกัน
@@ -374,9 +374,9 @@ export default function AuditDetailPage() {
                 <motion.div key={item.itemId}
                   initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: Math.min(i * 0.015, 0.3) }}
-                  className={`bg-white rounded-2xl border p-4 ${
-                    item.status === "mismatch" ? "border-red-100" :
-                    item.status === "scanned" ? "border-emerald-100" : "border-gray-100"
+                  className={`bg-white dark:bg-gray-800 rounded-2xl border p-4 ${
+                    item.status === "mismatch" ? "border-red-100 dark:border-red-900/40" :
+                    item.status === "scanned" ? "border-emerald-100 dark:border-emerald-900/40" : "border-gray-100 dark:border-gray-700"
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -386,9 +386,9 @@ export default function AuditDetailPage() {
                         {item.status === "scanned" && <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />}
                         {item.status === "mismatch" && <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />}
                       </div>
-                      <p className="text-sm font-semibold text-gray-900 truncate">{item.itemName}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        ระบบ: <span className="font-semibold text-gray-700">{item.expectedQuantity}</span>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{item.itemName}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                        ระบบ: <span className="font-semibold text-gray-700 dark:text-gray-200">{item.expectedQuantity}</span>
                         {diff != null && diff !== 0 && (
                           <span className={`ml-2 font-bold ${diff > 0 ? "text-emerald-600" : "text-red-500"}`}>
                             {diff > 0 ? `+${diff}` : diff}
@@ -398,8 +398,8 @@ export default function AuditDetailPage() {
                     </div>
                     {isPendingApproval ? (
                       <div className="text-right">
-                        <p className="text-sm font-bold text-gray-700">{item.actualQuantity ?? "—"}</p>
-                        <p className="text-xs text-gray-400">นับได้</p>
+                        <p className="text-sm font-bold text-gray-700 dark:text-gray-200">{item.actualQuantity ?? "—"}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">นับได้</p>
                       </div>
                     ) : (
                       <input
@@ -410,7 +410,7 @@ export default function AuditDetailPage() {
                         className={`w-20 text-center text-sm font-bold border rounded-xl px-2 py-2 focus:outline-none focus:ring-2 ${
                           item.status === "mismatch" ? "border-red-200 focus:ring-red-500/20 text-red-600" :
                           item.status === "scanned" ? "border-emerald-200 focus:ring-emerald-500/20 text-emerald-700" :
-                          "border-gray-200 focus:ring-blue-500/20 text-gray-900"
+                          "border-gray-200 dark:border-gray-600 focus:ring-blue-500/20 text-gray-900 dark:text-white dark:bg-gray-700"
                         }`}
                       />
                     )}
@@ -424,10 +424,10 @@ export default function AuditDetailPage() {
 
       {/* Completed all-items view */}
       {isCompleted && diffItems.length === 0 && (
-        <div className="text-center py-10 bg-white rounded-2xl border border-gray-100">
+        <div className="text-center py-10 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
           <CheckCircle className="w-10 h-10 text-emerald-400 mx-auto mb-2" />
-          <p className="text-sm font-semibold text-gray-700">ทุกรายการตรงกับระบบ</p>
-          <p className="text-xs text-gray-400 mt-1">ไม่มีการปรับสต็อก</p>
+          <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">ทุกรายการตรงกับระบบ</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">ไม่มีการปรับสต็อก</p>
         </div>
       )}
 
@@ -435,10 +435,10 @@ export default function AuditDetailPage() {
 
       {/* Sticky bottom: counting actions */}
       {canCount && (
-        <div className={`fixed left-0 right-0 bg-white border-t border-gray-100 p-4 z-40 ${isAdmin ? "bottom-0" : "bottom-16"}`}>
+        <div className={`fixed left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 p-4 z-40 ${isAdmin ? "bottom-0" : "bottom-16"}`}>
           <div className="max-w-3xl mx-auto flex items-center gap-3">
             <div className="flex-1">
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 นับแล้ว {totalCounted}/{items.length}
                 {diffItems.length > 0 && <span className="text-red-500 ml-1">· ต่างกัน {diffItems.length} รายการ</span>}
               </p>
@@ -481,23 +481,23 @@ export default function AuditDetailPage() {
             onClick={() => setConfirmSubmit(false)}
           >
             <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
-              className="bg-white rounded-3xl p-6 w-full max-w-sm space-y-4 shadow-2xl"
+              className="bg-white dark:bg-gray-800 rounded-3xl p-6 w-full max-w-sm space-y-4 shadow-2xl"
               onClick={e => e.stopPropagation()}
             >
-              <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center">
+              <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/40 rounded-2xl flex items-center justify-center">
                 <AlertTriangle className="w-6 h-6 text-amber-500" />
               </div>
               <div>
-                <h3 className="font-bold text-gray-900 text-base">นับยังไม่ครบ</h3>
-                <p className="text-sm text-gray-500 mt-1">
+                <h3 className="font-bold text-gray-900 dark:text-white text-base">นับยังไม่ครบ</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                   นับแล้ว <span className="font-bold text-gray-900">{totalCounted}</span> จาก <span className="font-bold text-gray-900">{items.length}</span> รายการ
                   — ยังเหลืออีก <span className="font-bold text-red-500">{items.length - totalCounted}</span> รายการที่ยังไม่ได้นับ
                 </p>
-                <p className="text-xs text-gray-400 mt-1">ส่งตอนนี้ได้ รายการที่ยังไม่นับจะถูกบันทึกเป็น "ยังไม่นับ"</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">ส่งตอนนี้ได้ รายการที่ยังไม่นับจะถูกบันทึกเป็น "ยังไม่นับ"</p>
               </div>
               <div className="flex gap-3">
                 <button onClick={() => setConfirmSubmit(false)}
-                  className="flex-1 py-3 text-sm font-semibold text-gray-600 bg-gray-100 rounded-2xl hover:bg-gray-200 transition-colors">
+                  className="flex-1 py-3 text-sm font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
                   นับต่อก่อน
                 </button>
                 <button onClick={() => { setConfirmSubmit(false); submitMut.mutate(); }}
@@ -513,10 +513,10 @@ export default function AuditDetailPage() {
 
       {/* Sticky bottom: admin approve */}
       {canApprove && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 z-40">
+        <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 p-4 z-40">
           <div className="max-w-3xl mx-auto flex items-center gap-3">
             <div className="flex-1">
-              <p className="text-sm font-semibold text-gray-700">
+              <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
                 {diffItems.length === 0 ? "ทุกรายการตรงกัน ไม่มีการปรับสต็อก" : `ปรับสต็อก ${diffItems.length} รายการหลังอนุมัติ`}
               </p>
             </div>
