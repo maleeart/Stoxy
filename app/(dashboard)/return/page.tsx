@@ -28,7 +28,7 @@ export default function ReturnPage() {
       <div className="flex items-center justify-between mb-5">
         <div>
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">รายการรอรับทราบ</h2>
-          <p className="text-sm text-gray-500">{returnPending.length} รายการ</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{returnPending.length} รายการ</p>
         </div>
       </div>
 
@@ -54,10 +54,10 @@ export default function ReturnPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-purple-100 text-purple-700">รอรับทราบ</span>
-                    <span className="font-mono text-xs text-blue-700 bg-blue-50 px-2 py-0.5 rounded">{b.itemCode}</span>
+                    <span className="font-mono text-xs text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/40 px-2 py-0.5 rounded">{b.itemCode}</span>
                   </div>
                   <p className="font-medium text-gray-900 dark:text-white">{b.itemName}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                     ผู้ยืม: {b.borrowerName} · {b.borrowerDepartment} · จำนวน: {b.quantity}
                   </p>
                   <div className="flex gap-3 mt-1 flex-wrap">
@@ -73,7 +73,7 @@ export default function ReturnPage() {
                     )}
                   </div>
                   {b.returnNotes && (
-                    <p className="text-xs text-gray-500 mt-1">หมายเหตุ: {b.returnNotes}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">หมายเหตุ: {b.returnNotes}</p>
                   )}
                   {(b.returnPhotos?.length ?? 0) > 0 && (
                     <div className="flex gap-2 mt-2 flex-wrap">

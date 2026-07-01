@@ -33,9 +33,9 @@ function NavCard({ href, icon, label, desc, color = "bg-orange-50 text-orange-50
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-900 dark:text-white">{label}</p>
-        <p className="text-xs text-gray-400 truncate">{desc}</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{desc}</p>
       </div>
-      <span className="text-gray-300 text-xs shrink-0">→</span>
+      <span className="text-gray-300 dark:text-gray-600 text-xs shrink-0">→</span>
     </Link>
   );
 }
@@ -53,12 +53,12 @@ export default function SettingsPage() {
       <div className="max-w-lg space-y-6">
         <div>
           <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">ตั้งค่าระบบ</h2>
-          <p className="text-sm text-gray-500">จัดการข้อมูลอ้างอิงและเครื่องมือสำหรับผู้ดูแล</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">จัดการข้อมูลอ้างอิงและเครื่องมือสำหรับผู้ดูแล</p>
         </div>
 
         {/* Reference data — visible to all roles but editable only by admin */}
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
-          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">ข้อมูลอ้างอิง</h3>
+          <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">ข้อมูลอ้างอิง</h3>
           <div className="space-y-1">
             {REF_ITEMS.map((item) => (
               <NavCard key={item.href} {...item} />

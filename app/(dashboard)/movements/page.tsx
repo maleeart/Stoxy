@@ -50,7 +50,7 @@ function MovementsList() {
     <>
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-gray-500">{movements.length} รายการล่าสุด</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{movements.length} รายการล่าสุด</p>
         <button
           onClick={() => exportMovementsExcel(movements)}
           className="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"

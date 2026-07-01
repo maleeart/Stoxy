@@ -93,12 +93,12 @@ export default function ProfilePage() {
   const content = (
     <div className="max-w-md mx-auto px-4 py-6 space-y-4">
       {/* Avatar + name */}
-      <div className="bg-white rounded-3xl p-6 flex flex-col items-center gap-3 border border-gray-100 shadow-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 flex flex-col items-center gap-3 border border-gray-100 dark:border-gray-700 shadow-sm">
         <div className="w-20 h-20 rounded-full bg-[#1D4ED8] flex items-center justify-center text-white text-3xl font-bold shadow-lg shadow-[#1D4ED8]/20">
           {avatar}
         </div>
         <div className="text-center">
-          <h2 className="text-lg font-bold text-gray-900">{stoxyUser.displayName}</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">{stoxyUser.displayName}</h2>
           <span className={cn("text-xs px-2.5 py-1 rounded-full font-semibold mt-1 inline-block",
             ROLE_COLOR[stoxyUser.role] ?? "bg-gray-100 text-gray-600")}>
             {ROLE_LABEL[stoxyUser.role] ?? stoxyUser.role}
@@ -107,12 +107,12 @@ export default function ProfilePage() {
       </div>
 
       {/* Info rows */}
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm divide-y divide-gray-50">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm divide-y divide-gray-50 dark:divide-gray-700">
         {/* Email */}
         <div className="flex items-center gap-3 px-5 py-4">
           <Mail className="w-4 h-4 text-gray-400 shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-gray-400 mb-0.5">อีเมล</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">อีเมล</p>
             <p className="text-sm font-medium text-gray-900 truncate">{stoxyUser.email}</p>
           </div>
         </div>
@@ -121,7 +121,7 @@ export default function ProfilePage() {
         <div className="flex items-center gap-3 px-5 py-4">
           <SmilePlus className="w-4 h-4 text-gray-400 shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-gray-400 mb-0.5">ชื่อเล่น</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">ชื่อเล่น</p>
             {editingNickname ? (
               <div className="flex items-center gap-2">
                 <input
@@ -143,7 +143,7 @@ export default function ProfilePage() {
               </div>
             ) : (
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-gray-900">{stoxyUser.nickname || "ไม่ระบุ"}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{stoxyUser.nickname || "ไม่ระบุ"}</p>
                 <button onClick={() => { setEditingNickname(true); setNickname(stoxyUser.nickname ?? ""); }}
                   className="p-1.5 rounded-lg hover:bg-gray-50 active:scale-95 transition-all">
                   <Edit2 className="w-3.5 h-3.5 text-gray-400" />
@@ -157,7 +157,7 @@ export default function ProfilePage() {
         <div className="flex items-center gap-3 px-5 py-4">
           <Building2 className="w-4 h-4 text-gray-400 shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-gray-400 mb-0.5">แผนก</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">แผนก</p>
             {editingDept ? (
               <div className="flex items-center gap-2">
                 <input
@@ -178,7 +178,7 @@ export default function ProfilePage() {
               </div>
             ) : (
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-gray-900">{stoxyUser.department || "ไม่ระบุ"}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{stoxyUser.department || "ไม่ระบุ"}</p>
                 <button onClick={() => { setEditingDept(true); setDept(stoxyUser.department ?? ""); }}
                   className="p-1.5 rounded-lg hover:bg-gray-50 active:scale-95 transition-all">
                   <Edit2 className="w-3.5 h-3.5 text-gray-400" />
@@ -192,15 +192,15 @@ export default function ProfilePage() {
         <div className="flex items-center gap-3 px-5 py-4">
           <Shield className="w-4 h-4 text-gray-400 shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-gray-400 mb-0.5">สิทธิ์การใช้งาน</p>
-            <p className="text-sm font-medium text-gray-900">{ROLE_LABEL[stoxyUser.role] ?? stoxyUser.role}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">สิทธิ์การใช้งาน</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-white">{ROLE_LABEL[stoxyUser.role] ?? stoxyUser.role}</p>
           </div>
         </div>
       </div>
 
       {/* Logout */}
       <button onClick={handleLogout} disabled={loggingOut}
-        className="w-full flex items-center justify-center gap-2 py-4 bg-white border border-red-100 text-red-500 font-bold rounded-3xl active:scale-[0.98] transition-all shadow-sm hover:bg-red-50 disabled:opacity-50"
+        className="w-full flex items-center justify-center gap-2 py-4 bg-white dark:bg-gray-800 border border-red-100 dark:border-red-900/40 text-red-500 font-bold rounded-3xl active:scale-[0.98] transition-all shadow-sm hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50"
       >
         <LogOut className="w-4 h-4" />
         {loggingOut ? "กำลังออกจากระบบ..." : "ออกจากระบบ"}
@@ -222,7 +222,7 @@ export default function ProfilePage() {
     <AppShell title="โปรไฟล์">
       <div className="flex items-center gap-3 mb-6">
         <button onClick={() => router.back()}
-          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors">
+          className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
           ← กลับ
         </button>
         <h2 className="text-lg font-bold text-gray-900 dark:text-white">โปรไฟล์</h2>

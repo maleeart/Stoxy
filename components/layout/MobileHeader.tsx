@@ -5,6 +5,8 @@ import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useAuth } from "@/hooks/useAuth";
+import Link from "next/link";
 
 interface MobileHeaderProps {
   title: string;
@@ -15,6 +17,8 @@ interface MobileHeaderProps {
 
 export function MobileHeader({ title, back, actions, className }: MobileHeaderProps) {
   const router = useRouter();
+  const { stoxyUser } = useAuth();
+  const initial = stoxyUser?.displayName?.charAt(0)?.toUpperCase() ?? "S";
 
   return (
     <div className={cn(
@@ -37,6 +41,9 @@ export function MobileHeader({ title, back, actions, className }: MobileHeaderPr
       <div className="flex items-center gap-1 shrink-0">
         {actions}
         <ThemeToggle />
+        <Link href="/profile" className="w-8 h-8 rounded-full bg-[#1D4ED8] flex items-center justify-center ml-0.5 hover:opacity-90 transition-opacity shrink-0">
+          <span className="text-xs font-bold text-white">{initial}</span>
+        </Link>
       </div>
     </div>
   );

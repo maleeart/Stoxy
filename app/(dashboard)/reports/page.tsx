@@ -85,7 +85,7 @@ export default function ReportsPage() {
     <AppShell title="รายงาน">
       <div className="mb-5">
         <h2 className="text-lg font-bold text-gray-900 dark:text-white">ส่งออกรายงาน</h2>
-        <p className="text-sm text-gray-500">เลือกรูปแบบ PDF หรือ Excel</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">เลือกรูปแบบ PDF หรือ Excel</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
@@ -101,7 +101,7 @@ export default function ReportsPage() {
               {r.icon}
             </div>
             <h3 className="font-bold text-gray-900 dark:text-white mb-0.5">{r.title}</h3>
-            <p className="text-xs text-gray-500 mb-4">{r.description}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">{r.description}</p>
             <div className="flex gap-2">
               {r.actions.map((a, j) => (
                 <button

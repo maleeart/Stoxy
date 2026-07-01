@@ -104,7 +104,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right - Form */}
-      <div className="flex-1 flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-950">
+      <div className="flex-1 flex items-center justify-center p-6 bg-gray-50">
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -122,10 +122,10 @@ export default function LoginPage() {
             <p className="text-xs text-gray-400 pl-1">Track Smarter. Work Faster.</p>
           </div>
 
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+          <h2 className="text-2xl font-bold text-gray-900 mb-1">
             เข้าสู่ระบบ
           </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+          <p className="text-sm text-gray-500 mb-6">
             ระบบบริหารจัดการคลังอุปกรณ์ไฟฟ้า
           </p>
 

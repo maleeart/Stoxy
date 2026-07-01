@@ -185,13 +185,13 @@ export default function ImportPage() {
 
         {(status === "running" || status === "done") && (
           <div className="space-y-2">
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
               <div
                 className="bg-emerald-500 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${progress}%` }}
               />
             </div>
-            <p className="text-center text-sm text-gray-500">{progress}%</p>
+            <p className="text-center text-sm text-gray-500 dark:text-gray-400">{progress}%</p>
           </div>
         )}
 
@@ -205,7 +205,7 @@ export default function ImportPage() {
             </button>
             <button
               onClick={() => router.push("/dashboard")}
-              className="flex-1 py-3 bg-gray-100 text-gray-700 font-bold rounded-2xl"
+              className="flex-1 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold rounded-2xl"
             >
               หน้าหลัก
             </button>
