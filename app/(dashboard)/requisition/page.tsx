@@ -507,7 +507,12 @@ function AdminRequisitionPage() {
               transition={{ delay: i * 0.04 }}
               className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4"
             >
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3">
+                {(() => { const img = items.find(i => i.id === req.itemId)?.images?.[0]; return (
+                  <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center shrink-0 overflow-hidden">
+                    {img ? <img src={img} alt={req.itemName} className="w-full h-full object-cover" loading="lazy" /> : <PackageOpen className="w-5 h-5 text-amber-500" />}
+                  </div>
+                ); })()}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusBadge[req.status]}`}>

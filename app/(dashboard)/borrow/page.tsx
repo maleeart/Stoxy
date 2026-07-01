@@ -1289,7 +1289,12 @@ function AdminBorrowPage() {
                 className={cn("bg-white dark:bg-gray-900 rounded-2xl border p-4",
                   overdue ? "border-red-200 dark:border-red-900" : "border-gray-100 dark:border-gray-800")}
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  {(() => { const img = items.find(i => i.id === record.itemId)?.images?.[0]; return (
+                    <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/40 flex items-center justify-center shrink-0 overflow-hidden">
+                      {img ? <img src={img} alt={record.itemName} className="w-full h-full object-cover" loading="lazy" /> : <ArrowLeftRight className="w-5 h-5 text-[#1D4ED8]" />}
+                    </div>
+                  ); })()}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusBadge[record.status] ?? "bg-gray-100 text-gray-700"}`}>
