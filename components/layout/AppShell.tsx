@@ -29,7 +29,7 @@ export function AppShell({ children, title }: AppShellProps) {
 
   // Admin gets the full sidebar layout
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
+    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
       {mobileOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 md:hidden"

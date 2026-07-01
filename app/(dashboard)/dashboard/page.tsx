@@ -84,16 +84,16 @@ function StaffHome() {
   };
 
   const quickItems = [
-    { label: "ยืม-คืน", desc: "ยืมและแจ้งคืนอุปกรณ์", icon: ArrowLeftRight, href: "/borrow", bg: "bg-blue-100", text: "text-blue-700", iconBg: "bg-white/60" },
-    { label: "เบิกของ", desc: "เบิกอุปกรณ์สำหรับงาน", icon: PackageOpen, href: "/requisition", bg: "bg-amber-100", text: "text-amber-700", iconBg: "bg-white/60" },
-    { label: "คลัง", desc: "ดูรายการอุปกรณ์ทั้งหมด", icon: Package, href: "/inventory", bg: "bg-emerald-100", text: "text-emerald-700", iconBg: "bg-white/60" },
-    { label: "ประวัติ", desc: "ประวัติการใช้งาน", icon: History, href: "/history", bg: "bg-purple-100", text: "text-purple-700", iconBg: "bg-white/60" },
+    { label: "ยืม-คืน", desc: "ยืมและแจ้งคืนอุปกรณ์", icon: ArrowLeftRight, href: "/borrow", bg: "bg-blue-100 dark:bg-blue-900/40", text: "text-blue-700 dark:text-blue-300", iconBg: "bg-white/60 dark:bg-white/10" },
+    { label: "เบิกของ", desc: "เบิกอุปกรณ์สำหรับงาน", icon: PackageOpen, href: "/requisition", bg: "bg-amber-100 dark:bg-amber-900/40", text: "text-amber-700 dark:text-amber-300", iconBg: "bg-white/60 dark:bg-white/10" },
+    { label: "คลัง", desc: "ดูรายการอุปกรณ์ทั้งหมด", icon: Package, href: "/inventory", bg: "bg-emerald-100 dark:bg-emerald-900/40", text: "text-emerald-700 dark:text-emerald-300", iconBg: "bg-white/60 dark:bg-white/10" },
+    { label: "ประวัติ", desc: "ประวัติการใช้งาน", icon: History, href: "/history", bg: "bg-purple-100 dark:bg-purple-900/40", text: "text-purple-700 dark:text-purple-300", iconBg: "bg-white/60 dark:bg-white/10" },
   ];
 
   const now = new Date();
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-gray-900">
       <MobileHeader
         title="หน้าหลัก"
         actions={
@@ -111,14 +111,14 @@ function StaffHome() {
       />
 
       {/* Greeting strip */}
-      <div className="px-5 py-4 bg-white border-b border-gray-50">
+      <div className="px-5 py-4 bg-white dark:bg-gray-800 border-b border-gray-50 dark:border-gray-700">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-gray-400 font-medium">{greeting()}</p>
-            <h2 className="text-lg font-bold text-gray-900 leading-tight">
+            <p className="text-xs text-gray-400 dark:text-gray-500 font-medium">{greeting()}</p>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">
               {stoxyUser?.nickname || stoxyUser?.displayName || "ผู้ใช้งาน"}
             </h2>
-            {stoxyUser?.department && <p className="text-xs text-gray-400 mt-0.5">{stoxyUser.department}</p>}
+            {stoxyUser?.department && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{stoxyUser.department}</p>}
           </div>
           {hasActiveAudit && (
             <button onClick={() => router.push("/audit")}
@@ -134,33 +134,33 @@ function StaffHome() {
         </div>
 
         {(myBorrowed.length > 0 || totalPendingMine > 0) && (
-          <div className="flex gap-3 mt-4 pt-4 border-t border-gray-100">
+          <div className="flex gap-3 mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
             {myBorrowed.length > 0 && (
-              <div className="flex items-center gap-2.5 bg-blue-50 rounded-2xl px-3 py-2">
-                <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center">
-                  <ArrowLeftRight className="w-4 h-4 text-blue-600" />
+              <div className="flex items-center gap-2.5 bg-blue-50 dark:bg-blue-900/30 rounded-2xl px-3 py-2">
+                <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-800/40 flex items-center justify-center">
+                  <ArrowLeftRight className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-blue-700 leading-none">{myBorrowed.length}</p>
-                  <p className="text-xs text-blue-500">ยืมอยู่</p>
+                  <p className="text-lg font-bold text-blue-700 dark:text-blue-300 leading-none">{myBorrowed.length}</p>
+                  <p className="text-xs text-blue-500 dark:text-blue-400">ยืมอยู่</p>
                 </div>
               </div>
             )}
             {totalPendingMine > 0 && (
               <button onClick={() => router.push("/history")}
-                className="flex items-center gap-2.5 bg-amber-50 rounded-2xl px-3 py-2 active:scale-95 transition-transform"
+                className="flex items-center gap-2.5 bg-amber-50 dark:bg-amber-900/30 rounded-2xl px-3 py-2 active:scale-95 transition-transform"
               >
-                <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center">
-                  <Clock className="w-4 h-4 text-amber-600" />
+                <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-800/40 flex items-center justify-center">
+                  <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                 </div>
                 <div className="text-left">
-                  <p className="text-lg font-bold text-amber-700 leading-none">{totalPendingMine}</p>
-                  <p className="text-xs text-amber-600">
+                  <p className="text-lg font-bold text-amber-700 dark:text-amber-300 leading-none">{totalPendingMine}</p>
+                  <p className="text-xs text-amber-600 dark:text-amber-400">
                     รออนุมัติ
                     {myPendingBorrow > 0 && myPendingReq > 0 && ` · ยืม ${myPendingBorrow} เบิก ${myPendingReq}`}
                   </p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-amber-400" />
+                <ChevronRight className="w-4 h-4 text-amber-400 dark:text-amber-500" />
               </button>
             )}
           </div>
@@ -169,7 +169,7 @@ function StaffHome() {
 
       <div className="px-5 py-5 space-y-6">
         <div>
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">เมนูด่วน</p>
+          <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">เมนูด่วน</p>
           <div className="grid grid-cols-2 gap-3">
             {quickItems.map((item, i) => (
               <Link key={item.href} href={item.href} prefetch>
@@ -195,7 +195,7 @@ function StaffHome() {
         {myBorrowed.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">อุปกรณ์ที่ยืมอยู่</p>
+              <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">อุปกรณ์ที่ยืมอยู่</p>
               <button onClick={() => router.push("/borrow")}
                 className="flex items-center gap-1 text-xs font-semibold text-[#1D4ED8]">
                 ดูทั้งหมด <ChevronRight className="w-3 h-3" />
@@ -210,13 +210,13 @@ function StaffHome() {
                 return (
                   <motion.div key={b.id}
                     initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
-                    className="bg-white rounded-2xl p-4 flex items-center gap-3 shadow-sm border border-blue-50">
-                    <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
-                      <Package className="w-6 h-6 text-blue-400" />
+                    className="bg-white dark:bg-gray-800 rounded-2xl p-4 flex items-center gap-3 shadow-sm border border-blue-50 dark:border-blue-900/40">
+                    <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/40 flex items-center justify-center shrink-0">
+                      <Package className="w-6 h-6 text-blue-400 dark:text-blue-300" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm text-gray-900 truncate">{b.itemName}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">
+                      <p className="font-semibold text-sm text-gray-900 dark:text-white truncate">{b.itemName}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                         คืนก่อน {returnDate.toLocaleDateString("th-TH", { day: "numeric", month: "short" })}
                       </p>
                     </div>
@@ -225,7 +225,7 @@ function StaffHome() {
                     ) : urgent ? (
                       <span className="text-xs font-bold text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full shrink-0">อีก {daysLeft} วัน</span>
                     ) : (
-                      <span className="text-xs font-medium text-gray-400 bg-gray-50 px-2.5 py-1 rounded-full shrink-0">อีก {daysLeft} วัน</span>
+                      <span className="text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-700 px-2.5 py-1 rounded-full shrink-0">อีก {daysLeft} วัน</span>
                     )}
                   </motion.div>
                 );
@@ -236,11 +236,11 @@ function StaffHome() {
 
         {myBorrowed.length === 0 && totalPendingMine === 0 && (
           <div className="text-center py-10">
-            <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-3">
-              <Package className="w-8 h-8 text-blue-500" />
+            <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center mx-auto mb-3">
+              <Package className="w-8 h-8 text-blue-500 dark:text-blue-400" />
             </div>
-            <p className="text-sm font-semibold text-gray-700">ไม่มีรายการยืมอยู่</p>
-            <p className="text-xs text-gray-400 mt-1">กด ยืม-คืน เพื่อเริ่มต้นใช้งาน</p>
+            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">ไม่มีรายการยืมอยู่</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">กด ยืม-คืน เพื่อเริ่มต้นใช้งาน</p>
           </div>
         )}
       </div>
@@ -315,23 +315,23 @@ export default function DashboardPage() {
     <AppShell title="แดชบอร์ด">
       {/* Greeting */}
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-        <p className="text-sm text-gray-400">{greeting()}</p>
-        <h2 className="text-xl font-bold text-gray-900">
+        <p className="text-sm text-gray-400 dark:text-gray-500">{greeting()}</p>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
           {stoxyUser?.nickname || stoxyUser?.displayName || "ผู้ดูแลระบบ"}
           {totalUrgent > 0 && (
-            <span className="ml-2 text-sm font-semibold text-red-500 bg-red-50 px-2.5 py-0.5 rounded-full align-middle">
+            <span className="ml-2 text-sm font-semibold text-red-500 bg-red-50 dark:bg-red-900/30 px-2.5 py-0.5 rounded-full align-middle">
               {totalUrgent} เร่งด่วน
             </span>
           )}
         </h2>
-        <p className="text-sm text-gray-500 mt-0.5">ภาพรวมระบบคลังไฟฟ้า</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">ภาพรวมระบบคลังไฟฟ้า</p>
       </motion.div>
 
       {/* ── Pending actions ── */}
       {totalPending + overdueBorrows.length + lowStockItems.length > 0 && (
         <section className="mb-6">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">รอดำเนินการ</h3>
+            <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">รอดำเนินการ</h3>
             <button onClick={() => router.push("/notifications")}
               className="flex items-center gap-1 text-xs font-semibold text-[#1D4ED8]">
               ดูทั้งหมด <ChevronRight className="w-3 h-3" />
@@ -401,35 +401,35 @@ export default function DashboardPage() {
 
       {/* ── Stock summary ── */}
       <section className="mb-6">
-        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">ภาพรวมสต็อก</h3>
+        <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-3">ภาพรวมสต็อก</h3>
         <div className="grid grid-cols-2 gap-3">
           <SummaryTile
             label="ถูกยืมออก"
             value={statsLoading ? "—" : String(stats?.borrowedQuantity ?? 0)}
-            icon={<ArrowLeftRight className="w-4 h-4 text-amber-600" />}
-            bg="bg-amber-100"
+            icon={<ArrowLeftRight className="w-4 h-4 text-amber-600 dark:text-amber-400" />}
+            bg="bg-amber-100 dark:bg-amber-900/40"
             onClick={() => router.push("/borrow")}
           />
           <SummaryTile
             label="ยอดเบิกแล้ว"
             value={statsLoading ? "—" : String(approvedReqsThisMonth.length)}
-            icon={<CheckCircle className="w-4 h-4 text-emerald-600" />}
-            bg="bg-emerald-100"
+            icon={<CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
+            bg="bg-emerald-100 dark:bg-emerald-900/40"
             onClick={() => router.push("/requisition")}
           />
           <SummaryTile
             label="เกินกำหนดคืน"
             value={String(overdueBorrows.length)}
-            icon={<Clock className="w-4 h-4 text-orange-600" />}
-            bg="bg-orange-100"
+            icon={<Clock className="w-4 h-4 text-orange-600 dark:text-orange-400" />}
+            bg="bg-orange-100 dark:bg-orange-900/40"
             urgent={overdueBorrows.length > 0}
             onClick={() => router.push("/operations")}
           />
           <SummaryTile
             label="ต้องสั่งซื้อ"
             value={String(lowStockItems.length)}
-            icon={<AlertTriangle className="w-4 h-4 text-rose-600" />}
-            bg="bg-rose-100"
+            icon={<AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400" />}
+            bg="bg-rose-100 dark:bg-rose-900/40"
             urgent={lowStockItems.length > 0}
             onClick={() => router.push("/purchase")}
           />
@@ -439,12 +439,12 @@ export default function DashboardPage() {
       {/* ── Chart + Activity ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Chart */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-blue-100 p-5">
+        <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-2xl border border-blue-100 dark:border-blue-900/40 p-5">
           <div className="mb-4 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-[#1D4ED8]" />
             <div>
-              <h3 className="text-sm font-semibold text-gray-900">การเคลื่อนไหว 7 วันล่าสุด</h3>
-              <p className="text-xs text-gray-400 mt-0.5">ยืมอุปกรณ์ vs เบิกวัสดุ</p>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">การเคลื่อนไหว 7 วันล่าสุด</h3>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">ยืมอุปกรณ์ vs เบิกวัสดุ</p>
             </div>
             <button onClick={() => router.push("/movements")}
               className="ml-auto flex items-center gap-1 text-xs font-semibold text-[#1D4ED8]">
@@ -464,35 +464,35 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent activity */}
-        <div className="bg-white rounded-2xl border border-amber-100 p-5">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-amber-100 dark:border-amber-900/40 p-5">
           <div className="flex items-center gap-2 mb-4">
             <Activity className="w-4 h-4 text-amber-500" />
-            <h3 className="text-sm font-semibold text-gray-900">กิจกรรมล่าสุด</h3>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">กิจกรรมล่าสุด</h3>
           </div>
           <div className="space-y-3">
             {movementsLoading
               ? Array.from({ length: 6 }).map((_, i) => (
                   <div key={i} className="animate-pulse flex gap-3">
-                    <div className="w-12 h-5 bg-gray-100 rounded" />
-                    <div className="flex-1 h-5 bg-gray-100 rounded" />
+                    <div className="w-12 h-5 bg-gray-100 dark:bg-gray-700 rounded" />
+                    <div className="flex-1 h-5 bg-gray-100 dark:bg-gray-700 rounded" />
                   </div>
                 ))
               : movements.length > 0
               ? movements.slice(0, 8).map((m) => (
                   <div key={m.id} className="flex items-start gap-2.5">
-                    <span className={cn("shrink-0 text-xs px-1.5 py-0.5 rounded-md font-medium", movementTypeColor[m.type] ?? "bg-gray-100 text-gray-600")}>
+                    <span className={cn("shrink-0 text-xs px-1.5 py-0.5 rounded-md font-medium", movementTypeColor[m.type] ?? "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300")}>
                       {movementTypeLabel[m.type] ?? m.type}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-gray-800 truncate">{m.itemName}</p>
-                      <p className="text-xs text-gray-400">{formatRelative(m.createdAt)}</p>
+                      <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">{m.itemName}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500">{formatRelative(m.createdAt)}</p>
                     </div>
-                    <span className={cn("text-xs font-semibold shrink-0", m.quantityChange >= 0 ? "text-emerald-600" : "text-red-500")}>
+                    <span className={cn("text-xs font-semibold shrink-0", m.quantityChange >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500 dark:text-red-400")}>
                       {m.quantityChange >= 0 ? "+" : ""}{m.quantityChange}
                     </span>
                   </div>
                 ))
-              : <p className="text-sm text-gray-400 text-center py-8">ยังไม่มีกิจกรรม</p>
+              : <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">ยังไม่มีกิจกรรม</p>
             }
           </div>
         </div>
@@ -552,8 +552,8 @@ function SummaryTile({
         {icon}
       </div>
       <div>
-        <p className={`text-xl font-bold leading-none ${urgent && value !== "0" ? "text-red-600" : "text-gray-900"}`}>{value}</p>
-        <p className="text-[11px] text-gray-600 mt-0.5 leading-tight font-medium">{label}</p>
+        <p className={`text-xl font-bold leading-none ${urgent && value !== "0" ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-white"}`}>{value}</p>
+        <p className="text-[11px] text-gray-600 dark:text-gray-300 mt-0.5 leading-tight font-medium">{label}</p>
       </div>
     </button>
   );

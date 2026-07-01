@@ -48,17 +48,17 @@ export function StaffShell({ children }: StaffShellProps) {
 
   if (isGuest) {
     return (
-      <div className="flex flex-col h-[100dvh] bg-[#F8FAFC]">
+      <div className="flex flex-col h-[100dvh] bg-[#F8FAFC] dark:bg-gray-900">
         <main className="flex-1 overflow-y-auto min-h-0">{children}</main>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-[#F8FAFC]">
+    <div className="flex flex-col h-[100dvh] bg-[#F8FAFC] dark:bg-gray-900">
       <main className="flex-1 overflow-y-auto min-h-0">{children}</main>
 
-      <nav className="shrink-0 bg-white border-t border-gray-100 safe-area-bottom z-50">
+      <nav className="shrink-0 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 safe-area-bottom z-50">
         <div className="flex items-end h-16">
           {sideItems.map((item) => {
             const active = isActive(item.href);
@@ -69,7 +69,7 @@ export function StaffShell({ children }: StaffShellProps) {
                 prefetch
                 className={cn(
                   "flex-1 flex flex-col items-center justify-center gap-1 h-full transition-colors",
-                  active ? "text-[#1D4ED8]" : "text-gray-400"
+                  active ? "text-[#1D4ED8]" : "text-gray-400 dark:text-gray-500"
                 )}
               >
                 <item.icon className={cn("w-5 h-5", active && "stroke-[2.5]")} />
@@ -89,7 +89,7 @@ export function StaffShell({ children }: StaffShellProps) {
             </div>
             <span className={cn(
               "text-[10px] font-semibold tracking-wide -mt-0.5",
-              homeActive ? "text-[#1D4ED8]" : "text-gray-400"
+              homeActive ? "text-[#1D4ED8]" : "text-gray-400 dark:text-gray-500"
             )}>หน้าหลัก</span>
           </Link>
 
@@ -102,7 +102,7 @@ export function StaffShell({ children }: StaffShellProps) {
                 prefetch
                 className={cn(
                   "flex-1 flex flex-col items-center justify-center gap-1 h-full transition-colors",
-                  active ? "text-[#1D4ED8]" : "text-gray-400"
+                  active ? "text-[#1D4ED8]" : "text-gray-400 dark:text-gray-500"
                 )}
               >
                 <item.icon className={cn("w-5 h-5", active && "stroke-[2.5]")} />

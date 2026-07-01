@@ -93,15 +93,15 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "flex flex-col h-screen bg-white border-r border-gray-100 transition-all duration-300 relative shrink-0",
+        "flex flex-col h-screen bg-white dark:bg-gray-800 border-r border-gray-100 dark:border-gray-700 transition-all duration-300 relative shrink-0",
         collapsed ? "w-16" : "w-64"
       )}
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-gray-100">
+      <div className="flex items-center gap-3 px-4 py-5 border-b border-gray-100 dark:border-gray-700">
         <img src="/logo.png" alt="Stoxy" className="w-9 h-9 rounded-xl shrink-0 object-cover" />
         {!collapsed && (
-          <span className="text-xl font-bold tracking-tight text-gray-900 overflow-hidden" style={{ fontFamily: "var(--font-geist-sans, inherit)" }}>STOXY</span>
+          <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white overflow-hidden" style={{ fontFamily: "var(--font-geist-sans, inherit)" }}>STOXY</span>
         )}
       </div>
 
@@ -119,7 +119,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           return (
             <div key={section}>
               {!collapsed && (
-                <p className="px-3 py-1.5 text-xs font-semibold text-gray-400 uppercase tracking-widest">
+                <p className="px-3 py-1.5 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
                   {section}
                 </p>
               )}
@@ -132,7 +132,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group relative w-full text-left",
                   isActive
                     ? "bg-[#1D4ED8] text-white shadow-md shadow-[#1D4ED8]/20"
-                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white"
                 );
                 const inner = (
                   <>
@@ -140,7 +140,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                       className={cn(
                         "shrink-0 transition-none",
                         collapsed ? "w-5 h-5 mx-auto" : "w-4 h-4",
-                        isActive ? "text-white" : "text-gray-500"
+                        isActive ? "text-white" : "text-gray-500 dark:text-gray-400"
                       )}
                     />
                     {!collapsed && <span className="truncate">{item.label}</span>}
@@ -175,11 +175,11 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       </nav>
 
       {/* User + Profile + Logout */}
-      <div className="border-t border-gray-100 p-3 space-y-1">
+      <div className="border-t border-gray-100 dark:border-gray-700 p-3 space-y-1">
         <Link
           href="/profile"
           className={cn(
-            "flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-100 transition-all group",
+            "flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all group",
             collapsed && "justify-center"
           )}
         >
@@ -188,15 +188,15 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           </div>
           {!collapsed && stoxyUser && (
             <div className="overflow-hidden flex-1 min-w-0">
-              <p className="text-xs font-semibold text-gray-900 truncate">{stoxyUser.displayName}</p>
-              <p className="text-xs text-gray-400 truncate">{stoxyUser.department}</p>
+              <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">{stoxyUser.displayName}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{stoxyUser.department}</p>
             </div>
           )}
         </Link>
         <button
           onClick={handleLogout}
           className={cn(
-            "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 transition-all",
+            "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all",
             collapsed && "justify-center"
           )}
         >
@@ -208,10 +208,10 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* QR popup */}
       {qrPopup && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50" onClick={() => setQrPopup(false)}>
-          <div className="bg-white rounded-2xl p-8 flex flex-col items-center gap-3 shadow-2xl mx-4" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 flex flex-col items-center gap-3 shadow-2xl mx-4" onClick={(e) => e.stopPropagation()}>
             <ScanLine className="w-12 h-12 text-[#1D4ED8]" />
-            <p className="text-lg font-bold text-gray-900">สแกน QR Code</p>
-            <p className="text-sm text-gray-500 text-center">อยู่ระหว่างพัฒนา<br/>จะเปิดให้ใช้งานเร็วๆ นี้</p>
+            <p className="text-lg font-bold text-gray-900 dark:text-white">สแกน QR Code</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 text-center">อยู่ระหว่างพัฒนา<br/>จะเปิดให้ใช้งานเร็วๆ นี้</p>
             <button onClick={() => setQrPopup(false)} className="mt-2 px-6 py-2 bg-[#1D4ED8] text-white rounded-xl text-sm font-medium hover:opacity-90">
               ตกลง
             </button>
@@ -222,12 +222,12 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Collapse Toggle */}
       <button
         onClick={onToggle}
-        className="absolute -right-3 top-8 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors z-50 shadow-sm"
+        className="absolute -right-3 top-8 w-6 h-6 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-full flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors z-50 shadow-sm"
       >
         {collapsed ? (
-          <ChevronRight className="w-3 h-3 text-gray-400" />
+          <ChevronRight className="w-3 h-3 text-gray-400 dark:text-gray-300" />
         ) : (
-          <ChevronLeft className="w-3 h-3 text-gray-400" />
+          <ChevronLeft className="w-3 h-3 text-gray-400 dark:text-gray-300" />
         )}
       </button>
     </aside>

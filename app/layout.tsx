@@ -39,6 +39,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="th" suppressHydrationWarning>
+      <head>
+        {/* ponytail: inline script prevents dark-mode flash before hydration */}
+        <script dangerouslySetInnerHTML={{ __html: `(function(){var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');if(t==='dark')document.documentElement.classList.add('dark')})()` }} />
+      </head>
       <body className={`${sarabun.variable} ${GeistSans.variable} font-sans antialiased`}>
         <Providers>{children}</Providers>
       </body>
