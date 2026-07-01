@@ -113,7 +113,7 @@ export default function ProfilePage() {
           <Mail className="w-4 h-4 text-gray-400 shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">อีเมล</p>
-            <p className="text-sm font-medium text-gray-900 truncate">{stoxyUser.email}</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-200 truncate">{stoxyUser.email}</p>
           </div>
         </div>
 
