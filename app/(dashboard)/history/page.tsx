@@ -3,7 +3,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useRealtimeBorrows } from "@/hooks/useRealtimeBorrows";
 import { useQuery } from "@tanstack/react-query";
-import { getMyRequisitions } from "@/services/requisition.service";
+import { getMyRequisitions, getRequisitions } from "@/services/requisition.service";
 import { AppShell } from "@/components/layout/AppShell";
 import { MobileHeader } from "@/components/layout/MobileHeader";
 import { formatDate, cn } from "@/lib/utils";
@@ -33,14 +33,15 @@ export default function HistoryPage() {
   const { stoxyUser } = useAuth();
   const uid = stoxyUser?.uid ?? "";
   const role = stoxyUser?.role;
+  const isAdmin = role === "admin" || role === "manager";
   const canRequisition = role !== "viewer" && role !== "supervisor";
 
   const { allRecords } = useRealtimeBorrows();
   const myBorrowHistory = allRecords.filter(b => b.borrowerId === uid);
 
   const { data: myReqs = [] } = useQuery({
-    queryKey: ["requisitions", "mine", uid],
-    queryFn: () => getMyRequisitions(uid),
+    queryKey: isAdmin ? ["requisitions", "all"] : ["requisitions", "mine", uid],
+    queryFn: () => isAdmin ? getRequisitions() : getMyRequisitions(uid),
     enabled: !!uid && canRequisition,
   });
 
@@ -84,7 +85,7 @@ export default function HistoryPage() {
         {canRequisition && (
           <div>
             <p className="text-xs font-bold text-amber-500 uppercase tracking-wider mb-3">
-              รายการเบิก ({myReqs.length})
+              {isAdmin ? "ประวัติเบิกทั้งหมด" : "รายการเบิก"} ({myReqs.length})
             </p>
             {myReqs.length === 0 ? (
               <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-6">ไม่มีประวัติการเบิก</p>
@@ -100,7 +101,7 @@ export default function HistoryPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-1">{r.itemName}</p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{formatDate(r.createdAt)} · จำนวน {r.quantity}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{formatDate(r.createdAt)} · จำนวน {r.quantity}{isAdmin && r.requesterName ? ` · ${r.requesterName}` : ""}</p>
                     </div>
                     <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium shrink-0",
                       r.status === "approved" ? "bg-emerald-100 text-emerald-700" :

@@ -39,18 +39,18 @@ const movementTypeColor: Record<string, string> = {
   requisition: "bg-purple-100 text-purple-700",
 };
 
-function buildWeeklyData(movements: StockMovement[]) {
+function buildWeeklyData(movements: StockMovement[], requisitions: { createdAt: { toDate(): Date } }[]) {
   const dayNames = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
   const today = new Date();
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(today);
     d.setDate(today.getDate() - (6 - i));
     const dateStr = d.toDateString();
-    const day = movements.filter((m) => m.createdAt?.toDate().toDateString() === dateStr);
+    const dayMov = movements.filter((m) => m.createdAt?.toDate().toDateString() === dateStr);
     return {
       day: dayNames[d.getDay()],
-      ยืม: day.filter((m) => m.type === "borrow").length,
-      เบิก: day.filter((m) => m.type === "requisition").length,
+      ยืม: dayMov.filter((m) => m.type === "borrow").length,
+      เบิก: requisitions.filter((r) => r.createdAt?.toDate().toDateString() === dateStr).length,
     };
   });
 }
@@ -294,7 +294,7 @@ export default function DashboardPage() {
   const totalPending = pendingBorrows.length + pendingReqs.length + pendingAudits.length;
   const totalUrgent = overdueBorrows.length + pendingAudits.length;
 
-  const weeklyData = buildWeeklyData(movements);
+  const weeklyData = buildWeeklyData(movements, requisitions);
 
   const greeting = () => {
     const h = new Date().getHours();
