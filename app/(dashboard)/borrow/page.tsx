@@ -56,12 +56,13 @@ function BorrowSheet({ item, uid, displayName, dept, onClose }: {
   const role = useRole();
   const guard = (fn: () => void) => role === "viewer" ? toast.error("ไม่มีสิทธิ์ดำเนินการ") : fn();
 
-  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
-  const minDate = tomorrow.toISOString().split("T")[0];
+  const today = new Date();
+  const minDate = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
 
   const mut = useMutation({
     mutationFn: async () => {
       if (!returnDate) throw new Error("กรุณาระบุวันกำหนดคืน");
+      if (returnDate < minDate) throw new Error("ไม่สามารถเลือกวันย้อนหลังได้");
       if (!purpose.trim()) throw new Error("กรุณาระบุวัตถุประสงค์");
       setCompressing(true);
       const urls = photos.length > 0 ? await compressImages(photos) : [];
@@ -963,14 +964,15 @@ function AdminBorrowPage() {
     setBorrowPhotos([]); setBorrowPhotosPreviews([]);
   }
 
-  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
-  const minDate = tomorrow.toISOString().split("T")[0];
+  const today = new Date();
+  const minDate = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
 
   const createMut = useMutation({
     mutationFn: async () => {
       if (!selected) throw new Error("กรุณาเลือกอุปกรณ์");
       if (!borrowerName.trim()) throw new Error("กรุณาระบุชื่อผู้ยืม");
       if (!returnDate) throw new Error("กรุณาระบุวันกำหนดคืน");
+      if (returnDate < minDate) throw new Error("ไม่สามารถเลือกวันย้อนหลังได้");
       if (!purpose.trim()) throw new Error("กรุณาระบุวัตถุประสงค์");
       setCompressing(true);
       const urls = borrowPhotos.length > 0 ? await compressImages(borrowPhotos) : [];
