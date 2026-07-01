@@ -39,9 +39,10 @@ const movementTypeColor: Record<string, string> = {
   requisition: "bg-purple-100 text-purple-700",
 };
 
-function buildWeeklyData(movements: StockMovement[], requisitions: { createdAt: { toDate(): Date } }[]) {
+function buildWeeklyData(movements: StockMovement[], requisitions: { createdAt: { toDate(): Date }; status: string }[]) {
   const dayNames = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
   const today = new Date();
+  const realReqs = requisitions.filter((r) => r.status !== "rejected");
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(today);
     d.setDate(today.getDate() - (6 - i));
@@ -50,7 +51,7 @@ function buildWeeklyData(movements: StockMovement[], requisitions: { createdAt: 
     return {
       day: dayNames[d.getDay()],
       ยืม: dayMov.filter((m) => m.type === "borrow").length,
-      เบิก: requisitions.filter((r) => r.createdAt?.toDate().toDateString() === dateStr).length,
+      เบิก: realReqs.filter((r) => r.createdAt?.toDate().toDateString() === dateStr).length,
     };
   });
 }
