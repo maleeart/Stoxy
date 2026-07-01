@@ -9,10 +9,12 @@ import { arrayUnion, doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { AppShell } from "@/components/layout/AppShell";
 import { useInventoryItem, useUpdateInventoryItem } from "@/hooks/useInventory";
+import { useAuth } from "@/hooks/useAuth";
 import { ArrowLeft, ImagePlus, Loader2, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { getLocations, addLocation } from "@/services/locations.service";
 import { compressImages } from "@/lib/compress";
+import { adjustStock } from "@/services/inventory.service";
 
 const CATEGORY_LABEL: Record<string, string> = {
   meter: "มิเตอร์และเครื่องวัด",
@@ -40,6 +42,7 @@ const schema = z.object({
   unit: z.string().optional(),
   categoryId: z.string().min(1, "กรุณาเลือกหมวดหมู่"),
   locationId: z.string().min(1, "กรุณาระบุสถานที่"),
+  quantityAvailable: z.coerce.number().min(0, "จำนวนต้องไม่ติดลบ"),
   minStockLevel: z.coerce.number().min(0),
   notes: z.string().optional(),
 });
@@ -49,6 +52,7 @@ type FormData = z.infer<typeof schema>;
 export default function EditItemPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const { stoxyUser } = useAuth();
   const { data: item, isLoading, refetch } = useInventoryItem(id);
   const updateItem = useUpdateInventoryItem();
 
@@ -84,6 +88,7 @@ export default function EditItemPage({ params }: { params: Promise<{ id: string 
       unit: item.unit ?? "",
       categoryId: item.categoryId,
       locationId: item.locationId,
+      quantityAvailable: item.quantityAvailable ?? 0,
       minStockLevel: item.minStockLevel ?? 0,
       notes: item.notes ?? "",
     });
@@ -104,6 +109,7 @@ export default function EditItemPage({ params }: { params: Promise<{ id: string 
     }
 
     const resolvedUnit = data.unit === "อื่นๆ" ? customUnit.trim() || undefined : data.unit || undefined;
+    const { quantityAvailable, ...rest } = data;
 
     try {
       setUploadingPhotos(newFiles.length > 0);
@@ -113,10 +119,22 @@ export default function EditItemPage({ params }: { params: Promise<{ id: string 
         await updateDoc(doc(db, "inventory_items", id), { images: arrayUnion(...extraImages) });
       }
 
+      const delta = quantityAvailable - (item?.quantityAvailable ?? 0);
+      if (delta !== 0) {
+        await adjustStock({
+          itemId: id,
+          type: delta > 0 ? "adjustment_in" : "adjustment_out",
+          quantity: Math.abs(delta),
+          reason: "แก้ไขจำนวนจากหน้าแก้ไขอุปกรณ์",
+          performedBy: stoxyUser?.uid ?? "",
+          performedByName: stoxyUser?.displayName ?? "",
+        });
+      }
+
       await updateItem.mutateAsync({
         id,
         data: {
-          ...data,
+          ...rest,
           unit: resolvedUnit,
           categoryName: CATEGORY_LABEL[data.categoryId] ?? data.categoryId,
           locationName: data.locationId === "__other__" ? customLocation.trim() : data.locationId,
@@ -254,6 +272,12 @@ export default function EditItemPage({ params }: { params: Promise<{ id: string 
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">สต็อก & สถานที่</h3>
             <div className="grid grid-cols-2 gap-3">
               <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">จำนวนคงเหลือ *</label>
+                <input type="number" {...register("quantityAvailable")} className="input-field" min={0} />
+                {errors.quantityAvailable && <p className="text-xs text-red-500 mt-1">{errors.quantityAvailable.message}</p>}
+              </div>
+
+              <div>
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">ขั้นต่ำ (แจ้งเตือน)</label>
                 <input type="number" {...register("minStockLevel")} className="input-field" min={0} />
               </div>
@@ -286,10 +310,6 @@ export default function EditItemPage({ params }: { params: Promise<{ id: string 
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">หมายเหตุ</label>
                 <textarea {...register("notes")} rows={3} className="input-field resize-none" placeholder="รายละเอียดเพิ่มเติม..." />
               </div>
-            </div>
-
-            <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl px-4 py-3 text-xs text-blue-700 dark:text-blue-400">
-              หากต้องการปรับจำนวนสต็อก ให้ใช้หน้า <strong>เติมสต็อก</strong> แทน
             </div>
           </div>
 
