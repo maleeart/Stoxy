@@ -54,23 +54,23 @@ export default function HistoryPage() {
             รายการยืม ({myBorrowHistory.length})
           </p>
           {myBorrowHistory.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-6">ไม่มีประวัติการยืม</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-6">ไม่มีประวัติการยืม</p>
           ) : (
             <div className="space-y-2">
               {myBorrowHistory.slice().reverse().map((b, i) => (
                 <motion.div key={b.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.02 }}
-                  className="bg-white rounded-2xl p-3.5 border border-gray-50 shadow-sm flex items-center gap-3"
+                  className="bg-white dark:bg-gray-800 rounded-2xl p-3.5 border border-gray-50 dark:border-gray-700 shadow-sm flex items-center gap-3"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/40 flex items-center justify-center shrink-0">
                     <ArrowLeftRight className="w-5 h-5 text-[#1D4ED8]" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 line-clamp-1">{b.itemName}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{formatDate(b.createdAt)} · จำนวน {b.quantity}</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-1">{b.itemName}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{formatDate(b.createdAt)} · จำนวน {b.quantity}</p>
                   </div>
                   <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium shrink-0",
-                    statusBadge[b.status] ?? "bg-gray-100 text-gray-600"
+                    statusBadge[b.status] ?? "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
                   )}>
                     {statusLabel[b.status] ?? b.status}
                   </span>
@@ -87,20 +87,20 @@ export default function HistoryPage() {
               รายการเบิก ({myReqs.length})
             </p>
             {myReqs.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-6">ไม่มีประวัติการเบิก</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-6">ไม่มีประวัติการเบิก</p>
             ) : (
               <div className="space-y-2">
                 {[...myReqs].reverse().map((r, i) => (
                   <motion.div key={r.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.02 }}
-                    className="bg-white rounded-2xl p-3.5 border border-gray-50 shadow-sm flex items-center gap-3"
+                    className="bg-white dark:bg-gray-800 rounded-2xl p-3.5 border border-gray-50 dark:border-gray-700 shadow-sm flex items-center gap-3"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
                       <Package className="w-5 h-5 text-amber-500" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 line-clamp-1">{r.itemName}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">{formatDate(r.createdAt)} · จำนวน {r.quantity}</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-1">{r.itemName}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{formatDate(r.createdAt)} · จำนวน {r.quantity}</p>
                     </div>
                     <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium shrink-0",
                       r.status === "approved" ? "bg-emerald-100 text-emerald-700" :

@@ -83,17 +83,17 @@ function BorrowSheet({ item, uid, displayName, dept, onClose }: {
     >
       <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 400 }}
-        className="w-full bg-white rounded-t-3xl p-5 max-h-[90vh] overflow-y-auto pb-8"
+        className="w-full bg-white dark:bg-gray-800 rounded-t-3xl p-5 max-h-[90vh] overflow-y-auto pb-8"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Handle */}
-        <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4" />
+        <div className="w-10 h-1 bg-gray-200 dark:bg-gray-600 rounded-full mx-auto mb-4" />
         <div className="flex items-start justify-between mb-5">
           <div>
-            <h3 className="font-bold text-gray-900 text-base">ขอยืมอุปกรณ์</h3>
-            <p className="text-sm text-gray-500 mt-0.5 truncate max-w-[240px]">{item.name}</p>
+            <h3 className="font-bold text-gray-900 dark:text-white text-base">ขอยืมอุปกรณ์</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 truncate max-w-[240px]">{item.name}</p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-50">
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700">
             <X className="w-5 h-5 text-gray-400" />
           </button>
         </div>
@@ -101,44 +101,44 @@ function BorrowSheet({ item, uid, displayName, dept, onClose }: {
         <div className="space-y-4">
           {/* Qty */}
           <div>
-            <label className="text-sm font-semibold text-gray-700 mb-2 block">จำนวน</label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">จำนวน</label>
             <div className="flex items-center gap-4">
               <button onClick={() => setQty(Math.max(1, qty - 1))}
-                className="w-11 h-11 rounded-2xl bg-gray-100 flex items-center justify-center active:scale-95 transition-transform">
-                <Minus className="w-5 h-5 text-gray-600" />
+                className="w-11 h-11 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center active:scale-95 transition-transform">
+                <Minus className="w-5 h-5 text-gray-600 dark:text-gray-300" />
               </button>
-              <span className="text-2xl font-bold text-gray-900 min-w-[2rem] text-center">{qty}</span>
+              <span className="text-2xl font-bold text-gray-900 dark:text-white min-w-[2rem] text-center">{qty}</span>
               <button onClick={() => setQty(Math.min(item.quantityAvailable, qty + 1))}
-                className="w-11 h-11 rounded-2xl bg-gray-100 flex items-center justify-center active:scale-95 transition-transform">
-                <Plus className="w-5 h-5 text-gray-600" />
+                className="w-11 h-11 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center active:scale-95 transition-transform">
+                <Plus className="w-5 h-5 text-gray-600 dark:text-gray-300" />
               </button>
-              <span className="text-xs text-gray-400 ml-auto">คงเหลือ {item.quantityAvailable} {item.notes?.replace("หน่วย: ", "") ?? ""}</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500 ml-auto">คงเหลือ {item.quantityAvailable} {item.notes?.replace("หน่วย: ", "") ?? ""}</span>
             </div>
           </div>
 
           {/* Return date */}
           <div>
-            <label className="text-sm font-semibold text-gray-700 mb-2 block">กำหนดคืน</label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">กำหนดคืน</label>
             <input type="date" value={returnDate} min={minDate} onChange={(e) => setReturnDate(e.target.value)}
-              className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl bg-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/30"
+              className="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-600 rounded-2xl bg-[#F8FAFC] dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/30"
             />
           </div>
 
           {/* Purpose */}
           <div>
-            <label className="text-sm font-semibold text-gray-700 mb-2 block">วัตถุประสงค์</label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">วัตถุประสงค์</label>
             <textarea value={purpose} onChange={(e) => setPurpose(e.target.value)} rows={2}
               placeholder="ระบุเหตุผลที่ยืม..."
-              className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl bg-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/30 resize-none"
+              className="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-600 rounded-2xl bg-[#F8FAFC] dark:bg-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/30 resize-none"
             />
           </div>
 
           {/* Photo */}
           <div>
-            <label className="text-sm font-semibold text-gray-700 mb-2 block">รูปสภาพก่อนยืม (ไม่บังคับ)</label>
-            <label className="flex items-center gap-2 cursor-pointer px-4 py-3 border-2 border-dashed border-gray-200 rounded-2xl hover:border-[#1D4ED8]/40 transition-colors bg-[#F8FAFC]">
+            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">รูปสภาพก่อนยืม (ไม่บังคับ)</label>
+            <label className="flex items-center gap-2 cursor-pointer px-4 py-3 border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-2xl hover:border-[#1D4ED8]/40 transition-colors bg-[#F8FAFC] dark:bg-gray-700">
               <Camera className="w-5 h-5 text-gray-400" />
-              <span className="text-sm text-gray-500">ถ่ายรูปหรือเลือกไฟล์</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">ถ่ายรูปหรือเลือกไฟล์</span>
               <input type="file" accept="image/*" multiple capture="environment" className="hidden"
                 onChange={(e) => { const f = Array.from(e.target.files ?? []); setPhotos(f); setPreviews(f.map(x => URL.createObjectURL(x))); }}
               />
@@ -188,30 +188,30 @@ function ReturnSheet({ record, uid, onClose }: { record: BorrowRecord; uid: stri
     >
       <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 400 }}
-        className="w-full bg-white rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto pb-8"
+        className="w-full bg-white dark:bg-gray-800 rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto pb-8"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4" />
+        <div className="w-10 h-1 bg-gray-200 dark:bg-gray-600 rounded-full mx-auto mb-4" />
         <div className="flex items-start justify-between mb-5">
           <div>
-            <h3 className="font-bold text-gray-900 text-base">แจ้งคืนอุปกรณ์</h3>
-            <p className="text-sm text-gray-500 mt-0.5 truncate max-w-[240px]">{record.itemName}</p>
+            <h3 className="font-bold text-gray-900 dark:text-white text-base">แจ้งคืนอุปกรณ์</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 truncate max-w-[240px]">{record.itemName}</p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-50"><X className="w-5 h-5 text-gray-400" /></button>
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700"><X className="w-5 h-5 text-gray-400" /></button>
         </div>
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-semibold text-gray-700 mb-2 block">หมายเหตุ (ไม่บังคับ)</label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">หมายเหตุ (ไม่บังคับ)</label>
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2}
               placeholder="บันทึกเพิ่มเติม..."
-              className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl bg-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-emerald-500/30 resize-none"
+              className="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-600 rounded-2xl bg-[#F8FAFC] dark:bg-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 resize-none"
             />
           </div>
           <div>
-            <label className="text-sm font-semibold text-gray-700 mb-2 block">รูปสภาพอุปกรณ์ (ไม่บังคับ)</label>
-            <label className="flex items-center gap-2 cursor-pointer px-4 py-3 border-2 border-dashed border-gray-200 rounded-2xl hover:border-emerald-400/50 transition-colors bg-[#F8FAFC]">
+            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">รูปสภาพอุปกรณ์ (ไม่บังคับ)</label>
+            <label className="flex items-center gap-2 cursor-pointer px-4 py-3 border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-2xl hover:border-emerald-400/50 transition-colors bg-[#F8FAFC] dark:bg-gray-700">
               <Camera className="w-5 h-5 text-gray-400" />
-              <span className="text-sm text-gray-500">ถ่ายรูปหรือเลือกไฟล์</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">ถ่ายรูปหรือเลือกไฟล์</span>
               <input type="file" accept="image/*" multiple capture="environment" className="hidden"
                 onChange={(e) => { const f = Array.from(e.target.files ?? []); setFiles(f); setPreviews(f.map(x => URL.createObjectURL(x))); }}
               />
@@ -262,26 +262,26 @@ function ItemCard({ item, isFav, onFav, onBorrow }: {
   item: InventoryItem; isFav: boolean; onFav: () => void; onBorrow: () => void;
 }) {
   return (
-    <div className="bg-white rounded-2xl p-4 border border-gray-50 shadow-sm flex items-center gap-3">
-      <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0 overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-50 dark:border-gray-700 shadow-sm flex items-center gap-3">
+      <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-900/40 flex items-center justify-center shrink-0 overflow-hidden">
         {item.images?.[0]
           ? <img src={item.images[0]} alt={item.name} className="w-full h-full object-cover" loading="lazy" />
           : <Package className="w-7 h-7 text-[#1D4ED8]" />}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-start gap-1">
-          <p className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2 flex-1">{item.name}</p>
+          <p className="font-semibold text-sm text-gray-900 dark:text-white leading-tight line-clamp-2 flex-1">{item.name}</p>
           <button onClick={onFav} className="shrink-0 p-0.5 -mt-0.5">
-            <Star className={cn("w-4 h-4", isFav ? "fill-amber-400 stroke-amber-400" : "stroke-gray-300")} />
+            <Star className={cn("w-4 h-4", isFav ? "fill-amber-400 stroke-amber-400" : "stroke-gray-300 dark:stroke-gray-600")} />
           </button>
         </div>
         <div className="flex items-center gap-2 mt-1">
           {item.locationName && (
-            <span className="flex items-center gap-1 text-xs text-gray-400">
+            <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
               <MapPin className="w-3 h-3" />{item.locationName}
             </span>
           )}
-          <span className="text-xs text-emerald-600 font-medium">คงเหลือ {item.quantityAvailable}</span>
+          <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">คงเหลือ {item.quantityAvailable}</span>
         </div>
       </div>
       <button onClick={onBorrow}
@@ -340,21 +340,21 @@ function StaffBorrowPage() {
   const isSearching = search.length > 0;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-gray-900">
       {/* Unified header */}
       <MobileHeader title="ยืม-คืน" />
 
       {/* Sub-header: segmented + search + chips */}
-      <div className="px-4 pb-0 bg-white sticky top-14 z-20 border-b border-gray-100">
+      <div className="px-4 pb-0 bg-white dark:bg-gray-800 sticky top-14 z-20 border-b border-gray-100 dark:border-gray-700">
         {/* Segmented Control */}
-        <div className="flex bg-gray-100 rounded-2xl p-1 mt-3 mb-3">
+        <div className="flex bg-gray-100 dark:bg-gray-700 rounded-2xl p-1 mt-3 mb-3">
           <button onClick={() => { setTab("borrow"); setSearch(""); setCategory("all"); }}
             className={cn("flex-1 py-2 text-sm font-bold rounded-xl transition-all",
-              tab === "borrow" ? "bg-white text-[#1D4ED8] shadow-sm" : "text-gray-500")}
+              tab === "borrow" ? "bg-white dark:bg-gray-600 text-[#1D4ED8] shadow-sm" : "text-gray-500 dark:text-gray-400")}
           >ยืมอุปกรณ์</button>
           <button onClick={() => { setTab("return"); setSearch(""); }}
             className={cn("flex-1 py-2 text-sm font-bold rounded-xl transition-all relative",
-              tab === "return" ? "bg-white text-emerald-600 shadow-sm" : "text-gray-500")}
+              tab === "return" ? "bg-white dark:bg-gray-600 text-emerald-600 shadow-sm" : "text-gray-500 dark:text-gray-400")}
           >
             คืนอุปกรณ์
             {(myBorrowed.length + myPending.length) > 0 && (
@@ -370,7 +370,7 @@ function StaffBorrowPage() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input value={search} onChange={e => setSearch(e.target.value)}
             placeholder={tab === "borrow" ? "ค้นหาอุปกรณ์, รหัส..." : "ค้นหารายการ..."}
-            className="w-full pl-11 pr-4 py-2.5 text-sm bg-[#F8FAFC] border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+            className="w-full pl-11 pr-4 py-2.5 text-sm bg-[#F8FAFC] dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 border border-gray-100 dark:border-gray-600 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
           />
         </div>
 
@@ -380,7 +380,7 @@ function StaffBorrowPage() {
             {CATEGORIES.map(c => (
               <button key={c.id} onClick={() => setCategory(c.id)}
                 className={cn("shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all",
-                  category === c.id ? "bg-[#1D4ED8] text-white" : "bg-gray-100 text-gray-500")}
+                  category === c.id ? "bg-[#1D4ED8] text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400")}
               >{c.label}</button>
             ))}
           </div>
@@ -409,7 +409,7 @@ function StaffBorrowPage() {
                   )}
                   {recentItems.length > 0 && (
                     <div>
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">เคยยืมล่าสุด</p>
+                      <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">เคยยืมล่าสุด</p>
                       <div className="space-y-3">
                         {recentItems.map(item => (
                           <ItemCard key={item.id} item={item} isFav={favs.includes(item.id)} onFav={() => toggleFav(item.id)} onBorrow={() => setBorrowItem(item)} />
@@ -418,7 +418,7 @@ function StaffBorrowPage() {
                     </div>
                   )}
                   {(favItems.length > 0 || recentItems.length > 0) && (
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">อุปกรณ์ทั้งหมด</p>
+                    <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">อุปกรณ์ทั้งหมด</p>
                   )}
                 </>
               )}
@@ -446,7 +446,7 @@ function StaffBorrowPage() {
             >
               {isLoading ? (
                 Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-24 bg-white rounded-2xl animate-pulse border border-gray-50" />
+                  <div key={i} className="h-24 bg-white dark:bg-gray-800 rounded-2xl animate-pulse border border-gray-50 dark:border-gray-700" />
                 ))
               ) : filteredReturn.length === 0 ? (
                 <div className="text-center py-16">
@@ -462,18 +462,18 @@ function StaffBorrowPage() {
                   return (
                     <motion.div key={record.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.04 }}
-                      className={cn("bg-white rounded-2xl p-4 border shadow-sm", overdue ? "border-red-100" : "border-gray-50")}
+                      className={cn("bg-white dark:bg-gray-800 rounded-2xl p-4 border shadow-sm", overdue ? "border-red-100 dark:border-red-900/40" : "border-gray-50 dark:border-gray-700")}
                     >
                       <div className="flex items-start gap-3">
                         <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shrink-0",
-                          overdue ? "bg-red-50" : "bg-blue-50")}>
+                          overdue ? "bg-red-50 dark:bg-red-900/30" : "bg-blue-50 dark:bg-blue-900/40")}>
                           <ArrowLeftRight className={cn("w-6 h-6", overdue ? "text-red-400" : "text-[#1D4ED8]")} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-sm text-gray-900 line-clamp-1">{record.itemName}</p>
+                          <p className="font-semibold text-sm text-gray-900 dark:text-white line-clamp-1">{record.itemName}</p>
                           <div className="flex items-center gap-2 mt-1 flex-wrap">
                             <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium",
-                              statusBadge[record.status] ?? "bg-gray-100 text-gray-600")}>
+                              statusBadge[record.status] ?? "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300")}>
                               {statusLabel[record.status] ?? record.status}
                             </span>
                             {record.status === "borrowed" && (
@@ -484,7 +484,7 @@ function StaffBorrowPage() {
                             )}
                           </div>
                           {record.borrowDate && (
-                            <span className="flex items-center gap-1 text-xs text-gray-400 mt-1">
+                            <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 mt-1">
                               <Clock className="w-3 h-3" />ยืม {formatDate(record.borrowDate)}
                             </span>
                           )}
@@ -492,7 +492,7 @@ function StaffBorrowPage() {
                       </div>
                       {canReturn && (
                         <button onClick={() => setReturnRecord(record)}
-                          className="mt-3 w-full py-2.5 border-2 border-emerald-400 text-emerald-600 font-bold text-sm rounded-xl active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+                          className="mt-3 w-full py-2.5 border-2 border-emerald-400 dark:border-emerald-600 text-emerald-600 dark:text-emerald-400 font-bold text-sm rounded-xl active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
                         >
                           <RotateCcw className="w-4 h-4" />แจ้งคืน
                         </button>
@@ -623,7 +623,7 @@ function GuestBorrowPage() {
   const isSearching = search.length > 0;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-gray-900">
       <MobileHeader
         title="ยืม / เบิก"
         actions={
@@ -646,20 +646,20 @@ function GuestBorrowPage() {
         }
       />
 
-      <div className="px-4 pb-0 bg-white sticky top-14 z-20 border-b border-gray-100">
+      <div className="px-4 pb-0 bg-white dark:bg-gray-800 sticky top-14 z-20 border-b border-gray-100 dark:border-gray-700">
         {/* Segmented */}
-        <div className="flex bg-gray-100 rounded-2xl p-1 mt-3 mb-3">
+        <div className="flex bg-gray-100 dark:bg-gray-700 rounded-2xl p-1 mt-3 mb-3">
           <button onClick={() => { setTab("borrow"); setSearch(""); setCategory("all"); }}
             className={cn("flex-1 py-2 text-sm font-bold rounded-xl transition-all",
-              tab === "borrow" ? "bg-white text-[#1D4ED8] shadow-sm" : "text-gray-500")}
+              tab === "borrow" ? "bg-white dark:bg-gray-600 text-[#1D4ED8] shadow-sm" : "text-gray-500 dark:text-gray-400")}
           >ยืมอุปกรณ์</button>
           <button onClick={() => { setTab("requisition"); setReqSearch(""); setReqCategory("all"); }}
             className={cn("flex-1 py-2 text-sm font-bold rounded-xl transition-all",
-              tab === "requisition" ? "bg-white text-amber-500 shadow-sm" : "text-gray-500")}
+              tab === "requisition" ? "bg-white dark:bg-gray-600 text-amber-500 shadow-sm" : "text-gray-500 dark:text-gray-400")}
           >เบิกของ</button>
           <button onClick={() => setTab("history")}
             className={cn("flex-1 py-2 text-sm font-bold rounded-xl transition-all",
-              tab === "history" ? "bg-white text-emerald-600 shadow-sm" : "text-gray-500")}
+              tab === "history" ? "bg-white dark:bg-gray-600 text-emerald-600 shadow-sm" : "text-gray-500 dark:text-gray-400")}
           >ประวัติ</button>
         </div>
 
@@ -671,12 +671,12 @@ function GuestBorrowPage() {
               {tab === "borrow" ? (
                 <input value={search} onChange={e => setSearch(e.target.value)}
                   placeholder="ค้นหาอุปกรณ์, รหัส..."
-                  className="w-full pl-11 pr-4 py-2.5 text-sm bg-[#F8FAFC] border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                  className="w-full pl-11 pr-4 py-2.5 text-sm bg-[#F8FAFC] dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 border border-gray-100 dark:border-gray-600 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
                 />
               ) : (
                 <input value={reqSearch} onChange={e => setReqSearch(e.target.value)}
                   placeholder="ค้นหาวัสดุ, รหัส..."
-                  className="w-full pl-11 pr-4 py-2.5 text-sm bg-[#F8FAFC] border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                  className="w-full pl-11 pr-4 py-2.5 text-sm bg-[#F8FAFC] dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 border border-gray-100 dark:border-gray-600 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
                 />
               )}
             </div>
@@ -685,7 +685,7 @@ function GuestBorrowPage() {
                 <button key={c.id}
                   onClick={() => tab === "borrow" ? setCategory(c.id) : setReqCategory(c.id)}
                   className={cn("shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all",
-                    (tab === "borrow" ? category : reqCategory) === c.id ? "bg-[#1D4ED8] text-white" : "bg-gray-100 text-gray-500")}
+                    (tab === "borrow" ? category : reqCategory) === c.id ? "bg-[#1D4ED8] text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400")}
                 >{c.label}</button>
               ))}
             </div>
@@ -709,7 +709,7 @@ function GuestBorrowPage() {
                   )}
                   {recentItems.length > 0 && (
                     <div>
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">เคยยืมล่าสุด</p>
+                      <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">เคยยืมล่าสุด</p>
                       <div className="space-y-3">
                         {recentItems.map(item => <ItemCard key={item.id} item={item} isFav={favs.includes(item.id)} onFav={() => toggleFav(item.id)} onBorrow={() => setBorrowItem(item)} />)}
                       </div>
@@ -741,16 +741,16 @@ function GuestBorrowPage() {
                   <div className="space-y-2">
                     {myBorrowHistory.slice().reverse().map((b, i) => (
                       <motion.div key={b.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}
-                        className="bg-white rounded-2xl p-3.5 border border-gray-50 shadow-sm flex items-center gap-3"
+                        className="bg-white dark:bg-gray-800 rounded-2xl p-3.5 border border-gray-50 dark:border-gray-700 shadow-sm flex items-center gap-3"
                       >
-                        <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/40 flex items-center justify-center shrink-0">
                           <ArrowLeftRight className="w-5 h-5 text-[#1D4ED8]" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 line-clamp-1">{b.itemName}</p>
-                          <p className="text-xs text-gray-400 mt-0.5">{formatDate(b.createdAt)} · จำนวน {b.quantity}</p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-1">{b.itemName}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{formatDate(b.createdAt)} · จำนวน {b.quantity}</p>
                         </div>
-                        <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium shrink-0", statusBadge[b.status] ?? "bg-gray-100 text-gray-600")}>
+                        <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium shrink-0", statusBadge[b.status] ?? "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300")}>
                           {statusLabel[b.status] ?? b.status}
                         </span>
                       </motion.div>
@@ -767,14 +767,14 @@ function GuestBorrowPage() {
                   <div className="space-y-2">
                     {[...myReqs].reverse().map((r, i) => (
                       <motion.div key={r.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}
-                        className="bg-white rounded-2xl p-3.5 border border-gray-50 shadow-sm flex items-center gap-3"
+                        className="bg-white dark:bg-gray-800 rounded-2xl p-3.5 border border-gray-50 dark:border-gray-700 shadow-sm flex items-center gap-3"
                       >
-                        <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
+                        <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
                           <Package className="w-5 h-5 text-amber-500" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 line-clamp-1">{r.itemName}</p>
-                          <p className="text-xs text-gray-400 mt-0.5">จำนวน {r.quantity}</p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-1">{r.itemName}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">จำนวน {r.quantity}</p>
                         </div>
                         <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium shrink-0",
                           r.status === "approved" ? "bg-emerald-100 text-emerald-700" :
