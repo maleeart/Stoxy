@@ -924,28 +924,19 @@ function AdminBorrowPage() {
   const { data: items = [] } = useInventoryItems();
   const [tab, setTab] = useState<BorrowStatus | "all">("all");
   const [search, setSearch] = useState("");
-  const [showForm, setShowForm] = useState(false);
+  const [showBrowser, setShowBrowser] = useState(false);
+  const [browserSearch, setBrowserSearch] = useState("");
+  const [browserCategory, setBrowserCategory] = useState("all");
+  const [browsedItem, setBrowsedItem] = useState<InventoryItem | null>(null);
   const [rejectId, setRejectId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [viewPhotos, setViewPhotos] = useState<string[] | null>(null);
-  const [compressing, setCompressing] = useState(false);
 
   const [returnRecord, setReturnRecord] = useState<BorrowRecord | null>(null);
   const [rtNotes, setRtNotes] = useState("");
   const [rtFiles, setRtFiles] = useState<File[]>([]);
   const [rtPreviews, setRtPreviews] = useState<string[]>([]);
   const [rtCompressing, setRtCompressing] = useState(false);
-
-  const [itemId, setItemId] = useState("");
-  const [itemSearch, setItemSearch] = useState("");
-  const [showItemList, setShowItemList] = useState(false);
-  const [borrowPhotos, setBorrowPhotos] = useState<File[]>([]);
-  const [borrowPhotosPreviews, setBorrowPhotosPreviews] = useState<string[]>([]);
-  const [quantityStr, setQuantityStr] = useState("1");
-  const [borrowerName, setBorrowerName] = useState("");
-  const [borrowerDept, setBorrowerDept] = useState("");
-  const [returnDate, setReturnDate] = useState("");
-  const [purpose, setPurpose] = useState("");
 
   const { records, isLoading } = useRealtimeBorrows(tab);
   const filtered = search
@@ -955,38 +946,10 @@ function AdminBorrowPage() {
       )
     : records;
 
-  const selected = items.find((i) => i.id === itemId);
-
-  function resetForm() {
-    setItemId(""); setItemSearch(""); setShowItemList(false);
-    setQuantityStr("1"); setBorrowerName("");
-    setBorrowerDept(""); setReturnDate(""); setPurpose("");
-    setBorrowPhotos([]); setBorrowPhotosPreviews([]);
-  }
-
-  const today = new Date();
-  const minDate = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
-
-  const createMut = useMutation({
-    mutationFn: async () => {
-      if (!selected) throw new Error("กรุณาเลือกอุปกรณ์");
-      if (!borrowerName.trim()) throw new Error("กรุณาระบุชื่อผู้ยืม");
-      if (!returnDate) throw new Error("กรุณาระบุวันกำหนดคืน");
-      if (returnDate < minDate) throw new Error("ไม่สามารถเลือกวันย้อนหลังได้");
-      if (!purpose.trim()) throw new Error("กรุณาระบุวัตถุประสงค์");
-      setCompressing(true);
-      const urls = borrowPhotos.length > 0 ? await compressImages(borrowPhotos) : [];
-      setCompressing(false);
-      return createBorrowRequest({
-        itemId: selected.id, itemCode: selected.code, itemName: selected.name,
-        quantity: Math.max(1, parseInt(quantityStr) || 1),
-        borrowerName, borrowerDepartment: borrowerDept, borrowerId: stoxyUser?.uid ?? "",
-        expectedReturnDate: Timestamp.fromDate(new Date(returnDate)),
-        purpose, status: "pending_approval", borrowPhotos: urls, createdBy: stoxyUser?.uid ?? "",
-      } as any);
-    },
-    onSuccess: () => { toast.success("ส่งคำขอยืมสำเร็จ"); setShowForm(false); resetForm(); },
-    onError: (e: any) => { setCompressing(false); toast.error(e.message ?? "เกิดข้อผิดพลาด"); },
+  const browserItems = items.filter(i => i.quantityAvailable > 0 && BORROWABLE.has(i.categoryId)).filter(i => {
+    const matchCat = browserCategory === "all" || i.categoryId === browserCategory;
+    const matchSearch = !browserSearch || i.name.toLowerCase().includes(browserSearch.toLowerCase()) || i.code.toLowerCase().includes(browserSearch.toLowerCase());
+    return matchCat && matchSearch;
   });
 
   const approveMut = useMutation({
@@ -1029,134 +992,85 @@ function AdminBorrowPage() {
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">บันทึกการยืม-คืน</h2>
           <p className="text-sm text-gray-500">{filtered.length} รายการ</p>
         </div>
-        <button onClick={() => setShowForm(true)}
+        <button onClick={() => setShowBrowser(true)}
           className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors"
         >
           <Plus className="w-4 h-4" /> สร้างคำขอยืม
         </button>
       </div>
 
-      {/* Create Form */}
+      {/* Item Browser Bottom Sheet */}
       <AnimatePresence>
-        {showForm && (
+        {showBrowser && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-            onClick={() => { setShowForm(false); resetForm(); }}
+            className="fixed inset-0 z-50 flex items-end bg-black/50" onClick={() => setShowBrowser(false)}
           >
-            <motion.div initial={{ scale: 0.95, y: 12 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 12 }}
-              className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
+            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="w-full bg-white dark:bg-gray-900 rounded-t-3xl flex flex-col max-h-[90vh]"
+              onClick={e => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-gray-900 dark:text-white">สร้างคำขอยืม</h3>
-                <button onClick={() => { setShowForm(false); resetForm(); }} className="p-1.5 rounded-lg hover:bg-gray-100">
+              <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 dark:border-gray-800">
+                <h3 className="font-bold text-gray-900 dark:text-white">เลือกอุปกรณ์ที่ต้องการยืม</h3>
+                <button onClick={() => setShowBrowser(false)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800">
                   <X className="w-4 h-4 text-gray-500" />
                 </button>
               </div>
-              <div className="space-y-4">
-                <div className="relative">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">อุปกรณ์</label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-                    <input
-                      value={selected ? `[${selected.code}] ${selected.name}` : itemSearch}
-                      onChange={(e) => { setItemSearch(e.target.value); setItemId(""); setShowItemList(true); }}
-                      onFocus={() => { if (!selected) setShowItemList(true); }}
-                      placeholder="ค้นหาชื่อหรือรหัสอุปกรณ์..."
-                      className="w-full pl-8 pr-8 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                    />
-                    {(itemId || itemSearch) && (
-                      <button type="button" onClick={() => { setItemId(""); setItemSearch(""); setShowItemList(false); }}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-gray-100"
-                      >
-                        <X className="w-3.5 h-3.5 text-gray-400" />
-                      </button>
-                    )}
-                  </div>
-                  {showItemList && !selected && (
-                    <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg max-h-48 overflow-y-auto">
-                      {items.filter((i) => i.quantityAvailable > 0 && BORROWABLE.has(i.categoryId) && (
-                        !itemSearch ||
-                        i.name.toLowerCase().includes(itemSearch.toLowerCase()) ||
-                        i.code.toLowerCase().includes(itemSearch.toLowerCase())
-                      )).slice(0, 20).map((i) => (
-                        <button key={i.id} type="button"
-                          onClick={() => { setItemId(i.id); setItemSearch(""); setShowItemList(false); }}
-                          className="w-full text-left px-3 py-2.5 text-sm hover:bg-blue-50 dark:hover:bg-gray-800 transition-colors border-b border-gray-50 dark:border-gray-800 last:border-0"
-                        >
-                          <span className="font-mono text-xs text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded mr-2">{i.code}</span>
-                          {i.name}
-                          <span className="ml-2 text-xs text-gray-400">คงเหลือ {i.quantityAvailable}</span>
-                        </button>
-                      ))}
-                      {items.filter((i) => i.quantityAvailable > 0 && BORROWABLE.has(i.categoryId) && (
-                        !itemSearch ||
-                        i.name.toLowerCase().includes(itemSearch.toLowerCase()) ||
-                        i.code.toLowerCase().includes(itemSearch.toLowerCase())
-                      )).length === 0 && (
-                        <p className="px-3 py-4 text-sm text-center text-gray-400">ไม่พบอุปกรณ์</p>
-                      )}
+              <div className="px-5 pt-3 pb-2">
+                <div className="relative mb-3">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input value={browserSearch} onChange={e => setBrowserSearch(e.target.value)}
+                    placeholder="ค้นหาอุปกรณ์, รหัส..."
+                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-[#F8FAFC] dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                  />
+                </div>
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+                  {CATEGORIES.map(c => (
+                    <button key={c.id} onClick={() => setBrowserCategory(c.id)}
+                      className={cn("shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all",
+                        browserCategory === c.id ? "bg-[#1D4ED8] text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400")}
+                    >{c.label}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex-1 overflow-y-auto px-5 pb-8 space-y-3">
+                {browserItems.length === 0 ? (
+                  <div className="text-center py-12"><Package className="w-10 h-10 text-gray-300 mx-auto mb-2" /><p className="text-sm text-gray-400">ไม่พบอุปกรณ์</p></div>
+                ) : browserItems.map((item, i) => (
+                  <motion.div key={item.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.015 }}
+                    className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-4 flex items-center gap-3"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/40 flex items-center justify-center shrink-0 overflow-hidden">
+                      {item.images?.[0] ? <img src={item.images[0]} alt={item.name} className="w-full h-full object-cover" loading="lazy" /> : <Package className="w-6 h-6 text-[#1D4ED8]" />}
                     </div>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">จำนวน</label>
-                  <input type="number" inputMode="numeric" value={quantityStr}
-                    onChange={(e) => setQuantityStr(e.target.value)}
-                    onBlur={() => { const n = parseInt(quantityStr); const max = selected?.quantityAvailable ?? 99; setQuantityStr(String(Math.min(Math.max(1, isNaN(n) ? 1 : n), max))); }}
-                    min={1} max={selected?.quantityAvailable ?? 99}
-                    className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">ชื่อผู้ยืม</label>
-                  <input value={borrowerName} onChange={(e) => setBorrowerName(e.target.value)} placeholder="ชื่อ-นามสกุล"
-                    className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">แผนก</label>
-                  <input value={borrowerDept} onChange={(e) => setBorrowerDept(e.target.value)} placeholder="เช่น แผนกไฟฟ้า"
-                    className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">กำหนดคืน</label>
-                  <input type="date" value={returnDate} onChange={(e) => setReturnDate(e.target.value)} min={minDate}
-                    className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">วัตถุประสงค์</label>
-                  <textarea value={purpose} onChange={(e) => setPurpose(e.target.value)} rows={2}
-                    placeholder="ระบุเหตุผล..."
-                    className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">รูปก่อนยืม (ไม่บังคับ)</label>
-                  <label className="flex items-center gap-2 cursor-pointer px-3 py-2.5 border border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-blue-400 transition-colors">
-                    <Camera className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-500">ถ่ายรูปหรือเลือกไฟล์</span>
-                    <input type="file" accept="image/*" multiple capture="environment" className="hidden"
-                      onChange={(e) => { const f = Array.from(e.target.files ?? []); setBorrowPhotos(f); setBorrowPhotosPreviews(f.map(x => URL.createObjectURL(x))); }}
-                    />
-                  </label>
-                  {borrowPhotosPreviews.length > 0 && (
-                    <div className="flex gap-2 mt-2 flex-wrap">
-                      {borrowPhotosPreviews.map((src, i) => <img key={i} src={src} alt="" className="w-16 h-16 object-cover rounded-lg border border-gray-200" />)}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm text-gray-900 dark:text-white line-clamp-1">{item.name}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {item.locationName && <span className="flex items-center gap-1 text-xs text-gray-400"><MapPin className="w-3 h-3" />{item.locationName}</span>}
+                        <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">คงเหลือ {item.quantityAvailable}</span>
+                      </div>
                     </div>
-                  )}
-                </div>
-                <button onClick={() => guard(() => createMut.mutate())} disabled={!itemId || !borrowerName.trim() || !returnDate || !purpose.trim() || createMut.isPending || compressing}
-                  className="w-full py-2.5 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl disabled:opacity-50 hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                >
-                  {(compressing || createMut.isPending) && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {compressing ? "กำลัง compress..." : createMut.isPending ? "กำลังบันทึก..." : "ส่งคำขอยืม"}
-                </button>
+                    <button onClick={() => { setBrowsedItem(item); setShowBrowser(false); }}
+                      className="shrink-0 px-4 py-2 bg-[#1D4ED8] text-white text-sm font-bold rounded-xl active:scale-95 transition-transform"
+                    >ยืม</button>
+                  </motion.div>
+                ))}
               </div>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* BorrowSheet for browsed item */}
+      <AnimatePresence>
+        {browsedItem && (
+          <BorrowSheet
+            item={browsedItem}
+            uid={stoxyUser?.uid ?? ""}
+            displayName={stoxyUser?.displayName ?? ""}
+            dept={stoxyUser?.department ?? ""}
+            onClose={() => setBrowsedItem(null)}
+          />
         )}
       </AnimatePresence>
 

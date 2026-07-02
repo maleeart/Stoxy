@@ -288,15 +288,15 @@ function AdminRequisitionPage() {
   const guard = (fn: () => void) => role === "viewer" ? toast.error("ไม่มีสิทธิ์ดำเนินการ") : fn();
   const qc = useQueryClient();
 
-  const [showForm, setShowForm] = useState(false);
+  const [browseMode, setBrowseMode] = useState(false);
+  const [browseCart, setBrowseCart] = useState<CartItem[]>([]);
+  const [showBrowseConfirm, setShowBrowseConfirm] = useState(false);
+  const [browsePurpose, setBrowsePurpose] = useState("");
+  const [browseSearch, setBrowseSearch] = useState("");
+  const [browseCategory, setBrowseCategory] = useState("all");
   const [tab, setTab] = useState<"all" | "mine">("all");
   const [rejectId, setRejectId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
-  const [itemId, setItemId] = useState("");
-  const [itemSearch, setItemSearch] = useState("");
-  const [showItemList, setShowItemList] = useState(false);
-  const [quantity, setQuantity] = useState(1);
-  const [purpose, setPurpose] = useState("");
 
   const { data: items = [] } = useInventoryItems();
 
@@ -307,19 +307,33 @@ function AdminRequisitionPage() {
     enabled: !!stoxyUser,
   });
 
-  const createMut = useMutation({
-    mutationFn: () => {
-      const item = items.find(i => i.id === itemId)!;
-      return createRequisition({
-        itemId, itemCode: item.code, itemName: item.name, quantity, purpose,
-        requesterId: stoxyUser?.uid ?? "",
-        requesterName: stoxyUser?.displayName ?? "ไม่ระบุ",
-      });
+  const browseAddToCart = (item: InventoryItem) => {
+    setBrowseCart(prev => {
+      const ex = prev.find(c => c.itemId === item.id);
+      if (ex) return prev.map(c => c.itemId === item.id ? { ...c, qty: Math.min(c.qty + 1, c.maxQty) } : c);
+      return [...prev, { itemId: item.id, itemCode: item.code, itemName: item.name, qty: 1, maxQty: item.quantityAvailable }];
+    });
+  };
+  const browseUpdateQty = (itemId: string, qty: number) => {
+    if (qty <= 0) { setBrowseCart(prev => prev.filter(c => c.itemId !== itemId)); return; }
+    setBrowseCart(prev => prev.map(c => c.itemId === itemId ? { ...c, qty: Math.min(qty, c.maxQty) } : c));
+  };
+
+  const cartMut = useMutation({
+    mutationFn: async () => {
+      for (const c of browseCart) {
+        await createRequisition({
+          itemId: c.itemId, itemCode: c.itemCode, itemName: c.itemName,
+          quantity: c.qty, purpose: browsePurpose,
+          requesterId: stoxyUser?.uid ?? "",
+          requesterName: stoxyUser?.displayName ?? "ไม่ระบุ",
+        });
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["requisitions"] });
-      toast.success("ส่งคำขอเบิกสำเร็จ");
-      setShowForm(false); setItemId(""); setItemSearch(""); setShowItemList(false); setQuantity(1); setPurpose("");
+      toast.success(`ส่งคำขอเบิก ${browseCart.length} รายการสำเร็จ`);
+      setBrowseCart([]); setBrowsePurpose(""); setShowBrowseConfirm(false); setBrowseMode(false);
     },
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
   });
@@ -344,7 +358,139 @@ function AdminRequisitionPage() {
     onError: () => toast.error("เกิดข้อผิดพลาด"),
   });
 
-  const selected = items.find(i => i.id === itemId);
+  const browseTotalItems = browseCart.reduce((s, c) => s + c.qty, 0);
+  const browseFiltered = items.filter(i => i.quantityAvailable > 0 && WITHDRAWABLE.has(i.categoryId)).filter(i => {
+    const matchCat = browseCategory === "all" || i.categoryId === browseCategory;
+    const matchSearch = !browseSearch || i.name.toLowerCase().includes(browseSearch.toLowerCase()) || i.code.toLowerCase().includes(browseSearch.toLowerCase());
+    return matchCat && matchSearch;
+  });
+
+  if (browseMode) {
+    return (
+      <AppShell title="เบิกของ">
+        <div className="flex items-center gap-3 mb-4">
+          <button onClick={() => { setBrowseMode(false); setBrowseCart([]); setBrowsePurpose(""); }}
+            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+          >
+            <X className="w-4 h-4" /> ยกเลิก
+          </button>
+          <h2 className="text-base font-bold text-gray-900 dark:text-white">เลือกรายการเบิก</h2>
+        </div>
+
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input value={browseSearch} onChange={e => setBrowseSearch(e.target.value)}
+            placeholder="ค้นหาวัสดุ, รหัส..."
+            className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+          />
+        </div>
+        <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-none mb-3">
+          {CATEGORIES.map(c => (
+            <button key={c.id} onClick={() => setBrowseCategory(c.id)}
+              className={cn("shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all",
+                browseCategory === c.id ? "bg-[#1D4ED8] text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400")}
+            >{c.label}</button>
+          ))}
+        </div>
+
+        <div className="space-y-3 pb-32">
+          {browseFiltered.length === 0 ? (
+            <div className="text-center py-16"><Package className="w-12 h-12 text-gray-300 mx-auto mb-3" /><p className="text-sm text-gray-400">ไม่พบวัสดุ</p></div>
+          ) : browseFiltered.map((item, i) => {
+            const inCart = browseCart.find(c => c.itemId === item.id);
+            return (
+              <motion.div key={item.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.015 }}
+                className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 flex items-center gap-3"
+              >
+                <div className="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center shrink-0 overflow-hidden">
+                  {item.images?.[0] ? <img src={item.images[0]} alt={item.name} className="w-full h-full object-cover" loading="lazy" /> : <Package className="w-7 h-7 text-amber-500" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm text-gray-900 dark:text-white leading-tight line-clamp-2">{item.name}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    {item.locationName && <span className="flex items-center gap-1 text-xs text-gray-400"><MapPin className="w-3 h-3" />{item.locationName}</span>}
+                    <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">คงเหลือ {item.quantityAvailable}</span>
+                  </div>
+                </div>
+                {inCart ? (
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button onClick={() => browseUpdateQty(item.id, inCart.qty - 1)} className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center active:scale-95"><Minus className="w-3.5 h-3.5 text-gray-600 dark:text-gray-300" /></button>
+                    <input type="number" min={1} max={item.quantityAvailable} value={inCart.qty}
+                      onChange={e => browseUpdateQty(item.id, Math.min(item.quantityAvailable, Math.max(1, parseInt(e.target.value) || 1)))}
+                      className="w-10 text-center text-sm font-bold text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 rounded-lg py-1 bg-transparent focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                    />
+                    <button onClick={() => browseUpdateQty(item.id, inCart.qty + 1)} disabled={inCart.qty >= item.quantityAvailable} className="w-8 h-8 rounded-xl bg-[#1D4ED8] flex items-center justify-center active:scale-95 disabled:opacity-40"><Plus className="w-3.5 h-3.5 text-white" /></button>
+                  </div>
+                ) : (
+                  <button onClick={() => browseAddToCart(item)} className="shrink-0 w-9 h-9 bg-[#1D4ED8] rounded-xl flex items-center justify-center active:scale-95 transition-transform"><Plus className="w-4 h-4 text-white" /></button>
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
+
+        <AnimatePresence>
+          {browseCart.length > 0 && !showBrowseConfirm && (
+            <motion.div initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }} className="fixed bottom-0 left-0 right-0 px-5 pb-5 z-40">
+              <button onClick={() => setShowBrowseConfirm(true)}
+                className="w-full py-4 bg-[#1D4ED8] text-white rounded-2xl font-bold text-sm shadow-xl flex items-center justify-between px-5 active:scale-[0.98] transition-transform"
+              >
+                <span className="flex items-center gap-2"><ShoppingCart className="w-5 h-5" />รายการเบิก ({browseCart.length} รายการ · {browseTotalItems} ชิ้น)</span>
+                <span>ยืนยัน →</span>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {showBrowseConfirm && (
+            <>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-50" onClick={() => setShowBrowseConfirm(false)} />
+              <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 rounded-t-3xl px-5 pt-5 pb-10"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-gray-900 dark:text-white text-base">ยืนยันการเบิก</h3>
+                  <button onClick={() => setShowBrowseConfirm(false)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800"><X className="w-5 h-5 text-gray-500" /></button>
+                </div>
+                <div className="space-y-2 max-h-52 overflow-y-auto mb-4">
+                  {browseCart.map(c => (
+                    <div key={c.itemId} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-1">{c.itemName}</p>
+                        <p className="text-xs text-gray-400">{c.itemCode}</p>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button onClick={() => browseUpdateQty(c.itemId, c.qty - 1)} className="w-7 h-7 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center active:scale-95"><Minus className="w-3 h-3 text-gray-600 dark:text-gray-300" /></button>
+                        <input type="number" min={1} max={c.maxQty} value={c.qty}
+                          onChange={e => browseUpdateQty(c.itemId, Math.min(c.maxQty, Math.max(1, parseInt(e.target.value) || 1)))}
+                          className="w-10 text-center text-sm font-bold border border-gray-200 dark:border-gray-600 bg-transparent dark:text-white rounded-lg py-0.5 focus:outline-none"
+                        />
+                        <button onClick={() => browseUpdateQty(c.itemId, c.qty + 1)} disabled={c.qty >= c.maxQty} className="w-7 h-7 rounded-lg bg-[#1D4ED8] flex items-center justify-center disabled:opacity-40 active:scale-95"><Plus className="w-3 h-3 text-white" /></button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">วัตถุประสงค์ / งานที่ใช้</label>
+                  <textarea value={browsePurpose} onChange={e => setBrowsePurpose(e.target.value)} rows={3}
+                    placeholder="ระบุงานหรือเหตุผลที่ต้องการเบิก..."
+                    className="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-700 rounded-2xl bg-transparent dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 resize-none"
+                  />
+                </div>
+                <button onClick={() => guard(() => cartMut.mutate())} disabled={!browsePurpose.trim() || cartMut.isPending}
+                  className="w-full py-3.5 bg-[#1D4ED8] text-white font-bold text-sm rounded-2xl disabled:opacity-50 active:scale-[0.98] transition-transform"
+                >
+                  {cartMut.isPending ? "กำลังส่ง..." : `ส่งคำขอเบิก ${browseCart.length} รายการ`}
+                </button>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell title="เบิกของ">
@@ -353,103 +499,12 @@ function AdminRequisitionPage() {
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">เบิกของ</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">ขอเบิกวัสดุ/อุปกรณ์จากสต็อก</p>
         </div>
-        <button onClick={() => setShowForm(true)}
+        <button onClick={() => setBrowseMode(true)}
           className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors"
         >
           <PackageOpen className="w-4 h-4" />ขอเบิก
         </button>
       </div>
-
-      {/* Form Modal */}
-      <AnimatePresence>
-        {showForm && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-            onClick={() => setShowForm(false)}
-          >
-            <motion.div initial={{ scale: 0.95, y: 12 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 12 }}
-              className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6"
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-gray-900 dark:text-white">ขอเบิกของ</h3>
-                <button onClick={() => setShowForm(false)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-                  <X className="w-4 h-4 text-gray-500" />
-                </button>
-              </div>
-              <div className="space-y-4">
-                <div className="relative">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">รายการที่ต้องการเบิก</label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-                    <input
-                      value={selected ? `[${selected.code}] ${selected.name}` : itemSearch}
-                      onChange={e => { setItemSearch(e.target.value); setItemId(""); setShowItemList(true); }}
-                      onFocus={() => { if (!selected) setShowItemList(true); }}
-                      placeholder="ค้นหาชื่อหรือรหัสวัสดุ..."
-                      className="w-full pl-8 pr-8 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                    />
-                    {(itemId || itemSearch) && (
-                      <button type="button" onClick={() => { setItemId(""); setItemSearch(""); setShowItemList(false); }}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-gray-100"
-                      >
-                        <X className="w-3.5 h-3.5 text-gray-400" />
-                      </button>
-                    )}
-                  </div>
-                  {showItemList && !selected && (
-                    <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg max-h-48 overflow-y-auto">
-                      {items.filter(i => i.quantityAvailable > 0 && WITHDRAWABLE.has(i.categoryId) && (
-                        !itemSearch ||
-                        i.name.toLowerCase().includes(itemSearch.toLowerCase()) ||
-                        i.code.toLowerCase().includes(itemSearch.toLowerCase())
-                      )).slice(0, 20).map(i => (
-                        <button key={i.id} type="button"
-                          onClick={() => { setItemId(i.id); setItemSearch(""); setShowItemList(false); }}
-                          className="w-full text-left px-3 py-2.5 text-sm hover:bg-blue-50 dark:hover:bg-gray-800 transition-colors border-b border-gray-50 dark:border-gray-800 last:border-0"
-                        >
-                          <span className="font-mono text-xs text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded mr-2">{i.code}</span>
-                          {i.name}
-                          <span className="ml-2 text-xs text-gray-400">คงเหลือ {i.quantityAvailable}</span>
-                        </button>
-                      ))}
-                      {items.filter(i => i.quantityAvailable > 0 && WITHDRAWABLE.has(i.categoryId) && (
-                        !itemSearch ||
-                        i.name.toLowerCase().includes(itemSearch.toLowerCase()) ||
-                        i.code.toLowerCase().includes(itemSearch.toLowerCase())
-                      )).length === 0 && (
-                        <p className="px-3 py-4 text-sm text-center text-gray-400">ไม่พบวัสดุ</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">จำนวน</label>
-                  <input type="number" value={quantity}
-                    onChange={e => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                    min={1} max={selected?.quantityAvailable ?? 999}
-                    className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                  />
-                  {selected && <p className="text-xs text-gray-400 mt-1">คงเหลือในสต็อก: {selected.quantityAvailable}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">วัตถุประสงค์ / งานที่ใช้</label>
-                  <textarea value={purpose} onChange={e => setPurpose(e.target.value)}
-                    rows={3} placeholder="ระบุงานหรือเหตุผลที่ต้องการเบิก..."
-                    className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none"
-                  />
-                </div>
-                <button onClick={() => guard(() => createMut.mutate())}
-                  disabled={!itemId || !purpose.trim() || createMut.isPending}
-                  className="w-full py-2.5 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl disabled:opacity-50 hover:bg-blue-700 transition-colors"
-                >
-                  {createMut.isPending ? "กำลังส่ง..." : "ส่งคำขอเบิก"}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Reject Modal */}
       <AnimatePresence>
