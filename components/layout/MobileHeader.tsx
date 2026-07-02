@@ -41,8 +41,14 @@ export function MobileHeader({ title, back, actions, className }: MobileHeaderPr
       <div className="flex items-center gap-1 shrink-0">
         {actions}
         <ThemeToggle />
-        <Link href="/profile" className="w-8 h-8 rounded-full bg-[#1D4ED8] flex items-center justify-center ml-0.5 hover:opacity-90 transition-opacity shrink-0">
-          <span className="text-xs font-bold text-white">{initial}</span>
+        <Link href="/profile" className="w-8 h-8 rounded-full overflow-hidden ml-0.5 hover:opacity-90 transition-opacity shrink-0">
+          {stoxyUser?.photoURL ? (
+            <img src={stoxyUser.photoURL} referrerPolicy="no-referrer" alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-[#1D4ED8] flex items-center justify-center">
+              <span className="text-xs font-bold text-white">{initial}</span>
+            </div>
+          )}
         </Link>
       </div>
     </div>

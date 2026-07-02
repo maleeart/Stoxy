@@ -69,10 +69,14 @@ export function Header({ title, onMenuClick }: HeaderProps) {
         <ThemeToggle />
 
         {/* Avatar */}
-        <Link href="/profile" className="w-8 h-8 rounded-full bg-[#1D4ED8] flex items-center justify-center ml-1 cursor-pointer hover:opacity-90 transition-opacity">
-          <span className="text-xs font-bold text-white">
-            {stoxyUser?.displayName?.charAt(0)?.toUpperCase() ?? "S"}
-          </span>
+        <Link href="/profile" className="w-8 h-8 rounded-full overflow-hidden ml-1 hover:opacity-90 transition-opacity shrink-0">
+          {stoxyUser?.photoURL ? (
+            <img src={stoxyUser.photoURL} referrerPolicy="no-referrer" alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-[#1D4ED8] flex items-center justify-center">
+              <span className="text-xs font-bold text-white">{stoxyUser?.displayName?.charAt(0)?.toUpperCase() ?? "S"}</span>
+            </div>
+          )}
         </Link>
       </div>
     </header>
