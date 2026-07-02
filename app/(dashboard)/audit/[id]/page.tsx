@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/hooks/useAuth";
 import { useInventoryItems } from "@/hooks/useInventory";
-import { getAuditSession, submitAuditForReview, approveAudit } from "@/services/audit.service";
+import { getAuditSession, submitAuditForReview, approveAudit, updateAuditItem } from "@/services/audit.service";
 import { MobileHeader } from "@/components/layout/MobileHeader";
 import { formatDate } from "@/lib/utils";
 import {
@@ -44,6 +44,39 @@ export default function AuditDetailPage() {
   const [search, setSearch] = useState("");
   const [showDiffOnly, setShowDiffOnly] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+
+  // Hydrate from a previously saved draft (session.items) — covers a cleared
+  // localStorage or picking the count back up on another device.
+  useEffect(() => {
+    if (!session?.items || session.items.length === 0) return;
+    setCounts(prev => {
+      const next = { ...prev };
+      let changed = false;
+      for (const it of session.items!) {
+        if (next[it.itemId] === undefined && it.actualQuantity != null) {
+          next[it.itemId] = String(it.actualQuantity);
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [session?.items]);
+
+  function buildAuditItems(): AuditItem[] {
+    return allItems.map(item => {
+      const counted = counts[item.id] !== undefined;
+      const actual = counted ? Number(counts[item.id]) : undefined;
+      const status: AuditItem["status"] = !counted ? "pending"
+        : actual === item.quantityAvailable ? "scanned" : "mismatch";
+      const entry: AuditItem = {
+        itemId: item.id, itemCode: item.code, itemName: item.name,
+        expectedQuantity: item.quantityAvailable, status,
+      };
+      if (actual !== undefined) entry.actualQuantity = actual;
+      if (stoxyUser?.uid) entry.scannedBy = stoxyUser.uid;
+      return entry;
+    });
+  }
 
   // Build item list from inventory (live system qty as expected)
   const items: AuditItem[] = useMemo(() => {
@@ -87,23 +120,7 @@ export default function AuditDetailPage() {
   const [confirmSubmit, setConfirmSubmit] = useState(false);
 
   const submitMut = useMutation({
-    mutationFn: () => {
-      const toSubmit: AuditItem[] = allItems.map(item => {
-        const counted = counts[item.id] !== undefined;
-        const actual = counted ? Number(counts[item.id]) : undefined;
-        const status: AuditItem["status"] = !counted ? "pending"
-          : actual === item.quantityAvailable ? "scanned" : "mismatch";
-        // strip undefined — Firestore rejects them
-        const entry: AuditItem = {
-          itemId: item.id, itemCode: item.code, itemName: item.name,
-          expectedQuantity: item.quantityAvailable, status,
-        };
-        if (actual !== undefined) entry.actualQuantity = actual;
-        if (stoxyUser?.uid) entry.scannedBy = stoxyUser.uid;
-        return entry;
-      });
-      return submitAuditForReview(id, toSubmit);
-    },
+    mutationFn: () => submitAuditForReview(id, buildAuditItems()),
     onSuccess: () => {
       localStorage.removeItem(storageKey);
       qc.invalidateQueries({ queryKey: ["audit_session", id] });
@@ -113,21 +130,21 @@ export default function AuditDetailPage() {
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
   });
 
+  const draftMut = useMutation({
+    mutationFn: () => updateAuditItem(id, buildAuditItems()),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["audit_session", id] });
+      qc.invalidateQueries({ queryKey: ["audit_sessions"] });
+      toast.success("บันทึกร่างแล้ว กลับมานับต่อได้");
+    },
+    onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
+  });
+
   const approveMut = useMutation({
     mutationFn: async () => {
       // If admin is counting directly (in_progress), save items first then approve
       if (isInProgress) {
-        const toSave: AuditItem[] = allItems.map(item => ({
-          itemId: item.id,
-          itemCode: item.code,
-          itemName: item.name,
-          expectedQuantity: item.quantityAvailable,
-          actualQuantity: counts[item.id] !== undefined ? Number(counts[item.id]) : undefined,
-          status: (counts[item.id] === undefined ? "pending" :
-            Number(counts[item.id]) === item.quantityAvailable ? "scanned" : "mismatch") as AuditItem["status"],
-          scannedBy: stoxyUser?.uid,
-        }));
-        await submitAuditForReview(id, toSave);
+        await submitAuditForReview(id, buildAuditItems());
       }
       return approveAudit(id, stoxyUser?.uid ?? "", stoxyUser?.displayName ?? "");
     },
@@ -443,6 +460,15 @@ export default function AuditDetailPage() {
                 {diffItems.length > 0 && <span className="text-red-500 ml-1">· ต่างกัน {diffItems.length} รายการ</span>}
               </p>
             </div>
+            {totalCounted > 0 && totalCounted < items.length && (
+              <button
+                onClick={() => draftMut.mutate()}
+                disabled={draftMut.isPending}
+                className="px-4 py-3 text-sm font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
+              >
+                {draftMut.isPending ? "กำลังบันทึก..." : "บันทึกร่าง"}
+              </button>
+            )}
             {isAdmin ? (
               <button
                 onClick={() => {
