@@ -94,9 +94,13 @@ export default function ProfilePage() {
     <div className="max-w-md mx-auto px-4 py-6 space-y-4">
       {/* Avatar + name */}
       <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 flex flex-col items-center gap-3 border border-gray-100 dark:border-gray-700 shadow-sm">
-        <div className="w-20 h-20 rounded-full bg-[#1D4ED8] flex items-center justify-center text-white text-3xl font-bold shadow-lg shadow-[#1D4ED8]/20">
-          {avatar}
-        </div>
+        {stoxyUser.photoURL ? (
+          <img src={stoxyUser.photoURL} referrerPolicy="no-referrer" alt="" className="w-20 h-20 rounded-full object-cover shadow-lg shadow-black/20" />
+        ) : (
+          <div className="w-20 h-20 rounded-full bg-[#1D4ED8] flex items-center justify-center text-white text-3xl font-bold shadow-lg shadow-[#1D4ED8]/20">
+            {avatar}
+          </div>
+        )}
         <div className="text-center">
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">{stoxyUser.displayName}</h2>
           <span className={cn("text-xs px-2.5 py-1 rounded-full font-semibold mt-1 inline-block",

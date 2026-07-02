@@ -4,8 +4,8 @@
   "description": "ระบบบริหารจัดการคลังอุปกรณ์ไฟฟ้า",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#0d2137",
-  "theme_color": "#0d2137",
+  "background_color": "#F0F4FF",
+  "theme_color": "#1E3A8A",
   "orientation": "portrait-primary",
   "icons": [
     {

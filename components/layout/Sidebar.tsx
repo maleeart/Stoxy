@@ -183,9 +183,13 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             collapsed && "justify-center"
           )}
         >
-          <div className="w-7 h-7 rounded-full bg-[#1D4ED8] flex items-center justify-center text-white font-bold text-sm shrink-0">
-            {stoxyUser?.displayName.charAt(0).toUpperCase()}
-          </div>
+          {stoxyUser?.photoURL ? (
+            <img src={stoxyUser.photoURL} referrerPolicy="no-referrer" alt="" className="w-7 h-7 rounded-full shrink-0 object-cover" />
+          ) : (
+            <div className="w-7 h-7 rounded-full bg-[#1D4ED8] flex items-center justify-center text-white font-bold text-sm shrink-0">
+              {stoxyUser?.displayName.charAt(0).toUpperCase()}
+            </div>
+          )}
           {!collapsed && stoxyUser && (
             <div className="overflow-hidden flex-1 min-w-0">
               <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">{stoxyUser.displayName}</p>
