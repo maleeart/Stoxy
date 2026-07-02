@@ -187,7 +187,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             <img src={stoxyUser.photoURL} referrerPolicy="no-referrer" alt="" className="w-7 h-7 rounded-full shrink-0 object-cover" />
           ) : (
             <div className="w-7 h-7 rounded-full bg-[#1D4ED8] flex items-center justify-center text-white font-bold text-sm shrink-0">
-              {stoxyUser?.displayName.charAt(0).toUpperCase()}
+              {stoxyUser?.displayName?.charAt(0)?.toUpperCase() ?? "S"}
             </div>
           )}
           {!collapsed && stoxyUser && (

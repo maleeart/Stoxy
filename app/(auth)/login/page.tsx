@@ -44,7 +44,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1D4ED8] flex">
+    <div className="min-h-screen bg-gradient-to-br from-[#1D4ED8] to-[#0ea5c2] flex">
       {/* Left - Branding */}
       <div className="hidden lg:flex lg:w-1/2 flex-col items-center justify-center p-12 relative overflow-hidden">
         {/* Background pattern */}
@@ -74,7 +74,7 @@ export default function LoginPage() {
           <h1 className="text-5xl font-bold text-white mb-3 tracking-tight" style={{ fontFamily: "var(--font-geist-sans, inherit)" }}>
             STOXY
           </h1>
-          <p className="text-blue-200 text-sm leading-relaxed mb-2">
+          <p className="text-white/75 text-sm leading-relaxed mb-2">
             Smart Tracking, Organization,<br />
             e<span className="text-yellow-400 font-semibold">X</span>change &amp; Efficiency
           </p>
@@ -94,7 +94,7 @@ export default function LoginPage() {
                 className="bg-white/10 backdrop-blur rounded-xl p-3 text-center"
               >
                 <p className="text-yellow-400 font-bold text-lg">{s.value}</p>
-                <p className="text-blue-200 text-xs">{s.label}</p>
+                <p className="text-white/75 text-xs">{s.label}</p>
               </div>
             ))}
           </div>
@@ -102,7 +102,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right - Form */}
-      <div className="flex-1 flex items-center justify-center p-6 bg-gray-50">
+      <div className="flex-1 flex items-center justify-center p-6 bg-white">
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
