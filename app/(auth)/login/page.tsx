@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Zap, Loader2, UserCircle2, X } from "lucide-react";
+import { Loader2, UserCircle2, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { loginWithGoogle, loginAsGuest } from "@/services/auth.service";
 import { toast } from "sonner";
@@ -70,9 +70,7 @@ export default function LoginPage() {
           transition={{ duration: 0.6 }}
           className="relative z-10 text-center"
         >
-          <div className="flex items-center justify-center w-20 h-20 bg-yellow-400 rounded-3xl mx-auto mb-6 shadow-2xl shadow-yellow-400/30">
-            <Zap className="w-10 h-10 text-[#1D4ED8]" />
-          </div>
+          <img src="/logo.png" alt="Stoxy" className="w-20 h-20 rounded-3xl mx-auto mb-6 shadow-2xl shadow-black/30" />
           <h1 className="text-5xl font-bold text-white mb-3 tracking-tight" style={{ fontFamily: "var(--font-geist-sans, inherit)" }}>
             STOXY
           </h1>
@@ -114,9 +112,7 @@ export default function LoginPage() {
           {/* Mobile logo */}
           <div className="flex flex-col mb-8 lg:hidden">
             <div className="flex items-center gap-3 mb-1">
-              <div className="w-10 h-10 bg-[#1D4ED8] rounded-xl flex items-center justify-center">
-                <Zap className="w-6 h-6 text-yellow-400" />
-              </div>
+              <img src="/logo.png" alt="Stoxy" className="w-10 h-10 rounded-xl" />
               <span className="text-2xl font-bold text-[#1D4ED8] tracking-tight" style={{ fontFamily: "var(--font-geist-sans, inherit)" }}>STOXY</span>
             </div>
             <p className="text-xs text-gray-400 pl-1">Track Smarter. Work Faster.</p>
