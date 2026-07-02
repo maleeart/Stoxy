@@ -387,6 +387,8 @@ export default function AuditDetailPage() {
             ? <p className="text-center text-sm text-gray-400 py-10">ไม่พบรายการ</p>
             : filtered.map((item, i) => {
               const diff = item.actualQuantity != null ? item.actualQuantity - item.expectedQuantity : null;
+              const inv = allItems.find(a => a.id === item.itemId);
+              const location = inv?.locationName || inv?.locationId;
               return (
                 <motion.div key={item.itemId}
                   initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
@@ -404,14 +406,21 @@ export default function AuditDetailPage() {
                         {item.status === "mismatch" && <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />}
                       </div>
                       <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{item.itemName}</p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                        ระบบ: <span className="font-semibold text-gray-700 dark:text-gray-200">{item.expectedQuantity}</span>
-                        {diff != null && diff !== 0 && (
-                          <span className={`ml-2 font-bold ${diff > 0 ? "text-emerald-600" : "text-red-500"}`}>
-                            {diff > 0 ? `+${diff}` : diff}
+                      <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                        <p className="text-xs text-gray-400 dark:text-gray-500">
+                          ระบบ: <span className="font-semibold text-gray-700 dark:text-gray-200">{item.expectedQuantity}</span>
+                          {diff != null && diff !== 0 && (
+                            <span className={`ml-2 font-bold ${diff > 0 ? "text-emerald-600" : "text-red-500"}`}>
+                              {diff > 0 ? `+${diff}` : diff}
+                            </span>
+                          )}
+                        </p>
+                        {location && (
+                          <span className="text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full truncate max-w-[140px]">
+                            📍 {location}
                           </span>
                         )}
-                      </p>
+                      </div>
                     </div>
                     {isPendingApproval ? (
                       <div className="text-right">
