@@ -155,7 +155,17 @@ export async function getRecentMovements(count = 10): Promise<StockMovement[]> {
     limit(count)
   );
   const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as StockMovement));
+  const movements = snap.docs.map((d) => ({ id: d.id, ...d.data() } as StockMovement));
+
+  const uniqueItemIds = [...new Set(movements.filter((m) => !m.unit).map((m) => m.itemId))];
+  if (uniqueItemIds.length > 0) {
+    const itemDocs = await Promise.all(uniqueItemIds.map((id) => getDoc(doc(db, ITEMS_COLLECTION, id))));
+    const unitMap: Record<string, string> = {};
+    itemDocs.forEach((d) => { if (d.exists()) unitMap[d.id] = d.data().unit ?? ""; });
+    movements.forEach((m) => { if (!m.unit && unitMap[m.itemId]) m.unit = unitMap[m.itemId]; });
+  }
+
+  return movements;
 }
 
 // ── Dashboard Stats ───────────────────────────────────────────
