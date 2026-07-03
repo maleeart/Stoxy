@@ -17,7 +17,7 @@ const IOS_STEPS = [
   },
   {
     icon: <CheckCircle2 className="w-5 h-5 text-green-500" />,
-    title: "กด "เพิ่ม" เพื่อยืนยัน",
+    title: 'กด "เพิ่ม" เพื่อยืนยัน',
     desc: "แอพจะปรากฏบนหน้าจอหลัก พร้อมใช้งานเหมือนแอพปกติ",
   },
 ];
@@ -35,7 +35,7 @@ const ANDROID_STEPS = [
   },
   {
     icon: <CheckCircle2 className="w-5 h-5 text-green-500" />,
-    title: "กด "ติดตั้ง" เพื่อยืนยัน",
+    title: 'กด "ติดตั้ง" เพื่อยืนยัน',
     desc: "แอพจะปรากฏบนหน้าจอหลักทันที",
   },
 ];
