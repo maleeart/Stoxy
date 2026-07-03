@@ -313,7 +313,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <AppShell title="แดชบอร์ด">
+    <AppShell title="หน้าหลัก">
       {/* Greeting */}
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
         <p className="text-sm text-gray-400 dark:text-gray-500">{greeting()}</p>

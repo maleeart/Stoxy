@@ -98,10 +98,22 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       )}
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-gray-100 dark:border-gray-700">
-        <img src="/logo.png" alt="Stoxy" className="w-9 h-9 rounded-xl shrink-0 object-cover" />
+      <div className={cn(
+        "flex items-center gap-3 border-b border-blue-100/60 dark:border-gray-700 transition-all",
+        collapsed ? "px-3 py-4 justify-center" : "px-4 py-4",
+        "bg-gradient-to-br from-blue-50/80 via-white to-white dark:from-blue-950/30 dark:via-gray-800 dark:to-gray-800"
+      )}>
+        <img src="/logo.png" alt="Stoxy" className="w-9 h-9 rounded-xl shrink-0 object-cover drop-shadow-sm" />
         {!collapsed && (
-          <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white overflow-hidden" style={{ fontFamily: "var(--font-geist-sans, inherit)" }}>STOXY</span>
+          <div className="overflow-hidden min-w-0">
+            <span
+              className="text-xl font-black tracking-tight leading-none bg-gradient-to-r from-[#1D4ED8] via-blue-500 to-cyan-400 bg-clip-text text-transparent"
+              style={{ fontFamily: "var(--font-geist-sans, inherit)" }}
+            >STOXY</span>
+            <p className="text-[10px] font-semibold text-cyan-500 dark:text-cyan-400 tracking-wide leading-none mt-1 truncate">
+              Track Smarter. Work Faster.
+            </p>
+          </div>
         )}
       </div>
 
