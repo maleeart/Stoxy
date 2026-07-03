@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeftRight, PackageOpen, Package, History, Home, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -36,24 +36,44 @@ export function StaffShell({ children }: StaffShellProps) {
 
   const qc = useQueryClient();
   const touchStartY = useRef(0);
-  const [pulling, setPulling] = useState(false);
+  const pullYRef = useRef(0);
   const [pullY, setPullY] = useState(0);
   const mainRef = useRef<HTMLElement>(null);
 
-  function onTouchStart(e: React.TouchEvent) {
-    if (mainRef.current && mainRef.current.scrollTop === 0) {
-      touchStartY.current = e.touches[0].clientY;
+  useEffect(() => {
+    const el = mainRef.current;
+    if (!el) return;
+
+    function onTouchStart(e: TouchEvent) {
+      if (el!.scrollTop === 0) touchStartY.current = e.touches[0].clientY;
+      else touchStartY.current = -1;
     }
-  }
-  function onTouchMove(e: React.TouchEvent) {
-    if (!mainRef.current || mainRef.current.scrollTop > 0) return;
-    const dy = e.touches[0].clientY - touchStartY.current;
-    if (dy > 0) { setPulling(true); setPullY(Math.min(dy * 0.4, 60)); }
-  }
-  function onTouchEnd() {
-    if (pullY >= 50) { qc.invalidateQueries(); }
-    setPulling(false); setPullY(0);
-  }
+    function onTouchMove(e: TouchEvent) {
+      if (touchStartY.current < 0) return;
+      const dy = e.touches[0].clientY - touchStartY.current;
+      if (dy > 0) {
+        e.preventDefault();
+        const v = Math.min(dy * 0.5, 70);
+        pullYRef.current = v;
+        setPullY(v);
+      }
+    }
+    function onTouchEnd() {
+      if (pullYRef.current >= 55) qc.invalidateQueries();
+      pullYRef.current = 0;
+      setPullY(0);
+      touchStartY.current = -1;
+    }
+
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd);
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [qc]);
 
   const { allRecords } = useRealtimeBorrows();
   const { data: reqs = [] } = useQuery({
@@ -127,13 +147,7 @@ export function StaffShell({ children }: StaffShellProps) {
       )} style={{ height: pullY }}>
         <RefreshCw className={cn("w-4 h-4 text-[#1D4ED8]", pullY >= 50 ? "animate-spin" : "")} />
       </div>
-      <main
-        ref={mainRef}
-        className="flex-1 overflow-y-auto min-h-0"
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-      >{children}</main>
+      <main ref={mainRef} className="flex-1 overflow-y-auto min-h-0">{children}</main>
 
       <nav className="shrink-0 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 safe-area-bottom z-50">
         {/* subtle top gradient accent */}
