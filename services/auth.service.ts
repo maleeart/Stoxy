@@ -126,6 +126,11 @@ export async function updateUserRole(uid: string, role: UserRole): Promise<void>
   });
 }
 
+export async function deleteUserDoc(uid: string): Promise<void> {
+  const { deleteDoc } = await import("firebase/firestore");
+  await deleteDoc(doc(db, USERS_COLLECTION, uid));
+}
+
 // ── Permissions ───────────────────────────────────────────────
 export const rolePermissions: Record<UserRole, string[]> = {
   admin: ["*"],

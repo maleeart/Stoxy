@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
-import { getAllUsers, updateUserRole, updateStoxyUser } from "@/services/auth.service";
+import { getAllUsers, updateUserRole, updateStoxyUser, deleteUserDoc } from "@/services/auth.service";
 import { getAccessRequests, approveAccessRequest, rejectAccessRequest } from "@/services/accessRequest.service";
 import { useAuth } from "@/hooks/useAuth";
-import { Users, Shield, Check, X, Pencil, Loader2 } from "lucide-react";
+import { Users, Shield, Check, X, Pencil, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import type { UserRole, StoxyUser, EmployeeType } from "@/types";
@@ -123,6 +123,7 @@ export default function UsersPage() {
   const isAdmin = stoxyUser?.role === "admin";
   const [tab, setTab] = useState<"users" | "requests">("users");
   const [editUser, setEditUser] = useState<StoxyUser | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<StoxyUser | null>(null);
 
   const { data: users = [], isLoading } = useQuery({ queryKey: ["users"], queryFn: getAllUsers });
   const { data: requests = [] } = useQuery({
@@ -157,6 +158,16 @@ export default function UsersPage() {
       toast.success("ปฏิเสธคำขอแล้ว");
     },
     onError: () => toast.error("เกิดข้อผิดพลาด"),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: (uid: string) => deleteUserDoc(uid),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["users"] });
+      toast.success("ลบบัญชีผู้ใช้แล้ว");
+      setConfirmDelete(null);
+    },
+    onError: () => toast.error("ลบไม่สำเร็จ"),
   });
 
   if (stoxyUser?.role === "supervisor") {
@@ -227,9 +238,14 @@ export default function UsersPage() {
 
                       <div className="flex items-center gap-2 shrink-0">
                         {isAdmin && !isSelf && (
-                          <button onClick={() => setEditUser(user)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                            <Pencil className="w-3.5 h-3.5 text-gray-400" />
-                          </button>
+                          <>
+                            <button onClick={() => setEditUser(user)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                              <Pencil className="w-3.5 h-3.5 text-gray-400" />
+                            </button>
+                            <button onClick={() => setConfirmDelete(user)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                              <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                            </button>
+                          </>
                         )}
                         {isAdmin && !isSelf ? (
                           <select value={user.role}
@@ -312,6 +328,42 @@ export default function UsersPage() {
       {/* Edit Modal */}
       <AnimatePresence>
         {editUser && <EditUserModal user={editUser} onClose={() => setEditUser(null)} />}
+      </AnimatePresence>
+
+      {/* Confirm Delete Modal */}
+      <AnimatePresence>
+        {confirmDelete && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[500] bg-black/50 flex items-center justify-center p-4"
+            onClick={() => setConfirmDelete(null)}
+          >
+            <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <Trash2 className="w-6 h-6 text-red-500" />
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-900 dark:text-white">ลบบัญชีผู้ใช้</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  คุณแน่ใจว่าต้องการลบ <span className="font-semibold text-gray-900 dark:text-white">{confirmDelete.displayName}</span> ออกจากระบบ? การกระทำนี้ไม่สามารถย้อนกลับได้
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => setConfirmDelete(null)}
+                  className="flex-1 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                  ยกเลิก
+                </button>
+                <button onClick={() => deleteMut.mutate(confirmDelete.uid)} disabled={deleteMut.isPending}
+                  className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl disabled:opacity-50 flex items-center justify-center gap-2 transition-colors">
+                  {deleteMut.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                  ลบบัญชี
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
     </AppShell>
   );
