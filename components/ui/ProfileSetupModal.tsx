@@ -116,7 +116,7 @@ export function ProfileSetupModal() {
               <input
                 value={employeeId}
                 onChange={e => setEmployeeId(e.target.value)}
-                placeholder="เช่น EMP-0001"
+                placeholder="เช่น 123456"
                 className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
               />
             </motion.div>
