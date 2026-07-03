@@ -23,6 +23,7 @@ import type { BorrowRecord, BorrowStatus, InventoryItem } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Timestamp } from "firebase/firestore";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 // ── Shared status maps ─────────────────────────────────────────────────────────
 const statusBadge: Partial<Record<BorrowStatus, string>> = {
@@ -447,7 +448,16 @@ function StaffBorrowPage() {
             >
               {isLoading ? (
                 Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-24 bg-white dark:bg-gray-800 rounded-2xl animate-pulse border border-gray-50 dark:border-gray-700" />
+                  <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-50 dark:border-gray-700 p-4 animate-pulse">
+                    <div className="flex items-start gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-gray-700 shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 w-3/4 bg-gray-100 dark:bg-gray-700 rounded" />
+                        <div className="flex gap-2"><div className="h-3.5 w-16 bg-gray-100 dark:bg-gray-700 rounded-full" /><div className="h-3.5 w-20 bg-gray-100 dark:bg-gray-700 rounded" /></div>
+                        <div className="h-3 w-32 bg-gray-100 dark:bg-gray-700 rounded" />
+                      </div>
+                    </div>
+                  </div>
                 ))
               ) : filteredReturn.length === 0 ? (
                 <div className="text-center py-16">
@@ -1208,11 +1218,21 @@ function AdminBorrowPage() {
       </div>
 
       {isLoading ? (
-        <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-20 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 animate-pulse" />)}</div>
+        <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4 animate-pulse">
+            <div className="flex items-start gap-3">
+              <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="flex gap-2"><div className="h-4 w-14 bg-gray-100 dark:bg-gray-800 rounded-full" /><div className="h-4 w-20 bg-gray-100 dark:bg-gray-800 rounded" /></div>
+                <div className="h-4 w-3/4 bg-gray-100 dark:bg-gray-800 rounded" />
+                <div className="h-3 w-1/2 bg-gray-100 dark:bg-gray-800 rounded" />
+              </div>
+            </div>
+          </div>
+        ))}</div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800">
-          <ArrowLeftRight className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-          <p className="text-sm text-gray-400">ไม่พบรายการ</p>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800">
+          <EmptyState icon={ArrowLeftRight} title="ไม่พบรายการยืม" description="ลองเปลี่ยน filter หรือค้นหาใหม่" iconColor="text-blue-300 dark:text-blue-700" />
         </div>
       ) : (
         <div className="space-y-3">

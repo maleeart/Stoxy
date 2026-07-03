@@ -35,6 +35,8 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { AddItemDialog } from "@/components/inventory/AddItemDialog";
 import { exportInventoryExcel } from "@/lib/export";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { useRouter } from "next/navigation";
 
 const statusFilters: { label: string; value: ItemStatus | "all" }[] = [
   { label: "ทั้งหมด", value: "all" },
@@ -54,6 +56,7 @@ const CATEGORIES = [
 
 export default function InventoryPage() {
   const { stoxyUser } = useAuth();
+  const router = useRouter();
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<ItemStatus | "all">("all");
@@ -353,12 +356,34 @@ export default function InventoryPage() {
       <div className="block md:hidden space-y-2.5">
         {isLoading ? (
           Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-24 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 animate-pulse" />
+            <div key={i} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-3.5 animate-pulse">
+              <div className="flex items-start gap-3">
+                <div className="w-14 h-14 rounded-xl bg-gray-100 dark:bg-gray-800 shrink-0" />
+                <div className="flex-1 min-w-0 space-y-2">
+                  <div className="flex justify-between gap-2">
+                    <div className="h-4 w-2/3 bg-gray-100 dark:bg-gray-800 rounded" />
+                    <div className="h-4 w-14 bg-gray-100 dark:bg-gray-800 rounded-full" />
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="h-3.5 w-16 bg-gray-100 dark:bg-gray-800 rounded" />
+                    <div className="h-3.5 w-20 bg-gray-100 dark:bg-gray-800 rounded" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-3 w-10 bg-gray-100 dark:bg-gray-800 rounded" />
+                    <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full" />
+                  </div>
+                </div>
+              </div>
+            </div>
           ))
         ) : filtered.length === 0 ? (
-          <div className="text-center py-16 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800">
-            <Package className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-            <p className="text-sm text-gray-400">ไม่พบรายการอุปกรณ์</p>
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800">
+            <EmptyState
+              icon={Package}
+              title={search ? "ไม่พบรายการที่ค้นหา" : "ยังไม่มีอุปกรณ์ในคลัง"}
+              description={search ? "ลองเปลี่ยนคำค้นหาหรือตัวกรอง" : "เพิ่มอุปกรณ์ชิ้นแรกเพื่อเริ่มต้นใช้งาน"}
+              action={isAdmin && !search ? { label: "+ เพิ่มอุปกรณ์", onClick: () => setShowAddDialog(true) } : undefined}
+            />
           </div>
         ) : (
           filtered.map((item, i) => {

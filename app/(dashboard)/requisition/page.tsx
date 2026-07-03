@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import type { InventoryItem } from "@/types";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 // ── Shared ─────────────────────────────────────────────────────────────────────
 const statusBadge = {
@@ -552,9 +553,8 @@ function AdminRequisitionPage() {
             <div key={i} className="h-20 bg-gray-100 dark:bg-gray-800 rounded-2xl animate-pulse" />
           ))
         ) : allReqs.length === 0 ? (
-          <div className="text-center py-16 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800">
-            <PackageOpen className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-            <p className="text-sm text-gray-400">ยังไม่มีรายการเบิก</p>
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800">
+            <EmptyState icon={PackageOpen} title="ยังไม่มีรายการเบิก" description="รายการที่ขอเบิกจะแสดงที่นี่" iconColor="text-amber-400 dark:text-amber-600" />
           </div>
         ) : (
           allReqs.map((req, i) => (
