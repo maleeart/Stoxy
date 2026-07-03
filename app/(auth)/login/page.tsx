@@ -164,19 +164,19 @@ export default function LoginPage() {
           </button>
 
           <div className="flex items-center justify-between mt-6">
-            <p className="text-xs text-gray-400">
-              STOXY © {new Date().getFullYear()} — Track Smarter. Work Faster.
+            <p className="text-xs text-gray-400 hidden lg:block">
+              STOXY © {new Date().getFullYear()}
             </p>
             <HelpButton label="ใช้งานบนมือถือ" className="text-blue-500 hover:text-blue-600 bg-blue-50 hover:bg-blue-100" />
           </div>
-          <div className="mt-4 pb-2 space-y-1 lg:hidden text-center">
-            <p className="text-[11px] text-gray-300">
-              Smart Tracking, Organization, e<span className="text-gray-400 font-semibold">X</span>change &amp; Efficiency
+          <div className="mt-4 pb-2 space-y-0.5 lg:hidden text-center">
+            <p className="text-[10px] text-gray-300">STOXY © {new Date().getFullYear()}</p>
+            <p className="text-[10px] text-gray-300">
+              Smart Tracking, Organization, e<span className="text-gray-400 font-medium">X</span>change &amp; Efficiency
             </p>
-            <p className="text-[11px] text-gray-300">
-              <span className="text-gray-400">ผู้ดูแลระบบ :</span> นายตวงเพชร ชัยยานนท์
+            <p className="text-[10px] text-gray-300 pt-1">
+              ผู้ดูแลระบบ : นายตวงเพชร ชัยยานนท์ &middot; วศ.4 หบอว-ธ. กบห-ธ. ชธธ.
             </p>
-            <p className="text-[10px] text-gray-300">วศ.4 &middot; หบอว-ธ. &middot; กบห-ธ. &middot; ชธธ.</p>
           </div>
 
           {/* Guest Modal */}
