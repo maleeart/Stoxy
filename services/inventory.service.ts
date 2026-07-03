@@ -119,6 +119,7 @@ export async function adjustStock(data: {
     quantityBefore: item.quantityAvailable,
     quantityChange: delta,
     quantityAfter: newAvailable,
+    unit: item.unit,
     reason: data.reason,
     performedBy: data.performedBy,
     performedByName: data.performedByName,

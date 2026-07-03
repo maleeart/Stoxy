@@ -206,6 +206,7 @@ export interface StockMovement {
   quantityBefore: number;
   quantityChange: number;
   quantityAfter: number;
+  unit?: string;
   referenceId?: string; // borrowId, adjustmentId etc.
   referenceType?: string;
   reason?: string;

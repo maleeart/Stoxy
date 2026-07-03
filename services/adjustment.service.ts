@@ -72,6 +72,7 @@ export async function createAdjustment(
     quantityAfter: after,
     referenceId: adjRef.id,
     referenceType: "adjustment",
+    unit: item.unit,
     reason: data.reason,
     performedBy: data.createdBy,
     performedByName: data.createdByName || data.createdBy,

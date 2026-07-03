@@ -90,6 +90,7 @@ export async function approveRequisition(id: string, approverId: string, approve
     quantityChange: -req.quantity,
     quantityAfter: item.quantityAvailable - req.quantity,
     referenceId: id,
+    unit: item.unit,
     referenceType: "requisition",
     reason: req.purpose,
     performedBy: approverId,

@@ -489,7 +489,7 @@ export default function DashboardPage() {
                       <p className="text-xs text-gray-400 dark:text-gray-500">{formatRelative(m.createdAt)}</p>
                     </div>
                     <span className={cn("text-xs font-semibold shrink-0", m.quantityChange >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500 dark:text-red-400")}>
-                      {m.quantityChange >= 0 ? "+" : ""}{m.quantityChange}
+                      {m.quantityChange >= 0 ? "+" : ""}{m.quantityChange}{m.unit ? ` ${m.unit}` : ""}
                     </span>
                   </div>
                 ))
