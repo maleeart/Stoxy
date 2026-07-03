@@ -407,30 +407,38 @@ export default function DashboardPage() {
           <SummaryTile
             label="ถูกยืมออก"
             value={statsLoading ? "—" : String(stats?.borrowedQuantity ?? 0)}
-            icon={<ArrowLeftRight className="w-4 h-4 text-amber-600 dark:text-amber-400" />}
-            bg="bg-amber-100 dark:bg-amber-900/40"
+            icon={<ArrowLeftRight className="w-4 h-4 text-amber-600 dark:text-amber-300" />}
+            bg="bg-amber-50 dark:bg-gray-800"
+            iconBg="bg-amber-100 dark:bg-amber-500/20"
+            accent="dark:ring-1 dark:ring-amber-500/30"
             onClick={() => router.push("/borrow")}
           />
           <SummaryTile
             label="ยอดเบิกแล้ว"
             value={statsLoading ? "—" : String(approvedReqsThisMonth.length)}
-            icon={<CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
-            bg="bg-emerald-100 dark:bg-emerald-900/40"
+            icon={<CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-300" />}
+            bg="bg-emerald-50 dark:bg-gray-800"
+            iconBg="bg-emerald-100 dark:bg-emerald-500/20"
+            accent="dark:ring-1 dark:ring-emerald-500/30"
             onClick={() => router.push("/requisition")}
           />
           <SummaryTile
             label="เกินกำหนดคืน"
             value={String(overdueBorrows.length)}
-            icon={<Clock className="w-4 h-4 text-orange-600 dark:text-orange-400" />}
-            bg="bg-orange-100 dark:bg-orange-900/40"
+            icon={<Clock className="w-4 h-4 text-orange-600 dark:text-orange-300" />}
+            bg="bg-orange-50 dark:bg-gray-800"
+            iconBg="bg-orange-100 dark:bg-orange-500/20"
+            accent="dark:ring-1 dark:ring-orange-500/30"
             urgent={overdueBorrows.length > 0}
             onClick={() => router.push("/operations")}
           />
           <SummaryTile
             label="ต้องสั่งซื้อ"
             value={String(lowStockItems.length)}
-            icon={<AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400" />}
-            bg="bg-rose-100 dark:bg-rose-900/40"
+            icon={<AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-300" />}
+            bg="bg-rose-50 dark:bg-gray-800"
+            iconBg="bg-rose-100 dark:bg-rose-500/20"
+            accent="dark:ring-1 dark:ring-rose-500/30"
             urgent={lowStockItems.length > 0}
             onClick={() => router.push("/purchase")}
           />
@@ -518,43 +526,46 @@ function ActionCard({
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       onClick={onClick}
-      className={`${bg} text-white rounded-2xl p-4 flex flex-col gap-2 active:scale-95 transition-all text-left w-full shadow-sm ${urgent ? "ring-2 ring-offset-1 ring-red-300" : ""}`}
+      className={`${bg} text-white rounded-2xl p-4 flex flex-col gap-2 active:scale-95 transition-all text-left w-full shadow-md ${urgent ? "ring-2 ring-offset-2 ring-offset-white dark:ring-offset-gray-900 ring-red-400 dark:ring-red-500/70" : ""}`}
     >
       <div className="flex items-center justify-between">
-        <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
+        <div className="w-9 h-9 rounded-xl bg-white/20 dark:bg-black/20 flex items-center justify-center shrink-0">
           {icon}
         </div>
         {urgent && <span className="w-2.5 h-2.5 bg-white rounded-full animate-pulse" />}
       </div>
       <div>
-        <p className="text-2xl font-bold leading-none">{count}</p>
-        <p className="text-xs font-medium opacity-80 mt-0.5 leading-tight">{label}</p>
+        <p className="text-3xl font-bold leading-none tracking-tight">{count}</p>
+        <p className="text-xs font-medium text-white/80 mt-1 leading-tight">{label}</p>
       </div>
     </motion.button>
   );
 }
 
 function SummaryTile({
-  label, value, icon, bg, onClick, urgent,
+  label, value, icon, bg, iconBg, accent, onClick, urgent,
 }: {
   label: string;
   value: string;
   icon: React.ReactNode;
   bg: string;
+  iconBg?: string;
+  accent?: string;
   onClick: () => void;
   urgent?: boolean;
 }) {
+  const isUrgent = urgent && value !== "0";
   return (
     <button
       onClick={onClick}
-      className={`${bg} rounded-2xl p-3.5 flex flex-col gap-2 active:scale-95 transition-all text-left w-full shadow-sm border ${urgent && value !== "0" ? "border-red-200" : "border-transparent"}`}
+      className={`${bg} ${accent ?? ""} rounded-2xl p-4 flex flex-col gap-3 active:scale-95 transition-all text-left w-full shadow-sm border ${isUrgent ? "border-red-300 dark:border-red-500/40" : "border-transparent dark:border-white/5"}`}
     >
-      <div className="w-8 h-8 rounded-xl bg-white/60 flex items-center justify-center">
+      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${iconBg ?? "bg-white/60 dark:bg-white/10"}`}>
         {icon}
       </div>
       <div>
-        <p className={`text-xl font-bold leading-none ${urgent && value !== "0" ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-white"}`}>{value}</p>
-        <p className="text-[11px] text-gray-600 dark:text-gray-300 mt-0.5 leading-tight font-medium">{label}</p>
+        <p className={`text-2xl lg:text-3xl font-bold leading-none tracking-tight ${isUrgent ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-white"}`}>{value}</p>
+        <p className="text-xs lg:text-sm text-gray-500 dark:text-gray-400 mt-1 leading-tight font-medium">{label}</p>
       </div>
     </button>
   );
