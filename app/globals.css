@@ -41,6 +41,11 @@
   border-color: hsl(214 32% 91%);
 }
 
+/* Eliminate 300ms tap delay on all interactive elements */
+a, button, [role="button"], summary {
+  touch-action: manipulation;
+}
+
 body {
   background-color: hsl(210 40% 98%);
   color: hsl(222 47% 11%);
