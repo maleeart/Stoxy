@@ -8,6 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { GlobalSearch } from "@/components/ui/GlobalSearch";
 
 interface HeaderProps {
   title?: string;
@@ -46,7 +47,8 @@ export function Header({ title, onMenuClick }: HeaderProps) {
         </h1>
       )}
 
-      <div className="ml-auto flex items-center gap-1">
+      <div className="ml-auto flex items-center gap-2">
+        <GlobalSearch />
         {/* Home */}
         {!onDashboard && (
           <button
