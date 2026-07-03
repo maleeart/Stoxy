@@ -100,11 +100,9 @@ export default function LoginPage() {
             ))}
           </div>
 
-          <div className="mt-10 border-t border-white/15 pt-5 text-center space-y-1">
-            <p className="text-white/40 text-[11px] uppercase tracking-widest">ผู้ดูแลระบบ</p>
-            <p className="text-white/90 text-sm font-semibold">นายตวงเพชร ชัยยานนท์</p>
-            <p className="text-white/50 text-xs">วศ.4 &middot; หบอว-ธ. &middot; กบห-ธ. &middot; ชธธ.</p>
-          </div>
+          <p className="mt-10 text-white/30 text-[10px] text-center">
+            ผู้ดูแลระบบ : นายตวงเพชร ชัยยานนท์ &middot; วศ.4 หบอว-ธ. กบห-ธ. ชธธ.
+          </p>
         </motion.div>
       </div>
 
