@@ -6,6 +6,7 @@ import { Loader2, UserCircle2, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { loginWithGoogle, loginAsGuest } from "@/services/auth.service";
 import { toast } from "sonner";
+import { HelpButton } from "@/components/ui/HelpModal";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -160,9 +161,12 @@ export default function LoginPage() {
             เข้าใช้แบบผู้เยี่ยมชม (ยืม-คืนเท่านั้น)
           </button>
 
-          <p className="text-center text-xs text-gray-400 mt-6">
-            STOXY © {new Date().getFullYear()} — Track Smarter. Work Faster.
-          </p>
+          <div className="flex items-center justify-between mt-6">
+            <p className="text-xs text-gray-400">
+              STOXY © {new Date().getFullYear()} — Track Smarter. Work Faster.
+            </p>
+            <HelpButton className="text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200" />
+          </div>
 
           {/* Guest Modal */}
           <AnimatePresence>

@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { GlobalSearch } from "@/components/ui/GlobalSearch";
+import { HelpButton } from "@/components/ui/HelpModal";
 
 interface HeaderProps {
   title?: string;
@@ -49,6 +50,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
 
       <div className="ml-auto flex items-center gap-2">
         <GlobalSearch />
+        <HelpButton className="text-gray-400 hover:text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600" />
         {/* Home */}
         {!onDashboard && (
           <button
