@@ -111,18 +111,16 @@ export default function LoginPage() {
           className="w-full max-w-md"
         >
           {/* Mobile logo */}
-          <div className="flex flex-col mb-8 lg:hidden">
-            <div className="flex items-center gap-3 mb-1">
-              <img src="/logo.png" alt="Stoxy" className="w-10 h-10 rounded-xl" />
-              <span className="text-2xl font-bold text-[#1D4ED8] tracking-tight" style={{ fontFamily: "var(--font-geist-sans, inherit)" }}>STOXY</span>
-            </div>
-            <p className="text-xs text-gray-400 pl-1">Track Smarter. Work Faster.</p>
+          <div className="flex flex-col items-center mb-8 lg:hidden">
+            <img src="/logo.png" alt="Stoxy" className="w-20 h-20 rounded-2xl shadow-lg shadow-blue-200 mb-3" />
+            <span className="text-3xl font-black text-[#1D4ED8] tracking-tight mb-1" style={{ fontFamily: "var(--font-geist-sans, inherit)" }}>STOXY</span>
+            <p className="text-xs text-gray-400">Track Smarter. Work Faster.</p>
           </div>
 
-          <h2 className="text-2xl font-bold text-gray-900 mb-1">
+          <h2 className="text-base font-semibold text-gray-500 mb-1 lg:text-2xl lg:font-bold lg:text-gray-900">
             เข้าสู่ระบบ
           </h2>
-          <p className="text-sm text-gray-500 mb-6">
+          <p className="text-sm text-gray-400 mb-6 lg:text-gray-500">
             ระบบบริหารจัดการคลังอุปกรณ์ไฟฟ้า
           </p>
 
