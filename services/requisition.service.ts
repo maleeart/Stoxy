@@ -4,6 +4,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { recordStockMovement } from "./inventory.service";
+import { notifyLine } from "@/lib/notifyLine";
 
 const COL = "requisitions";
 
@@ -41,6 +42,7 @@ export async function createRequisition(data: {
     createdAt: now,
     updatedAt: now,
   });
+  notifyLine(`📦 คำขอเบิกอุปกรณ์ใหม่\nชื่อ: ${data.requesterName}\nอุปกรณ์: ${data.itemName} x${data.quantity}\nกรุณาอนุมัติใน STOXY > เบิก`);
   return ref.id;
 }
 

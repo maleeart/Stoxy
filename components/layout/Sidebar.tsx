@@ -75,7 +75,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
   const { stoxyUser } = useAuth();
   const router = useRouter();
-  const { total: pendingTotal } = usePendingCount();
+  const { total: pendingTotal, pendingAccessRequests } = usePendingCount();
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
   const isSupervisor = stoxyUser?.role === "supervisor";
   const { data: hasActiveAudit = false } = useHasActiveAudit(!isAdmin && !isSupervisor ? stoxyUser?.uid : undefined);
@@ -161,7 +161,15 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                         {pendingTotal > 99 ? "99+" : pendingTotal}
                       </span>
                     )}
+                    {!collapsed && item.href === "/users" && pendingAccessRequests > 0 && (
+                      <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                        {pendingAccessRequests}
+                      </span>
+                    )}
                     {collapsed && item.href === "/notifications" && pendingTotal > 0 && (
+                      <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full" />
+                    )}
+                    {collapsed && item.href === "/users" && pendingAccessRequests > 0 && (
                       <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full" />
                     )}
                     {collapsed && (

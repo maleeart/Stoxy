@@ -4,6 +4,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { updateUserRole } from "@/services/auth.service";
+import { notifyLine } from "@/lib/notifyLine";
 import type { AccessRequest } from "@/types";
 
 const COL = "accessRequests";
@@ -17,6 +18,7 @@ export async function createAccessRequest(
     status: "pending",
     createdAt: Timestamp.now(),
   });
+  notifyLine(`📋 คำขอสิทธิ์ใหม่\nชื่อ: ${displayName}\nแผนก: ${department}\nกรุณาอนุมัติใน STOXY > ผู้ใช้งาน`);
 }
 
 export async function getAccessRequests(): Promise<AccessRequest[]> {

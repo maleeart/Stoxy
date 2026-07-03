@@ -239,14 +239,34 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* ประเภท */}
+        {/* ประเภท (editable toggle) */}
         <div className="flex items-center gap-3 px-5 py-4">
           <Briefcase className="w-4 h-4 text-gray-400 shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">ประเภท</p>
-            <p className="text-sm font-medium text-gray-900 dark:text-white">
-              {stoxyUser.employeeType === "employee" ? "พนักงาน" : stoxyUser.employeeType === "contractor" ? "ลูกจ้าง" : "ไม่ระบุ"}
-            </p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mb-1.5">ประเภท</p>
+            <div className="flex gap-2">
+              {(["employee", "contractor"] as const).map((t) => (
+                <button key={t}
+                  onClick={async () => {
+                    setSaving(true);
+                    try {
+                      await updateStoxyUser(stoxyUser!.uid, { employeeType: t });
+                      await refreshUser();
+                      toast.success("บันทึกประเภทแล้ว");
+                    } catch { toast.error("เกิดข้อผิดพลาด"); } finally { setSaving(false); }
+                  }}
+                  disabled={saving}
+                  className={cn(
+                    "px-3 py-1 rounded-full text-xs font-semibold border transition-all active:scale-95",
+                    stoxyUser.employeeType === t
+                      ? "bg-[#1D4ED8] text-white border-[#1D4ED8]"
+                      : "bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:border-[#1D4ED8]/40"
+                  )}
+                >
+                  {t === "employee" ? "พนักงาน" : "ลูกจ้าง"}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

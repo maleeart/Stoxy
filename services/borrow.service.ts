@@ -15,6 +15,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { recordStockMovement } from "./inventory.service";
+import { notifyLine } from "@/lib/notifyLine";
 import type { BorrowRecord, BorrowStatus, ItemCondition } from "@/types";
 
 const BORROWS_COLLECTION = "borrow_records";
@@ -29,6 +30,7 @@ export async function createBorrowRequest(
     createdAt: now,
     updatedAt: now,
   });
+  notifyLine(`🔧 คำขอยืมอุปกรณ์ใหม่\nชื่อ: ${data.borrowerName}\nอุปกรณ์: ${data.itemName} x${data.quantity}\nกรุณาอนุมัติใน STOXY > ยืม-คืน`);
   return ref.id;
 }
 
