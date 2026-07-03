@@ -1,12 +1,11 @@
 "use client";
 
-import { Menu, RefreshCw, Home, Smartphone } from "lucide-react";
+import { Menu, RefreshCw, Home } from "lucide-react";
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { useLayoutMode } from "@/hooks/useLayoutMode";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { GlobalSearch } from "@/components/ui/GlobalSearch";
@@ -19,8 +18,6 @@ interface HeaderProps {
 
 export function Header({ title, onMenuClick }: HeaderProps) {
   const { stoxyUser } = useAuth();
-  const [layoutMode, toggleLayout] = useLayoutMode();
-  const isStaffDesktop = stoxyUser?.role === "staff" && layoutMode === "desktop";
   const [spinning, setSpinning] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
@@ -53,15 +50,6 @@ export function Header({ title, onMenuClick }: HeaderProps) {
 
       <div className="ml-auto flex items-center gap-2">
         <GlobalSearch />
-        {isStaffDesktop && (
-          <button
-            onClick={toggleLayout}
-            title="กลับโหมดมือถือ"
-            className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          >
-            <Smartphone className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-          </button>
-        )}
         <HelpButton className="text-gray-400 hover:text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600" />
         {/* Home */}
         {!onDashboard && (
