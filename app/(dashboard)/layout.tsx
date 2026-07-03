@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import Image from "next/image";
 
 export default function DashboardLayout({
   children,
@@ -20,18 +21,50 @@ export default function DashboardLayout({
 
   if (loading || !initialized) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 bg-[#1D4ED8] rounded-2xl flex items-center justify-center animate-pulse">
-            <svg
-              className="w-6 h-6 text-yellow-400"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path d="M13 2L4.5 13.5H11L9 22L19.5 9.5H13L15 2H13Z" />
-            </svg>
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+        <style>{`
+          @keyframes logo-breathe {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+          }
+          @keyframes dot-bounce {
+            0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+            40% { transform: translateY(-6px); opacity: 1; }
+          }
+          .logo-breathe { animation: logo-breathe 2s ease-in-out infinite; }
+          .dot1 { animation: dot-bounce 1.2s ease-in-out infinite; }
+          .dot2 { animation: dot-bounce 1.2s ease-in-out infinite 0.2s; }
+          .dot3 { animation: dot-bounce 1.2s ease-in-out infinite 0.4s; }
+        `}</style>
+        <div className="flex flex-col items-center gap-5">
+          {/* logo + spinning ring */}
+          <div className="relative w-24 h-24 flex items-center justify-center">
+            {/* outer spinning arc */}
+            <div
+              className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-400 border-r-cyan-300"
+              style={{ animation: "spin 1.4s linear infinite" }}
+            />
+            {/* inner counter-spin arc (subtle) */}
+            <div
+              className="absolute inset-2 rounded-full border-2 border-transparent border-b-blue-200/60"
+              style={{ animation: "spin 2.2s linear infinite reverse" }}
+            />
+            {/* logo */}
+            <Image
+              src="/logo.png"
+              width={64}
+              height={64}
+              alt="Stoxy"
+              className="logo-breathe relative z-10 drop-shadow-md"
+              priority
+            />
           </div>
-          <p className="text-sm text-gray-500">กำลังโหลด Stoxy...</p>
+          {/* bouncing dots */}
+          <div className="flex items-center gap-1.5">
+            <span className="dot1 w-2 h-2 rounded-full bg-blue-400" />
+            <span className="dot2 w-2 h-2 rounded-full bg-cyan-400" />
+            <span className="dot3 w-2 h-2 rounded-full bg-blue-300" />
+          </div>
         </div>
       </div>
     );
