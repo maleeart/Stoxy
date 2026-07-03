@@ -1,6 +1,7 @@
 ﻿"use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { MobileHeader } from "@/components/layout/MobileHeader";
@@ -13,7 +14,7 @@ import {
 import { formatDateTime, cn } from "@/lib/utils";
 import {
   PackageOpen, Search, X, CheckCircle, XCircle, Plus, Minus,
-  ShoppingCart, MapPin, Package,
+  ShoppingCart, MapPin, Package, ScanLine,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -46,6 +47,8 @@ function StaffRequisitionPage() {
   const role = useRole();
   const guard = (fn: () => void) => role === "viewer" ? toast.error("ไม่มีสิทธิ์ดำเนินการ") : fn();
   const qc = useQueryClient();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: items = [] } = useInventoryItems();
 
   const [search, setSearch] = useState("");
@@ -53,6 +56,19 @@ function StaffRequisitionPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showConfirm, setShowConfirm] = useState(false);
   const [purpose, setPurpose] = useState("");
+
+  // Auto-add to cart when coming from QR scan
+  useEffect(() => {
+    const itemId = searchParams.get("item");
+    if (itemId && items.length > 0) {
+      const found = items.find(i => i.id === itemId);
+      if (found && found.quantityAvailable > 0) {
+        setCart(prev => prev.find(c => c.itemId === found.id) ? prev : [
+          ...prev, { itemId: found.id, itemCode: found.code, itemName: found.name, qty: 1, maxQty: found.quantityAvailable }
+        ]);
+      }
+    }
+  }, [searchParams, items]);
 
   const available = items.filter(i => i.quantityAvailable > 0 && WITHDRAWABLE.has(i.categoryId));
   const filtered = available.filter(i => {
@@ -100,13 +116,21 @@ function StaffRequisitionPage() {
       {/* Unified header */}
       <MobileHeader
         title="เบิกของ"
-        actions={cart.length > 0 ? (
-          <button onClick={() => setShowConfirm(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 text-white rounded-xl text-sm font-bold active:scale-95 transition-transform"
-          >
-            <ShoppingCart className="w-4 h-4" />{cart.length}
-          </button>
-        ) : undefined}
+        actions={
+          <div className="flex items-center gap-1">
+            <button onClick={() => router.push("/scan?mode=requisition")}
+              className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 transition-all">
+              <ScanLine className="w-5 h-5 text-gray-500" />
+            </button>
+            {cart.length > 0 && (
+              <button onClick={() => setShowConfirm(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 text-white rounded-xl text-sm font-bold active:scale-95 transition-transform"
+              >
+                <ShoppingCart className="w-4 h-4" />{cart.length}
+              </button>
+            )}
+          </div>
+        }
       />
 
       {/* Sub-header: search + chips */}
@@ -614,7 +638,7 @@ function AdminRequisitionPage() {
 }
 
 // ── Entry point ────────────────────────────────────────────────────────────────
-export default function RequisitionPage() {
+function RequisitionPageInner() {
   const { stoxyUser } = useAuth();
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
 
@@ -627,4 +651,8 @@ export default function RequisitionPage() {
     );
   }
   return <AdminRequisitionPage />;
+}
+
+export default function RequisitionPage() {
+  return <Suspense><RequisitionPageInner /></Suspense>;
 }

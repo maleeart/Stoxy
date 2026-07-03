@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useState, useMemo, useEffect, Suspense } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,15 +11,16 @@ import { MobileHeader } from "@/components/layout/MobileHeader";
 import { formatDate } from "@/lib/utils";
 import {
   ArrowLeft, CheckCircle, AlertTriangle, Clock,
-  Search, ArrowUp, ArrowDown, Minus, XCircle,
+  Search, ArrowUp, ArrowDown, Minus, XCircle, ScanLine,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import type { AuditItem } from "@/types";
 
-export default function AuditDetailPage() {
+function AuditDetailContent() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { stoxyUser } = useAuth();
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
   const isViewer = stoxyUser?.role === "viewer";
@@ -42,7 +43,7 @@ export default function AuditDetailPage() {
       return next;
     });
   }
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => searchParams.get("q") ?? "");
   const [showDiffOnly, setShowDiffOnly] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
@@ -403,6 +404,10 @@ export default function AuditDetailPage() {
                 className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
+            <button onClick={() => router.push(`/scan?mode=audit&session=${id}`)}
+              className="p-2.5 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-600 dark:text-gray-300 hover:border-blue-400 hover:text-blue-600 transition-colors">
+              <ScanLine className="w-4 h-4" />
+            </button>
             <button onClick={() => setShowDiffOnly(v => !v)}
               className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium rounded-xl border transition-colors ${
                 showDiffOnly ? "bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800 text-red-600" : "bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300"
@@ -644,4 +649,8 @@ export default function AuditDetailPage() {
       )}
     </AppShell>
   );
+}
+
+export default function AuditDetailPage() {
+  return <Suspense><AuditDetailContent /></Suspense>;
 }

@@ -1,17 +1,28 @@
 ﻿"use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { searchInventoryItems } from "@/services/inventory.service";
 import type { InventoryItem } from "@/types";
-import { ScanLine, CheckCircle, AlertCircle, Package } from "lucide-react";
+import { ScanLine, CheckCircle, AlertCircle, Package, ArrowLeft } from "lucide-react";
 import { statusConfig } from "@/lib/utils";
 
 type ScanState = "idle" | "scanning" | "found" | "not_found";
+type ScanMode = "inventory" | "borrow" | "requisition" | "audit";
 
-export default function ScanPage() {
+const modeLabel: Record<ScanMode, string> = {
+  inventory: "ดูรายละเอียด",
+  borrow:    "ยืมอุปกรณ์",
+  requisition: "เบิกอุปกรณ์",
+  audit:     "ตรวจนับ",
+};
+
+function ScanContent() {
   const router = useRouter();
+  const params = useSearchParams();
+  const mode = (params.get("mode") ?? "inventory") as ScanMode;
+  const session = params.get("session") ?? "";
   const scannerRef = useRef<HTMLDivElement>(null);
   const html5QrRef = useRef<any>(null);
   const [state, setState] = useState<ScanState>("idle");
@@ -91,9 +102,14 @@ export default function ScanPage() {
   return (
     <AppShell title="สแกน QR">
       <div className="max-w-md mx-auto">
-        <div className="mb-5">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">สแกน QR Code</h2>
-          <p className="text-sm text-gray-500">สแกน QR หรือบาร์โค้ดของอุปกรณ์</p>
+        <div className="mb-5 flex items-center gap-3">
+          <button onClick={() => router.back()} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+            <ArrowLeft className="w-5 h-5 text-gray-500" />
+          </button>
+          <div>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">สแกน QR Code</h2>
+            <p className="text-sm text-gray-500">โหมด: {modeLabel[mode]}</p>
+          </div>
         </div>
 
         {/* Scanner */}
@@ -174,10 +190,15 @@ export default function ScanPage() {
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => router.push(`/inventory/${item.id}`)}
+                  onClick={() => {
+                    if (mode === "borrow") router.push(`/borrow?item=${item.id}`);
+                    else if (mode === "requisition") router.push(`/requisition?item=${item.id}`);
+                    else if (mode === "audit" && session) router.push(`/audit/${session}?q=${encodeURIComponent(item.code)}`);
+                    else router.push(`/inventory/${item.id}`);
+                  }}
                   className="flex-1 py-2 text-sm bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors"
                 >
-                  ดูรายละเอียด
+                  {modeLabel[mode]}
                 </button>
                 <button
                   onClick={reset}
@@ -206,5 +227,13 @@ export default function ScanPage() {
         )}
       </div>
     </AppShell>
+  );
+}
+
+export default function ScanPage() {
+  return (
+    <Suspense>
+      <ScanContent />
+    </Suspense>
   );
 }

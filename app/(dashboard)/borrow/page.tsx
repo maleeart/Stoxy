@@ -1,13 +1,13 @@
 ﻿"use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import {
   Search, X, Camera, Clock, RotateCcw, Loader2, MapPin,
-  Package, CheckCircle, ArrowLeftRight, ChevronRight, Plus, Minus, Star, ShoppingCart,
+  Package, CheckCircle, ArrowLeftRight, ChevronRight, Plus, Minus, Star, ShoppingCart, ScanLine,
 } from "lucide-react";
 import { createRequisition, getMyRequisitions } from "@/services/requisition.service";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { MobileHeader } from "@/components/layout/MobileHeader";
 import { useInventoryItems } from "@/hooks/useInventory";
@@ -301,12 +301,23 @@ function StaffBorrowPage() {
   const { allRecords, isLoading } = useRealtimeBorrows();
   const uid = stoxyUser?.uid ?? "";
   const { favs, toggle: toggleFav } = useFavorites(uid);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [tab, setTab] = useState<"borrow" | "return">("borrow");
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [borrowItem, setBorrowItem] = useState<InventoryItem | null>(null);
   const [returnRecord, setReturnRecord] = useState<BorrowRecord | null>(null);
+
+  // Auto-open borrow sheet when coming from QR scan
+  useEffect(() => {
+    const itemId = searchParams.get("item");
+    if (itemId && items.length > 0) {
+      const found = items.find(i => i.id === itemId);
+      if (found) setBorrowItem(found);
+    }
+  }, [searchParams, items]);
 
   const myBorrowed = allRecords.filter(b => b.borrowerId === uid && b.status === "borrowed");
   const myPending = allRecords.filter(b => b.borrowerId === uid && b.status === "pending_approval");
@@ -344,7 +355,12 @@ function StaffBorrowPage() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-gray-900">
       {/* Unified header */}
-      <MobileHeader title="ยืม-คืน" />
+      <MobileHeader title="ยืม-คืน" actions={
+        <button onClick={() => router.push("/scan?mode=borrow")}
+          className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 transition-all">
+          <ScanLine className="w-5 h-5 text-gray-500" />
+        </button>
+      } />
 
       {/* Sub-header: segmented + search + chips */}
       <div className="px-4 pb-0 bg-white dark:bg-gray-800 sticky top-14 z-20 border-b border-gray-100 dark:border-gray-700">
@@ -1340,7 +1356,7 @@ function AdminBorrowPage() {
 }
 
 // ── Entry point ────────────────────────────────────────────────────────────────
-export default function BorrowPage() {
+function BorrowPageInner() {
   const { stoxyUser } = useAuth();
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
   const isGuest = stoxyUser?.role === "guest";
@@ -1366,4 +1382,8 @@ export default function BorrowPage() {
       <AdminBorrowPage />
     </AppShell>
   );
+}
+
+export default function BorrowPage() {
+  return <Suspense><BorrowPageInner /></Suspense>;
 }
