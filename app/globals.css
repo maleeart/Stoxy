@@ -21,6 +21,13 @@
   --color-stoxy-yellow: #f5a623;
 }
 
+/* Prevent iOS Safari auto-zoom on input focus */
+@media screen and (max-width: 768px) {
+  input, textarea, select {
+    font-size: max(16px, 1em);
+  }
+}
+
 .safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
