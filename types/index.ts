@@ -327,6 +327,10 @@ export interface AuditSession {
   createdBy: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
+  rejectedReason?: string;
+  rejectedBy?: string;
+  rejectedByName?: string;
+  rejectedAt?: Timestamp;
 }
 
 export interface AuditItem {

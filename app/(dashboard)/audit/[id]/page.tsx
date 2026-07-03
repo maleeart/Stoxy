@@ -6,12 +6,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/hooks/useAuth";
 import { useInventoryItems } from "@/hooks/useInventory";
-import { getAuditSession, submitAuditForReview, approveAudit, updateAuditItem } from "@/services/audit.service";
+import { getAuditSession, submitAuditForReview, approveAudit, rejectAudit, updateAuditItem } from "@/services/audit.service";
 import { MobileHeader } from "@/components/layout/MobileHeader";
 import { formatDate } from "@/lib/utils";
 import {
   ArrowLeft, CheckCircle, AlertTriangle, Clock,
-  Search, ArrowUp, ArrowDown, Minus,
+  Search, ArrowUp, ArrowDown, Minus, XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -22,6 +22,7 @@ export default function AuditDetailPage() {
   const router = useRouter();
   const { stoxyUser } = useAuth();
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
+  const isViewer = stoxyUser?.role === "viewer";
   const qc = useQueryClient();
 
   const { data: session, isLoading: sessionLoading } = useQuery({
@@ -118,6 +119,20 @@ export default function AuditDetailPage() {
   const pct = items.length > 0 ? Math.round((totalCounted / items.length) * 100) : 0;
 
   const [confirmSubmit, setConfirmSubmit] = useState(false);
+  const [showReject, setShowReject] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+
+  const rejectMut = useMutation({
+    mutationFn: () => rejectAudit(id, stoxyUser?.uid ?? "", stoxyUser?.displayName ?? "", rejectReason.trim()),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["audit_session", id] });
+      qc.invalidateQueries({ queryKey: ["audit_sessions"] });
+      toast.success("ส่งกลับให้แก้ไขแล้ว");
+      setShowReject(false);
+      setRejectReason("");
+    },
+    onError: () => toast.error("เกิดข้อผิดพลาด"),
+  });
 
   const submitMut = useMutation({
     mutationFn: () => submitAuditForReview(id, buildAuditItems()),
@@ -164,7 +179,7 @@ export default function AuditDetailPage() {
   const isCompleted = status === "completed";
   const isPendingApproval = status === "pending_approval";
   const isInProgress = status === "in_progress";
-  const canCount = isInProgress; // both staff and admin can fill counts
+  const canCount = isInProgress && !isViewer;
   const canApprove = isPendingApproval && isAdmin;
 
   if (isLoading) return (
@@ -246,6 +261,25 @@ export default function AuditDetailPage() {
                 ช่างส่งผลนับแล้ว มี <span className="font-bold">{diffItems.length} รายการ</span> ที่จำนวนต่างจากระบบ
                 {diffItems.length > 0 && ` — สต็อกจะถูกปรับอัตโนมัติหลังอนุมัติ`}
               </p>
+              <button
+                onClick={() => setShowReject(true)}
+                className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-red-500 hover:text-red-600 transition-colors"
+              >
+                <XCircle className="w-3.5 h-3.5" /> ปฏิเสธและส่งกลับแก้ไข
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rejected reason banner (for staff) */}
+      {isInProgress && session?.rejectedReason && !isAdmin && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl px-4 py-3 mb-5">
+          <div className="flex items-start gap-2">
+            <XCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-red-700 dark:text-red-400">ถูกส่งกลับให้แก้ไข</p>
+              <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">เหตุผล: {session.rejectedReason}</p>
             </div>
           </div>
         </div>
@@ -540,6 +574,47 @@ export default function AuditDetailPage() {
                   disabled={submitMut.isPending}
                   className="flex-1 py-3 text-sm font-semibold text-white bg-[#1D4ED8] rounded-2xl hover:bg-blue-700 disabled:opacity-50 transition-colors">
                   ส่งเลย
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Reject Modal */}
+      <AnimatePresence>
+        {showReject && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] bg-black/50 flex items-center justify-center p-4"
+            onClick={() => setShowReject(false)}
+          >
+            <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center">
+                <XCircle className="w-6 h-6 text-red-500" />
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-900 dark:text-white">ปฏิเสธและส่งกลับแก้ไข</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">ระบุเหตุผลเพื่อให้ช่างแก้ไขและส่งใหม่</p>
+              </div>
+              <textarea
+                value={rejectReason}
+                onChange={e => setRejectReason(e.target.value)}
+                placeholder="เช่น จำนวนไม่ตรงกับที่ตรวจสอบ กรุณานับใหม่อีกครั้ง"
+                rows={3}
+                className="w-full px-3 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 resize-none"
+              />
+              <div className="flex gap-2">
+                <button onClick={() => setShowReject(false)}
+                  className="flex-1 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-xl hover:bg-gray-200 transition-colors">
+                  ยกเลิก
+                </button>
+                <button onClick={() => rejectMut.mutate()} disabled={!rejectReason.trim() || rejectMut.isPending}
+                  className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl disabled:opacity-50 flex items-center justify-center gap-2 transition-colors">
+                  {rejectMut.isPending && <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
+                  ส่งกลับแก้ไข
                 </button>
               </div>
             </motion.div>

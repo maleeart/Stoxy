@@ -104,6 +104,22 @@ export async function completeAuditSession(sessionId: string): Promise<void> {
   });
 }
 
+export async function rejectAudit(
+  sessionId: string,
+  rejectedBy: string,
+  rejectedByName: string,
+  reason: string,
+): Promise<void> {
+  await updateDoc(doc(db, COL, sessionId), {
+    status: "in_progress",
+    rejectedReason: reason,
+    rejectedBy,
+    rejectedByName,
+    rejectedAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+  });
+}
+
 export async function getAuditSession(sessionId: string): Promise<AuditSession | null> {
   const snap = await getDoc(doc(db, COL, sessionId));
   if (!snap.exists()) return null;
