@@ -90,7 +90,7 @@ function MovementsList() {
               </div>
               <div className="text-right shrink-0">
                 <p className={`text-sm font-bold ${m.quantityChange > 0 ? "text-emerald-600" : "text-red-600"}`}>
-                  {m.quantityChange > 0 ? "+" : ""}{m.quantityChange}
+                  {m.quantityChange > 0 ? "+" : ""}{m.quantityChange}{m.unit ? ` ${m.unit}` : ""}
                 </p>
                 <p className="text-xs text-gray-400">{m.quantityBefore} → {m.quantityAfter}</p>
               </div>
