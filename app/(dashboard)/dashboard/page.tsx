@@ -3,7 +3,7 @@
 import {
   Package, CheckCircle, ArrowLeftRight, AlertTriangle,
   Clock, Activity, TrendingUp, PackageOpen, History,
-  Search, ChevronRight, UserCircle, ShieldCheck,
+  Search, ChevronRight, ShieldCheck,
 } from "lucide-react";
 import { MobileHeader } from "@/components/layout/MobileHeader";
 import { useDashboardStats, useRecentMovements } from "@/hooks/useInventory";
@@ -102,16 +102,10 @@ function StaffHome() {
       <MobileHeader
         title="หน้าหลัก"
         actions={
-          <>
-            <button onClick={() => router.push("/inventory")}
-              className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-gray-50 active:scale-95 transition-all">
-              <Search className="w-5 h-5 text-gray-500" />
-            </button>
-            <button onClick={() => router.push("/profile")}
-              className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-gray-50 active:scale-95 transition-all">
-              <UserCircle className="w-5 h-5 text-gray-500" />
-            </button>
-          </>
+          <button onClick={() => router.push("/inventory")}
+            className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-gray-50 active:scale-95 transition-all">
+            <Search className="w-5 h-5 text-gray-500" />
+          </button>
         }
       />
 
