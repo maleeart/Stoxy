@@ -6,7 +6,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { MobileHeader } from "@/components/layout/MobileHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { logout, updateStoxyUser } from "@/services/auth.service";
-import { LogOut, Building2, Shield, Mail, SmilePlus, Edit2, Check, X } from "lucide-react";
+import { LogOut, Building2, Shield, Mail, SmilePlus, Edit2, Check, X, User, Briefcase, Hash } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +34,10 @@ export default function ProfilePage() {
   const [dept, setDept] = useState(stoxyUser?.department ?? "");
   const [editingNickname, setEditingNickname] = useState(false);
   const [nickname, setNickname] = useState(stoxyUser?.nickname ?? "");
+  const [editingName, setEditingName] = useState(false);
+  const [displayName, setDisplayName] = useState(stoxyUser?.displayName ?? "");
+  const [editingEmpId, setEditingEmpId] = useState(false);
+  const [empId, setEmpId] = useState(stoxyUser?.employeeId ?? "");
   const [saving, setSaving] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -47,6 +51,27 @@ export default function ProfilePage() {
 
   if (loading) return null;
   if (!stoxyUser) { router.replace("/login"); return null; }
+
+  async function saveDisplayName() {
+    if (!displayName.trim()) { toast.error("กรุณากรอกชื่อ-สกุล"); return; }
+    setSaving(true);
+    try {
+      await updateStoxyUser(stoxyUser!.uid, { displayName: displayName.trim() });
+      await refreshUser();
+      toast.success("บันทึกชื่อ-สกุลแล้ว");
+      setEditingName(false);
+    } catch { toast.error("เกิดข้อผิดพลาด"); } finally { setSaving(false); }
+  }
+
+  async function saveEmpId() {
+    setSaving(true);
+    try {
+      await updateStoxyUser(stoxyUser!.uid, { employeeId: empId.trim() || undefined });
+      await refreshUser();
+      toast.success("บันทึกรหัสพนักงานแล้ว");
+      setEditingEmpId(false);
+    } catch { toast.error("เกิดข้อผิดพลาด"); } finally { setSaving(false); }
+  }
 
   async function saveNickname() {
     setSaving(true);
@@ -112,6 +137,28 @@ export default function ProfilePage() {
 
       {/* Info rows */}
       <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm divide-y divide-gray-50 dark:divide-gray-700">
+        {/* ชื่อ-สกุล (editable) */}
+        <div className="flex items-center gap-3 px-5 py-4">
+          <User className="w-4 h-4 text-gray-400 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">ชื่อ-สกุล</p>
+            {editingName ? (
+              <div className="flex items-center gap-2">
+                <input value={displayName} onChange={e => setDisplayName(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && saveDisplayName()} autoFocus
+                  className="flex-1 text-sm border border-[#1D4ED8]/30 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20" />
+                <button onClick={saveDisplayName} disabled={saving} className="w-7 h-7 rounded-lg bg-emerald-500 flex items-center justify-center"><Check className="w-3.5 h-3.5 text-white" /></button>
+                <button onClick={() => { setEditingName(false); setDisplayName(stoxyUser.displayName ?? ""); }} className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center"><X className="w-3.5 h-3.5 text-gray-500" /></button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{stoxyUser.displayName || "ไม่ระบุ"}</p>
+                <button onClick={() => { setEditingName(true); setDisplayName(stoxyUser.displayName ?? ""); }} className="p-1.5 rounded-lg hover:bg-gray-50 transition-all"><Edit2 className="w-3.5 h-3.5 text-gray-400" /></button>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Email */}
         <div className="flex items-center gap-3 px-5 py-4">
           <Mail className="w-4 h-4 text-gray-400 shrink-0" />
@@ -187,6 +234,39 @@ export default function ProfilePage() {
                   className="p-1.5 rounded-lg hover:bg-gray-50 active:scale-95 transition-all">
                   <Edit2 className="w-3.5 h-3.5 text-gray-400" />
                 </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ประเภท */}
+        <div className="flex items-center gap-3 px-5 py-4">
+          <Briefcase className="w-4 h-4 text-gray-400 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">ประเภท</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-white">
+              {stoxyUser.employeeType === "employee" ? "พนักงาน" : stoxyUser.employeeType === "contractor" ? "ลูกจ้าง" : "ไม่ระบุ"}
+            </p>
+          </div>
+        </div>
+
+        {/* รหัสพนักงาน (editable) */}
+        <div className="flex items-center gap-3 px-5 py-4">
+          <Hash className="w-4 h-4 text-gray-400 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">รหัสพนักงาน</p>
+            {editingEmpId ? (
+              <div className="flex items-center gap-2">
+                <input value={empId} onChange={e => setEmpId(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && saveEmpId()} autoFocus placeholder="เช่น 123456"
+                  className="flex-1 text-sm border border-[#1D4ED8]/30 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20" />
+                <button onClick={saveEmpId} disabled={saving} className="w-7 h-7 rounded-lg bg-emerald-500 flex items-center justify-center"><Check className="w-3.5 h-3.5 text-white" /></button>
+                <button onClick={() => { setEditingEmpId(false); setEmpId(stoxyUser.employeeId ?? ""); }} className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center"><X className="w-3.5 h-3.5 text-gray-500" /></button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{stoxyUser.employeeId || "ไม่ระบุ"}</p>
+                <button onClick={() => { setEditingEmpId(true); setEmpId(stoxyUser.employeeId ?? ""); }} className="p-1.5 rounded-lg hover:bg-gray-50 transition-all"><Edit2 className="w-3.5 h-3.5 text-gray-400" /></button>
               </div>
             )}
           </div>
