@@ -407,38 +407,38 @@ export default function DashboardPage() {
           <SummaryTile
             label="ถูกยืมออก"
             value={statsLoading ? "—" : String(stats?.borrowedQuantity ?? 0)}
-            icon={<ArrowLeftRight className="w-4 h-4 text-amber-600 dark:text-amber-300" />}
-            bg="bg-amber-50 dark:bg-gray-800"
-            iconBg="bg-amber-100 dark:bg-amber-500/20"
-            accent="dark:ring-1 dark:ring-amber-500/30"
+            icon={<ArrowLeftRight className="w-4 h-4 text-blue-600 dark:text-blue-300" />}
+            bg="bg-blue-50 dark:bg-blue-950/60"
+            iconBg="bg-blue-100 dark:bg-blue-500/25"
+            accent="dark:ring-1 dark:ring-blue-500/40"
             onClick={() => router.push("/borrow")}
           />
           <SummaryTile
             label="ยอดเบิกแล้ว"
             value={statsLoading ? "—" : String(approvedReqsThisMonth.length)}
-            icon={<CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-300" />}
-            bg="bg-emerald-50 dark:bg-gray-800"
-            iconBg="bg-emerald-100 dark:bg-emerald-500/20"
-            accent="dark:ring-1 dark:ring-emerald-500/30"
+            icon={<CheckCircle className="w-4 h-4 text-teal-600 dark:text-teal-300" />}
+            bg="bg-teal-50 dark:bg-teal-950/60"
+            iconBg="bg-teal-100 dark:bg-teal-500/25"
+            accent="dark:ring-1 dark:ring-teal-500/40"
             onClick={() => router.push("/requisition")}
           />
           <SummaryTile
             label="เกินกำหนดคืน"
             value={String(overdueBorrows.length)}
-            icon={<Clock className="w-4 h-4 text-orange-600 dark:text-orange-300" />}
-            bg="bg-orange-50 dark:bg-gray-800"
-            iconBg="bg-orange-100 dark:bg-orange-500/20"
-            accent="dark:ring-1 dark:ring-orange-500/30"
+            icon={<Clock className="w-4 h-4 text-red-600 dark:text-red-300" />}
+            bg="bg-red-50 dark:bg-red-950/60"
+            iconBg="bg-red-100 dark:bg-red-500/25"
+            accent="dark:ring-1 dark:ring-red-500/40"
             urgent={overdueBorrows.length > 0}
             onClick={() => router.push("/operations")}
           />
           <SummaryTile
             label="ต้องสั่งซื้อ"
             value={String(lowStockItems.length)}
-            icon={<AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-300" />}
-            bg="bg-rose-50 dark:bg-gray-800"
-            iconBg="bg-rose-100 dark:bg-rose-500/20"
-            accent="dark:ring-1 dark:ring-rose-500/30"
+            icon={<AlertTriangle className="w-4 h-4 text-violet-600 dark:text-violet-300" />}
+            bg="bg-violet-50 dark:bg-violet-950/60"
+            iconBg="bg-violet-100 dark:bg-violet-500/25"
+            accent="dark:ring-1 dark:ring-violet-500/40"
             urgent={lowStockItems.length > 0}
             onClick={() => router.push("/purchase")}
           />
