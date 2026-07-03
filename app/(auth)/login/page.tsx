@@ -165,7 +165,7 @@ export default function LoginPage() {
             <p className="text-xs text-gray-400">
               STOXY © {new Date().getFullYear()} — Track Smarter. Work Faster.
             </p>
-            <HelpButton className="text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200" />
+            <HelpButton label="ใช้งานบนมือถือ" className="text-blue-500 hover:text-blue-600 bg-blue-50 hover:bg-blue-100" />
           </div>
 
           {/* Guest Modal */}
