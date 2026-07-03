@@ -130,7 +130,7 @@ export function ProfileSetupModal() {
             <input
               value={department}
               onChange={e => setDepartment(e.target.value)}
-              placeholder="เช่น ช่างไฟฟ้า, งานระบบ"
+              placeholder="เช่น หบอว-ธ."
               className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
             />
           </div>
