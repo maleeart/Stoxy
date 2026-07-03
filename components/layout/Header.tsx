@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, RefreshCw, Home } from "lucide-react";
+import { Menu, RefreshCw, Home, ScanLine } from "lucide-react";
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
@@ -50,6 +50,13 @@ export function Header({ title, onMenuClick }: HeaderProps) {
 
       <div className="ml-auto flex items-center gap-2">
         <GlobalSearch />
+        <button
+          onClick={() => router.push("/scan?mode=inventory")}
+          title="สแกน QR"
+          className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        >
+          <ScanLine className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+        </button>
         <HelpButton className="text-gray-400 hover:text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600" />
         {/* Home */}
         {!onDashboard && (

@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
   Plus,
   Search,
@@ -10,6 +11,7 @@ import {
   Trash2,
   Package,
   Camera,
+  ScanLine,
 } from "lucide-react";
 import {
   useReactTable,
@@ -265,7 +267,12 @@ export default function InventoryPage() {
 
   return (
     <AppShell title="คลังอุปกรณ์">
-      {!isAdmin && <MobileHeader title="คลังอุปกรณ์" />}
+      {!isAdmin && <MobileHeader title="คลังอุปกรณ์" actions={
+        <button onClick={() => router.push("/scan?mode=inventory")}
+          className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 transition-all">
+          <ScanLine className="w-5 h-5 text-gray-500" />
+        </button>
+      } />}
       <div className="px-4 sm:px-0">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
@@ -278,6 +285,11 @@ export default function InventoryPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <button onClick={() => router.push("/scan?mode=inventory")}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
+            <ScanLine className="w-4 h-4" />
+            <span className="hidden sm:inline">สแกน QR</span>
+          </button>
           <Link href="/inventory/add-photos">
             <button className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
               <Camera className="w-4 h-4" />
