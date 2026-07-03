@@ -4,9 +4,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { useMutation } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { useRealtimeBorrows } from "@/hooks/useRealtimeBorrows";
+import { useInventoryItems } from "@/hooks/useInventory";
 import { acknowledgeReturn } from "@/services/borrow.service";
 import { formatDate } from "@/lib/utils";
-import { Undo2, CheckCircle, Clock } from "lucide-react";
+import { Undo2, CheckCircle, Clock, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
@@ -15,6 +16,7 @@ export default function ReturnPage() {
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
   const isSupervisor = stoxyUser?.role === "supervisor";
   const { allRecords, isLoading } = useRealtimeBorrows();
+  const { data: items = [] } = useInventoryItems();
   const returnPending = allRecords.filter((b) => b.status === "return_pending");
 
   const acknowledgeMut = useMutation({
@@ -60,6 +62,12 @@ export default function ReturnPage() {
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                     ผู้ยืม: {b.borrowerName} · {b.borrowerDepartment} · จำนวน: {b.quantity}
                   </p>
+                  {(() => { const inv = items.find(i => i.id === b.itemId); return inv ? (
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                      {inv.locationName && <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500"><MapPin className="w-3 h-3" />{inv.locationName}</span>}
+                      <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">คงเหลือ {inv.quantityAvailable}{inv.unit ? ` ${inv.unit}` : ""}</span>
+                    </div>
+                  ) : null; })()}
                   <div className="flex gap-3 mt-1 flex-wrap">
                     {b.borrowDate && (
                       <span className="flex items-center gap-1 text-xs text-gray-400">

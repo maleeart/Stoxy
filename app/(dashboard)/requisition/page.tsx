@@ -582,6 +582,12 @@ function AdminRequisitionPage() {
                     จำนวน: <span className="font-semibold text-gray-700 dark:text-gray-300">{req.quantity}</span>
                     {" · "}ผู้ขอ: {req.requesterName}
                   </p>
+                  {(() => { const inv = items.find(i => i.id === req.itemId); return inv ? (
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                      {inv.locationName && <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500"><MapPin className="w-3 h-3" />{inv.locationName}</span>}
+                      <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">คงเหลือ {inv.quantityAvailable}{inv.unit ? ` ${inv.unit}` : ""}</span>
+                    </div>
+                  ) : null; })()}
                   <p className="text-xs text-gray-400 mt-0.5 truncate">วัตถุประสงค์: {req.purpose}</p>
                   {req.rejectedReason && <p className="text-xs text-red-500 mt-0.5">เหตุผล: {req.rejectedReason}</p>}
                 </div>

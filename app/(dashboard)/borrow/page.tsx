@@ -484,6 +484,12 @@ function StaffBorrowPage() {
                               </span>
                             )}
                           </div>
+                          {(() => { const inv = items.find(i => i.id === record.itemId); return inv ? (
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              {inv.locationName && <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500"><MapPin className="w-3 h-3" />{inv.locationName}</span>}
+                              <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">คงเหลือ {inv.quantityAvailable}{inv.unit ? ` ${inv.unit}` : ""}</span>
+                            </div>
+                          ) : null; })()}
                           {record.borrowDate && (
                             <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 mt-1">
                               <Clock className="w-3 h-3" />ยืม {formatDate(record.borrowDate)}
@@ -750,6 +756,12 @@ function GuestBorrowPage() {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-1">{b.itemName}</p>
                           <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{formatDate(b.createdAt)} · จำนวน {b.quantity}</p>
+                          {(() => { const inv = items.find(i => i.id === b.itemId); return inv ? (
+                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                              {inv.locationName && <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500"><MapPin className="w-3 h-3" />{inv.locationName}</span>}
+                              <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">คงเหลือ {inv.quantityAvailable}{inv.unit ? ` ${inv.unit}` : ""}</span>
+                            </div>
+                          ) : null; })()}
                         </div>
                         <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium shrink-0", statusBadge[b.status] ?? "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300")}>
                           {statusLabel[b.status] ?? b.status}
@@ -776,6 +788,12 @@ function GuestBorrowPage() {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-1">{r.itemName}</p>
                           <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">จำนวน {r.quantity}</p>
+                          {(() => { const inv = items.find(i => i.id === r.itemId); return inv ? (
+                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                              {inv.locationName && <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500"><MapPin className="w-3 h-3" />{inv.locationName}</span>}
+                              <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">คงเหลือ {inv.quantityAvailable}{inv.unit ? ` ${inv.unit}` : ""}</span>
+                            </div>
+                          ) : null; })()}
                         </div>
                         <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium shrink-0",
                           r.status === "approved" ? "bg-emerald-100 text-emerald-700" :
@@ -1222,6 +1240,12 @@ function AdminBorrowPage() {
                     <p className="text-xs text-gray-500 mt-0.5">
                       ผู้ยืม: {record.borrowerName} · {record.borrowerDepartment} · จำนวน: {record.quantity}
                     </p>
+                    {(() => { const inv = items.find(i => i.id === record.itemId); return inv ? (
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        {inv.locationName && <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500"><MapPin className="w-3 h-3" />{inv.locationName}</span>}
+                        <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">คงเหลือ {inv.quantityAvailable}{inv.unit ? ` ${inv.unit}` : ""}</span>
+                      </div>
+                    ) : null; })()}
                     <div className="flex items-center gap-3 mt-1 flex-wrap">
                       {record.borrowDate && (
                         <span className="flex items-center gap-1 text-xs text-gray-400">
