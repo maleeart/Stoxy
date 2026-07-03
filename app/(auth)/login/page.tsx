@@ -165,6 +165,9 @@ export default function LoginPage() {
             </p>
             <HelpButton label="ใช้งานบนมือถือ" className="text-blue-500 hover:text-blue-600 bg-blue-50 hover:bg-blue-100" />
           </div>
+          <p className="text-xs text-gray-300 text-center mt-3 lg:hidden">
+            Smart Tracking, Organization, e<span className="text-gray-400 font-semibold">X</span>change &amp; Efficiency
+          </p>
 
           {/* Guest Modal */}
           <AnimatePresence>
