@@ -7,9 +7,10 @@ import { useInventoryItems } from "@/hooks/useInventory";
 import { getRequisitions } from "@/services/requisition.service";
 import { getBorrowRecords } from "@/services/borrow.service";
 import { getAuditSessions } from "@/services/audit.service";
+import { getAccessRequests } from "@/services/accessRequest.service";
 import {
   AlertTriangle, PackageOpen, Clock, Bell,
-  ArrowLeftRight, ShieldCheck, CheckCircle2, ChevronRight,
+  ArrowLeftRight, ShieldCheck, CheckCircle2, ChevronRight, UserCheck,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -17,7 +18,7 @@ import { formatDate } from "@/lib/utils";
 
 type NotifGroup = {
   id: string;
-  type: "borrow_pending" | "borrow_overdue" | "req_pending" | "audit_review" | "low_stock";
+  type: "borrow_pending" | "borrow_overdue" | "req_pending" | "audit_review" | "low_stock" | "access_request";
   title: string;
   subtitle: string;
   href: string;
@@ -40,11 +41,30 @@ export default function NotificationsPage() {
     queryKey: ["audit_sessions"],
     queryFn: getAuditSessions,
   });
+  const { data: accessRequests = [] } = useQuery({
+    queryKey: ["access_requests"],
+    queryFn: getAccessRequests,
+  });
 
   const now = new Date();
 
   const groups = useMemo(() => {
     const result: NotifGroup[] = [];
+
+    // 0. Access requests pending
+    accessRequests
+      .filter((r) => r.status === "pending")
+      .forEach((r) => {
+        result.push({
+          id: `access_${r.id}`,
+          type: "access_request",
+          title: `คำขอสิทธิ์: ${r.displayName}`,
+          subtitle: `${r.department}${r.employeeType ? ` · ${r.employeeType === "employee" ? "พนักงาน" : "ลูกจ้าง"}` : ""}`,
+          href: "/users",
+          urgent: true,
+          date: formatDate(r.createdAt),
+        });
+      });
 
     // 1. Audit pending approval — most urgent for admin
     auditSessions
@@ -123,13 +143,14 @@ export default function NotificationsPage() {
       });
 
     return result;
-  }, [items, requisitions, borrows, auditSessions]);
+  }, [items, requisitions, borrows, auditSessions, accessRequests]);
 
   // Sort: urgent first
   const sorted = [...groups].sort((a, b) => (b.urgent ? 1 : 0) - (a.urgent ? 1 : 0));
   const urgentCount = sorted.filter((n) => n.urgent).length;
 
   const iconMap: Record<NotifGroup["type"], React.ReactNode> = {
+    access_request: <UserCheck className="w-4 h-4 text-white" />,
     audit_review: <ShieldCheck className="w-4 h-4 text-white" />,
     borrow_pending: <ArrowLeftRight className="w-4 h-4 text-white" />,
     req_pending: <PackageOpen className="w-4 h-4 text-white" />,
@@ -138,6 +159,7 @@ export default function NotificationsPage() {
   };
 
   const colorMap: Record<NotifGroup["type"], string> = {
+    access_request: "bg-violet-500",
     audit_review: "bg-red-500",
     borrow_overdue: "bg-orange-500",
     borrow_pending: "bg-[#1D4ED8]",
@@ -146,6 +168,7 @@ export default function NotificationsPage() {
   };
 
   const labelMap: Record<NotifGroup["type"], string> = {
+    access_request: "คำขอสิทธิ์",
     audit_review: "ตรวจนับ",
     borrow_overdue: "เกินกำหนด",
     borrow_pending: "รออนุมัติยืม",
