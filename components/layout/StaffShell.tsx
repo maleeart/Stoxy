@@ -1,12 +1,13 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeftRight, PackageOpen, Package, History, Home } from "lucide-react";
+import { ArrowLeftRight, PackageOpen, Package, History, Home, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useRealtimeBorrows } from "@/hooks/useRealtimeBorrows";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRequisitions } from "@/services/requisition.service";
 
 interface StaffShellProps {
@@ -32,6 +33,27 @@ export function StaffShell({ children }: StaffShellProps) {
   const uid = stoxyUser?.uid ?? "";
   const isGuest = role === "guest";
   const isViewer = role === "viewer";
+
+  const qc = useQueryClient();
+  const touchStartY = useRef(0);
+  const [pulling, setPulling] = useState(false);
+  const [pullY, setPullY] = useState(0);
+  const mainRef = useRef<HTMLElement>(null);
+
+  function onTouchStart(e: React.TouchEvent) {
+    if (mainRef.current && mainRef.current.scrollTop === 0) {
+      touchStartY.current = e.touches[0].clientY;
+    }
+  }
+  function onTouchMove(e: React.TouchEvent) {
+    if (!mainRef.current || mainRef.current.scrollTop > 0) return;
+    const dy = e.touches[0].clientY - touchStartY.current;
+    if (dy > 0) { setPulling(true); setPullY(Math.min(dy * 0.4, 60)); }
+  }
+  function onTouchEnd() {
+    if (pullY >= 50) { qc.invalidateQueries(); }
+    setPulling(false); setPullY(0);
+  }
 
   const { allRecords } = useRealtimeBorrows();
   const { data: reqs = [] } = useQuery({
@@ -98,7 +120,20 @@ export function StaffShell({ children }: StaffShellProps) {
 
   return (
     <div className="flex flex-col h-[100dvh] bg-[#F8FAFC] dark:bg-gray-900">
-      <main className="flex-1 overflow-y-auto min-h-0">{children}</main>
+      {/* Pull-to-refresh indicator */}
+      <div className={cn(
+        "flex items-center justify-center overflow-hidden transition-all duration-200",
+        pullY > 0 ? "bg-blue-50 dark:bg-blue-950/30" : ""
+      )} style={{ height: pullY }}>
+        <RefreshCw className={cn("w-4 h-4 text-[#1D4ED8]", pullY >= 50 ? "animate-spin" : "")} />
+      </div>
+      <main
+        ref={mainRef}
+        className="flex-1 overflow-y-auto min-h-0"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >{children}</main>
 
       <nav className="shrink-0 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 safe-area-bottom z-50">
         {/* subtle top gradient accent */}

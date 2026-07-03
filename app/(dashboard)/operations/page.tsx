@@ -206,7 +206,7 @@ function AdminReceiveModal({ borrowId, borrowerName, itemName, onConfirm, onCanc
             <div className="flex gap-2 mb-3 flex-wrap">
               {previews.map((src, i) => (
                 <div key={i} className="relative">
-                  <img src={src} alt="" className="w-20 h-20 object-cover rounded-xl border border-gray-200" />
+                  <img src={src} alt="" className="w-20 h-20 object-cover rounded-xl border border-gray-200 dark:border-gray-700" />
                   <button onClick={() => removePhoto(i)}
                     className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
                     <X className="w-3 h-3 text-white" />
@@ -216,7 +216,7 @@ function AdminReceiveModal({ borrowId, borrowerName, itemName, onConfirm, onCanc
             </div>
           )}
           {photos.length < 3 && (
-            <label className="flex items-center gap-2 w-full px-4 py-3 border-2 border-dashed border-gray-200 rounded-2xl text-sm text-gray-400 cursor-pointer hover:border-orange-300 hover:text-orange-400 transition-colors">
+            <label className="flex items-center gap-2 w-full px-4 py-3 border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-2xl text-sm text-gray-400 dark:text-gray-500 cursor-pointer hover:border-orange-300 dark:hover:border-orange-500 hover:text-orange-400 transition-colors">
               <Camera className="w-4 h-4" />
               เพิ่มรูป (สูงสุด 3 รูป)
               <input type="file" accept="image/*" multiple className="hidden" onChange={e => handleFiles(e.target.files)} />
@@ -427,13 +427,13 @@ export default function OperationsPage() {
                           </p>
                         )}
                         {b.returnNotes && (
-                          <p className="text-xs text-gray-500 mt-1">หมายเหตุ: {b.returnNotes}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">หมายเหตุ: {b.returnNotes}</p>
                         )}
                         {(b.returnPhotos?.length ?? 0) > 0 && (
                           <div className="flex gap-2 mt-2 flex-wrap">
                             {b.returnPhotos!.map((url, j) => (
                               <a key={j} href={url} target="_blank" rel="noopener noreferrer">
-                                <img src={url} alt="" className="w-14 h-14 object-cover rounded-lg border border-gray-200 hover:opacity-90" />
+                                <img src={url} alt="" className="w-14 h-14 object-cover rounded-lg border border-gray-200 dark:border-gray-700 hover:opacity-90" />
                               </a>
                             ))}
                           </div>
@@ -498,7 +498,7 @@ export default function OperationsPage() {
       {/* ── TAB: เบิก ── */}
       {tab === "requisition" && (
         <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
             <PackageOpen className="w-4 h-4 text-amber-500" />
             คำขอเบิกรออนุมัติ ({pendingReqs.length})
           </h3>
@@ -523,7 +523,7 @@ export default function OperationsPage() {
                         {req.requesterName} · จำนวน: {req.quantity}
                       </p>
                       {req.purpose && (
-                        <p className="text-xs text-gray-500 mt-1">วัตถุประสงค์: {req.purpose}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">วัตถุประสงค์: {req.purpose}</p>
                       )}
                     </div>
                     <div className="flex gap-2 shrink-0">
@@ -555,10 +555,10 @@ export default function OperationsPage() {
             />
           </div>
           <div className="flex gap-4 mb-4">
-            <div className="flex items-center gap-1.5 text-xs text-gray-500">
+            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
               <ArrowDownCircle className="w-3.5 h-3.5 text-emerald-500" />รับเข้า = สต็อกเพิ่ม
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-gray-500">
+            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
               <ArrowUpCircle className="w-3.5 h-3.5 text-red-500" />จ่ายออก = สต็อกลด
             </div>
           </div>

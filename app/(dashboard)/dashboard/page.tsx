@@ -39,17 +39,20 @@ const movementTypeColor: Record<string, string> = {
   requisition: "bg-purple-100 text-purple-700",
 };
 
-function buildWeeklyData(movements: StockMovement[], requisitions: { createdAt: { toDate(): Date }; status: string }[]) {
+function buildChartData(movements: StockMovement[], requisitions: { createdAt: { toDate(): Date }; status: string }[], days: 7 | 30) {
   const dayNames = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
   const today = new Date();
   const realReqs = requisitions.filter((r) => r.status !== "rejected");
-  return Array.from({ length: 7 }, (_, i) => {
+  return Array.from({ length: days }, (_, i) => {
     const d = new Date(today);
-    d.setDate(today.getDate() - (6 - i));
+    d.setDate(today.getDate() - (days - 1 - i));
     const dateStr = d.toDateString();
     const dayMov = movements.filter((m) => m.createdAt?.toDate().toDateString() === dateStr);
+    const label = days === 7
+      ? dayNames[d.getDay()]
+      : `${d.getDate()}/${d.getMonth() + 1}`;
     return {
-      day: dayNames[d.getDay()],
+      day: label,
       ยืม: dayMov.filter((m) => m.type === "borrow").length,
       เบิก: realReqs.filter((r) => r.createdAt?.toDate().toDateString() === dateStr).length,
     };
@@ -255,8 +258,9 @@ export default function DashboardPage() {
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager" || stoxyUser?.role === "supervisor";
   const router = useRouter();
 
+  const [chartDays, setChartDays] = useState<7 | 30>(7);
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
-  const { data: movements = [], isLoading: movementsLoading } = useRecentMovements(100);
+  const { data: movements = [], isLoading: movementsLoading } = useRecentMovements(300);
   const { data: items = [] } = useInventoryItems();
 
   const { data: borrows = [] } = useQuery({
@@ -295,7 +299,7 @@ export default function DashboardPage() {
   const totalPending = pendingBorrows.length + pendingReqs.length + pendingAudits.length;
   const totalUrgent = overdueBorrows.length + pendingAudits.length;
 
-  const weeklyData = buildWeeklyData(movements, requisitions);
+  const weeklyData = buildChartData(movements, requisitions, chartDays);
 
   const greeting = () => {
     const h = new Date().getHours();
@@ -449,14 +453,24 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Chart */}
         <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-2xl border border-blue-100 dark:border-blue-900/40 p-5">
-          <div className="mb-4 flex items-center gap-2">
+          <div className="mb-4 flex items-center gap-2 flex-wrap">
             <TrendingUp className="w-4 h-4 text-[#1D4ED8]" />
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">การเคลื่อนไหว 7 วันล่าสุด</h3>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">การเคลื่อนไหว {chartDays} วันล่าสุด</h3>
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">ยืมอุปกรณ์ vs เบิกวัสดุ</p>
             </div>
+            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5">
+              {([7, 30] as const).map((d) => (
+                <button key={d} onClick={() => setChartDays(d)}
+                  className={cn("px-2.5 py-1 text-xs font-semibold rounded-md transition-all",
+                    chartDays === d ? "bg-white dark:bg-gray-600 text-[#1D4ED8] shadow-sm" : "text-gray-500 dark:text-gray-400"
+                  )}>
+                  {d}ว
+                </button>
+              ))}
+            </div>
             <button onClick={() => router.push("/movements")}
-              className="ml-auto flex items-center gap-1 text-xs font-semibold text-[#1D4ED8]">
+              className="flex items-center gap-1 text-xs font-semibold text-[#1D4ED8]">
               ดูทั้งหมด <ChevronRight className="w-3 h-3" />
             </button>
           </div>
