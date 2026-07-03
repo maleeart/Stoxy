@@ -41,6 +41,7 @@ import {
   collection,
   getDocs,
   Timestamp,
+  deleteField,
 } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import type { StoxyUser, UserRole } from "@/types";
@@ -108,10 +109,11 @@ export async function getStoxyUser(uid: string): Promise<StoxyUser | null> {
 }
 
 export async function updateStoxyUser(uid: string, data: Partial<StoxyUser>): Promise<void> {
-  await updateDoc(doc(db, USERS_COLLECTION, uid), {
-    ...data,
-    updatedAt: Timestamp.now(),
-  });
+  const payload: Record<string, unknown> = { updatedAt: Timestamp.now() };
+  for (const [k, v] of Object.entries(data)) {
+    payload[k] = v === undefined ? deleteField() : v;
+  }
+  await updateDoc(doc(db, USERS_COLLECTION, uid), payload);
 }
 
 export async function getAllUsers(): Promise<StoxyUser[]> {
