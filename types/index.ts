@@ -7,6 +7,8 @@ import { Timestamp } from "firebase/firestore";
 // ── User & Auth ──────────────────────────────────────────────
 export type UserRole = "admin" | "manager" | "supervisor" | "staff" | "viewer" | "guest";
 
+export type EmployeeType = "employee" | "contractor";
+
 export interface StoxyUser {
   uid: string;
   email: string;
@@ -15,11 +17,27 @@ export interface StoxyUser {
   photoURL?: string;
   role: UserRole;
   department: string;
+  employeeType?: EmployeeType;
   employeeId?: string;
   phone?: string;
   isActive: boolean;
+  profileCompleted?: boolean;
+  accessRequested?: boolean;
   createdAt: Timestamp;
   updatedAt: Timestamp;
+}
+
+export interface AccessRequest {
+  id: string;
+  uid: string;
+  displayName: string;
+  email: string;
+  department: string;
+  employeeType?: EmployeeType;
+  status: "pending" | "approved" | "rejected";
+  createdAt: Timestamp;
+  reviewedAt?: Timestamp;
+  reviewedBy?: string;
 }
 
 // ── Category ─────────────────────────────────────────────────

@@ -86,11 +86,13 @@ export async function ensureUserDoc(firebaseUser: User): Promise<StoxyUser> {
   const now = Timestamp.now();
   const newUser: Omit<StoxyUser, "uid"> = {
     email: firebaseUser.email ?? "",
-    displayName: firebaseUser.displayName ?? "Unknown",
+    displayName: firebaseUser.displayName ?? "",
     photoURL: firebaseUser.photoURL ?? undefined,
-    role: "staff",
-    department: "ทั่วไป",
+    role: "viewer",
+    department: "",
     isActive: true,
+    profileCompleted: false,
+    accessRequested: false,
     createdAt: now,
     updatedAt: now,
   };

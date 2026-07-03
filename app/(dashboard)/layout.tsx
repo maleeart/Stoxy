@@ -1,17 +1,20 @@
 ﻿"use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import Image from "next/image";
+import { ProfileSetupModal } from "@/components/ui/ProfileSetupModal";
+import { RoleRequestModal } from "@/components/ui/RoleRequestModal";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { firebaseUser, loading, initialized } = useAuth();
+  const { firebaseUser, stoxyUser, loading, initialized } = useAuth();
   const router = useRouter();
+  const [roleModalDone, setRoleModalDone] = useState(false);
 
   useEffect(() => {
     if (initialized && !firebaseUser) {
@@ -72,5 +75,21 @@ export default function DashboardLayout({
 
   if (!firebaseUser) return null;
 
-  return <>{children}</>;
+  // บังคับกรอกข้อมูลส่วนตัวก่อน
+  if (stoxyUser && !stoxyUser.profileCompleted && stoxyUser.role !== "guest") {
+    return <ProfileSetupModal />;
+  }
+
+  // ถามสิทธิ์ครั้งแรก (viewer ที่ยังไม่เคยตอบ)
+  const needRolePrompt = stoxyUser?.role === "viewer"
+    && stoxyUser.profileCompleted
+    && stoxyUser.accessRequested === false
+    && !roleModalDone;
+
+  return (
+    <>
+      {children}
+      {needRolePrompt && <RoleRequestModal onDone={() => setRoleModalDone(true)} />}
+    </>
+  );
 }
