@@ -168,6 +168,10 @@ export default function LoginPage() {
           <p className="text-xs text-gray-300 text-center mt-3 lg:hidden">
             Smart Tracking, Organization, e<span className="text-gray-400 font-semibold">X</span>change &amp; Efficiency
           </p>
+          <div className="text-center mt-4 pb-2 lg:hidden">
+            <p className="text-[11px] text-gray-300 font-medium">นายตวงเพชร ชัยยานนท์</p>
+            <p className="text-[10px] text-gray-300 mt-0.5">วศ.4 &middot; หบอว-ธ. &middot; กบห-ธ. &middot; ชธธ.</p>
+          </div>
 
           {/* Guest Modal */}
           <AnimatePresence>
