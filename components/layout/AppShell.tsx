@@ -5,7 +5,6 @@ import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { StaffShell } from "./StaffShell";
 import { useAuth } from "@/hooks/useAuth";
-import { useLayoutMode } from "@/hooks/useLayoutMode";
 import { cn } from "@/lib/utils";
 
 interface AppShellProps {
@@ -17,17 +16,12 @@ export function AppShell({ children, title }: AppShellProps) {
   const { stoxyUser, loading } = useAuth();
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
   const hasSidebar = isAdmin || stoxyUser?.role === "supervisor";
-  const isStaff = stoxyUser?.role === "staff";
-  const [layoutMode] = useLayoutMode();
-  const useDesktop = isStaff && layoutMode === "desktop";
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Wait for auth — prevents flash between admin layout and StaffShell
   if (loading) return null;
 
-  // Staff gets mobile shell unless they chose desktop mode
-  if (!hasSidebar && !useDesktop && stoxyUser) {
+  if (!hasSidebar && stoxyUser) {
     return <StaffShell>{children}</StaffShell>;
   }
 
