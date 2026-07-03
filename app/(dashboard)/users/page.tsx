@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Users, Shield, Check, X, Pencil, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import type { UserRole, StoxyUser, AccessRequest } from "@/types";
+import type { UserRole, StoxyUser, EmployeeType } from "@/types";
 
 const roles: { value: UserRole; label: string; color: string }[] = [
   { value: "admin",      label: "Admin",         color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
@@ -23,19 +23,23 @@ function EditUserModal({ user, onClose }: { user: StoxyUser; onClose: () => void
   const qc = useQueryClient();
   const [displayName, setDisplayName] = useState(user.displayName);
   const [nickname, setNickname] = useState(user.nickname ?? "");
-  const [department, setDepartment] = useState(user.department);
+  const [employeeType, setEmployeeType] = useState<EmployeeType>(user.employeeType ?? "employee");
   const [employeeId, setEmployeeId] = useState(user.employeeId ?? "");
+  const [department, setDepartment] = useState(user.department ?? "");
   const [loading, setLoading] = useState(false);
 
   async function save() {
     if (!displayName.trim()) { toast.error("กรุณากรอกชื่อ-สกุล"); return; }
+    if (!department.trim()) { toast.error("กรุณากรอกหน่วยงาน"); return; }
+    if (employeeType === "employee" && !employeeId.trim()) { toast.error("กรุณากรอกรหัสพนักงาน"); return; }
     try {
       setLoading(true);
       await updateStoxyUser(user.uid, {
         displayName: displayName.trim(),
         nickname: nickname.trim() || undefined,
+        employeeType,
+        employeeId: employeeType === "employee" ? employeeId.trim() : undefined,
         department: department.trim(),
-        employeeId: employeeId.trim() || undefined,
       });
       qc.invalidateQueries({ queryKey: ["users"] });
       toast.success("บันทึกข้อมูลสำเร็จ");
@@ -48,11 +52,8 @@ function EditUserModal({ user, onClose }: { user: StoxyUser; onClose: () => void
   }
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[200] bg-black/50 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
-      <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+    <div className="fixed inset-0 z-[500] bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
+      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
         className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4"
         onClick={e => e.stopPropagation()}
       >
@@ -63,28 +64,56 @@ function EditUserModal({ user, onClose }: { user: StoxyUser; onClose: () => void
           </button>
         </div>
 
-        {[
-          { label: "ชื่อ-สกุล *", value: displayName, set: setDisplayName, placeholder: "ชื่อ-สกุล" },
-          { label: "ชื่อเล่น", value: nickname, set: setNickname, placeholder: "ชื่อเล่น" },
-          { label: "หน่วยงาน", value: department, set: setDepartment, placeholder: "แผนก/หน่วยงาน" },
-          { label: "รหัสพนักงาน", value: employeeId, set: setEmployeeId, placeholder: "รหัสพนักงาน" },
-        ].map(f => (
-          <div key={f.label}>
-            <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 block">{f.label}</label>
-            <input value={f.value} onChange={e => f.set(e.target.value)} placeholder={f.placeholder}
-              className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            />
+        {/* ชื่อ-สกุล */}
+        <div>
+          <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 block">ชื่อ-สกุล <span className="text-red-500">*</span></label>
+          <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="ชื่อ-สกุล"
+            className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+        </div>
+
+        {/* ชื่อเล่น */}
+        <div>
+          <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 block">ชื่อเล่น</label>
+          <input value={nickname} onChange={e => setNickname(e.target.value)} placeholder="ชื่อเล่น"
+            className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+        </div>
+
+        {/* ประเภท */}
+        <div>
+          <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 block">ประเภท <span className="text-red-500">*</span></label>
+          <div className="flex gap-2">
+            {([["employee", "พนักงาน"], ["contractor", "ลูกจ้าง"]] as const).map(([val, label]) => (
+              <button key={val} type="button" onClick={() => setEmployeeType(val)}
+                className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-all ${employeeType === val ? "bg-blue-600 border-blue-600 text-white" : "bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300"}`}>
+                {label}
+              </button>
+            ))}
           </div>
-        ))}
+        </div>
+
+        {/* รหัสพนักงาน */}
+        {employeeType === "employee" && (
+          <div>
+            <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 block">รหัสพนักงาน <span className="text-red-500">*</span></label>
+            <input value={employeeId} onChange={e => setEmployeeId(e.target.value)} placeholder="เช่น 123456"
+              className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+          </div>
+        )}
+
+        {/* หน่วยงาน */}
+        <div>
+          <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 block">หน่วยงาน <span className="text-red-500">*</span></label>
+          <input value={department} onChange={e => setDepartment(e.target.value)} placeholder="เช่น หบอว-ธ."
+            className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+        </div>
 
         <button onClick={save} disabled={loading}
-          className="w-full py-2.5 bg-[#1D4ED8] text-white font-bold rounded-xl hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
-        >
+          className="w-full py-2.5 bg-[#1D4ED8] text-white font-bold rounded-xl hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2">
           {loading && <Loader2 className="w-4 h-4 animate-spin" />}
           บันทึก
         </button>
       </motion.div>
-    </motion.div>
+    </div>
   );
 }
 
