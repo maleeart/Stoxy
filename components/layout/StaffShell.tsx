@@ -3,12 +3,13 @@
 import { usePathname } from "next/navigation";
 import { useRef, useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeftRight, PackageOpen, Package, History, Home, RefreshCw } from "lucide-react";
+import { ArrowLeftRight, PackageOpen, Package, History, Home, RefreshCw, Monitor } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useRealtimeBorrows } from "@/hooks/useRealtimeBorrows";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRequisitions } from "@/services/requisition.service";
+import { useLayoutMode } from "@/hooks/useLayoutMode";
 
 interface StaffShellProps {
   children: React.ReactNode;
@@ -34,6 +35,7 @@ export function StaffShell({ children }: StaffShellProps) {
   const isGuest = role === "guest";
   const isViewer = role === "viewer";
 
+  const [, toggleLayout] = useLayoutMode();
   const qc = useQueryClient();
   const touchStartY = useRef(0);
   const pullYRef = useRef(0);
@@ -149,9 +151,19 @@ export function StaffShell({ children }: StaffShellProps) {
       </div>
       <main ref={mainRef} className="flex-1 overflow-y-auto min-h-0">{children}</main>
 
-      <nav className="shrink-0 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 safe-area-bottom z-50">
+      <nav className="relative shrink-0 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 safe-area-bottom z-50">
         {/* subtle top gradient accent */}
         <div className="h-px bg-gradient-to-r from-transparent via-blue-200/60 dark:via-blue-500/20 to-transparent" />
+        {/* Desktop mode toggle */}
+        <div className="absolute right-2 -top-8">
+          <button
+            onClick={toggleLayout}
+            title="เปลี่ยนเป็นโหมด Desktop"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 text-[10px] font-medium hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-500 transition-colors"
+          >
+            <Monitor className="w-3 h-3" /> Desktop
+          </button>
+        </div>
         <div className="flex items-end h-16">
           {sideItems.map((item) => (
             <NavItem key={item.href} item={item} active={isActive(item.href)} />
