@@ -99,6 +99,12 @@ export default function LoginPage() {
               </div>
             ))}
           </div>
+
+          <div className="mt-10 border-t border-white/15 pt-5 text-center space-y-1">
+            <p className="text-white/40 text-[11px] uppercase tracking-widest">ผู้ดูแลระบบ</p>
+            <p className="text-white/90 text-sm font-semibold">นายตวงเพชร ชัยยานนท์</p>
+            <p className="text-white/50 text-xs">วศ.4 &middot; หบอว-ธ. &middot; กบห-ธ. &middot; ชธธ.</p>
+          </div>
         </motion.div>
       </div>
 
@@ -165,12 +171,14 @@ export default function LoginPage() {
             </p>
             <HelpButton label="ใช้งานบนมือถือ" className="text-blue-500 hover:text-blue-600 bg-blue-50 hover:bg-blue-100" />
           </div>
-          <p className="text-xs text-gray-300 text-center mt-3 lg:hidden">
-            Smart Tracking, Organization, e<span className="text-gray-400 font-semibold">X</span>change &amp; Efficiency
-          </p>
-          <div className="text-center mt-4 pb-2 lg:hidden">
-            <p className="text-[11px] text-gray-300 font-medium">นายตวงเพชร ชัยยานนท์</p>
-            <p className="text-[10px] text-gray-300 mt-0.5">วศ.4 &middot; หบอว-ธ. &middot; กบห-ธ. &middot; ชธธ.</p>
+          <div className="mt-4 pb-2 space-y-1 lg:hidden text-center">
+            <p className="text-[11px] text-gray-300">
+              Smart Tracking, Organization, e<span className="text-gray-400 font-semibold">X</span>change &amp; Efficiency
+            </p>
+            <p className="text-[11px] text-gray-300">
+              <span className="text-gray-400">ผู้ดูแลระบบ :</span> นายตวงเพชร ชัยยานนท์
+            </p>
+            <p className="text-[10px] text-gray-300">วศ.4 &middot; หบอว-ธ. &middot; กบห-ธ. &middot; ชธธ.</p>
           </div>
 
           {/* Guest Modal */}
