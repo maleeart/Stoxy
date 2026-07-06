@@ -46,6 +46,7 @@ function AuditDetailContent() {
   const [search, setSearch] = useState(() => searchParams.get("q") ?? "");
   const [showDiffOnly, setShowDiffOnly] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [countFilter, setCountFilter] = useState<"all" | "counted" | "uncounted">("all");
 
   // Hydrate from a previously saved draft (session.items) — covers a cleared
   // localStorage or picking the count back up on another device.
@@ -105,6 +106,8 @@ function AuditDetailContent() {
 
   const filtered = items.filter(i => {
     if (showDiffOnly && i.status === "scanned") return false;
+    if (countFilter === "counted" && i.actualQuantity == null) return false;
+    if (countFilter === "uncounted" && i.actualQuantity != null) return false;
     if (selectedCategory !== "all") {
       const inv = allItems.find(a => a.id === i.itemId);
       if (inv?.categoryId !== selectedCategory) return false;
@@ -356,6 +359,27 @@ function AuditDetailContent() {
       {/* Filters (counting mode) */}
       {(canCount || (isPendingApproval && !isAdmin)) && (
         <div className="space-y-3 mb-4">
+          {/* Count status tabs */}
+          <div className="flex gap-2">
+            {([
+              ["all", "ทั้งหมด", items.length],
+              ["uncounted", "ยังไม่ได้นับ", items.filter(i => i.actualQuantity == null).length],
+              ["counted", "นับแล้ว", items.filter(i => i.actualQuantity != null).length],
+            ] as const).map(([val, label, count]) => (
+              <button key={val} onClick={() => setCountFilter(val)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-full border transition-colors ${
+                  countFilter === val
+                    ? "bg-[#1D4ED8] text-white border-[#1D4ED8]"
+                    : "bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600"
+                }`}>
+                {label}
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${countFilter === val ? "bg-white/20" : "bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400"}`}>
+                  {count}
+                </span>
+              </button>
+            ))}
+          </div>
+
           {/* Category tabs */}
           {categories.length > 0 && (
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
