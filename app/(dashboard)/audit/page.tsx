@@ -41,6 +41,7 @@ export default function AuditPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [filter, setFilter] = useState<"all" | "counted" | "uncounted">("all");
 
   const { data: sessions = [], isLoading } = useQuery({
     queryKey: ["audit_sessions"],
@@ -77,7 +78,11 @@ export default function AuditPage() {
 
   // Staff sees only their assigned sessions
   const visibleSessions = isAdmin
-    ? sessions
+    ? sessions.filter(s => {
+        if (filter === "counted") return s.status === "completed" || s.status === "pending_approval";
+        if (filter === "uncounted") return s.status === "draft" || s.status === "in_progress";
+        return true;
+      })
     : sessions.filter(s =>
         (s.assignedUsers?.includes(stoxyUser?.uid ?? "") || s.assignedUsers?.includes("all")) &&
         s.status === "in_progress"
@@ -118,16 +123,26 @@ export default function AuditPage() {
 
       {/* Header + create button (admin only) */}
       {isAdmin && (
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">ตรวจนับสต็อก</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{sessions.length} รอบทั้งหมด</p>
+        <>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">ตรวจนับสต็อก</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{sessions.length} รอบทั้งหมด</p>
+            </div>
+            <button onClick={() => setShowForm(true)}
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors">
+              <Plus className="w-4 h-4" /> สร้างรอบใหม่
+            </button>
           </div>
-          <button onClick={() => setShowForm(true)}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors">
-            <Plus className="w-4 h-4" /> สร้างรอบใหม่
-          </button>
-        </div>
+          <div className="flex gap-2 mb-4">
+            {([ ["all", "ทั้งหมด"], ["uncounted", "ยังไม่ได้นับ"], ["counted", "นับแล้ว"] ] as const).map(([val, label]) => (
+              <button key={val} onClick={() => setFilter(val)}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${filter === val ? "bg-[#1D4ED8] text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Create form */}
