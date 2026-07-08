@@ -211,54 +211,64 @@ export default function UsersPage() {
                 <p className="text-sm text-gray-400">ยังไม่มีผู้ใช้งาน</p>
               </div>
             ) : (
-              users.map((user, i) => {
-                const roleCfg = roles.find(r => r.value === user.role) ?? roles[3];
-                const isSelf = user.uid === stoxyUser?.uid;
+              roles.map(roleCfg => {
+                const group = users.filter(u => u.role === roleCfg.value);
+                if (group.length === 0) return null;
                 return (
-                  <motion.div key={user.uid} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                    className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 rounded-full bg-[#1D4ED8] flex items-center justify-center text-white font-bold text-sm shrink-0">
-                          {user.displayName?.charAt(0)?.toUpperCase() ?? "?"}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <p className="font-medium text-gray-900 dark:text-white truncate">{user.displayName}</p>
-                            {user.nickname && <span className="text-xs text-gray-400">({user.nickname})</span>}
-                            {isSelf && <span className="text-xs text-gray-400">· คุณ</span>}
-                          </div>
-                          <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                          {user.department && <p className="text-xs text-gray-400 truncate">{user.department}{user.employeeId ? ` · ${user.employeeId}` : ""}</p>}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        {isAdmin && !isSelf && (
-                          <>
-                            <button onClick={() => setEditUser(user)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                              <Pencil className="w-3.5 h-3.5 text-gray-400" />
-                            </button>
-                            <button onClick={() => setConfirmDelete(user)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                              <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                            </button>
-                          </>
-                        )}
-                        {isAdmin && !isSelf ? (
-                          <select value={user.role}
-                            onChange={e => roleMut.mutate({ uid: user.uid, role: e.target.value as UserRole })}
-                            disabled={roleMut.isPending}
-                            className="text-xs px-2 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                          >
-                            {roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-                          </select>
-                        ) : (
-                          <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${roleCfg.color}`}>{roleCfg.label}</span>
-                        )}
-                      </div>
+                  <div key={roleCfg.value} className="space-y-2">
+                    <div className="flex items-center gap-2 mt-4 first:mt-0">
+                      <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${roleCfg.color}`}>{roleCfg.label}</span>
+                      <span className="text-xs text-gray-400">{group.length} คน</span>
                     </div>
-                  </motion.div>
+                    {group.map((user, i) => {
+                      const isSelf = user.uid === stoxyUser?.uid;
+                      return (
+                        <motion.div key={user.uid} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+                          className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="w-10 h-10 rounded-full bg-[#1D4ED8] flex items-center justify-center text-white font-bold text-sm shrink-0">
+                                {user.displayName?.charAt(0)?.toUpperCase() ?? "?"}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <p className="font-medium text-gray-900 dark:text-white truncate">{user.displayName}</p>
+                                  {user.nickname && <span className="text-xs text-gray-400">({user.nickname})</span>}
+                                  {isSelf && <span className="text-xs text-gray-400">· คุณ</span>}
+                                </div>
+                                <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                                {user.department && <p className="text-xs text-gray-400 truncate">{user.department}{user.employeeId ? ` · ${user.employeeId}` : ""}</p>}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              {isAdmin && !isSelf && (
+                                <>
+                                  <button onClick={() => setEditUser(user)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                    <Pencil className="w-3.5 h-3.5 text-gray-400" />
+                                  </button>
+                                  <button onClick={() => setConfirmDelete(user)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                                    <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                                  </button>
+                                </>
+                              )}
+                              {isAdmin && !isSelf ? (
+                                <select value={user.role}
+                                  onChange={e => roleMut.mutate({ uid: user.uid, role: e.target.value as UserRole })}
+                                  disabled={roleMut.isPending}
+                                  className="text-xs px-2 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                >
+                                  {roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                                </select>
+                              ) : (
+                                <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${roleCfg.color}`}>{roleCfg.label}</span>
+                              )}
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
                 );
               })
             )}
