@@ -37,21 +37,48 @@ function ScanContent() {
 
   async function startScanner() {
     if (!scannerRef.current) return;
+    if (!window.isSecureContext) {
+      setError("กล้องต้องเปิดผ่าน HTTPS — ลองป้อนรหัสแทน");
+      setState("idle");
+      return;
+    }
     const { Html5Qrcode } = await import("html5-qrcode");
     const scanner = new Html5Qrcode("qr-reader");
     html5QrRef.current = scanner;
     setState("scanning");
 
+    // qrbox relative to the video so it never exceeds the frame (a start() error on narrow screens)
+    const config = {
+      fps: 10,
+      qrbox: (w: number, h: number) => {
+        const m = Math.floor(Math.min(w, h) * 0.75);
+        return { width: m, height: m };
+      },
+    };
+
     try {
-      await scanner.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        onScan,
-        () => {}
-      );
+      await scanner.start({ facingMode: "environment" }, config, onScan, () => {});
     } catch {
-      setError("ไม่สามารถเปิดกล้องได้ ลองป้อนรหัสแทน");
-      setState("idle");
+      // fallback: env constraint can fail on desktop / iOS — pick a camera explicitly
+      try {
+        const cams = await Html5Qrcode.getCameras();
+        if (!cams?.length) throw new Error("no-camera");
+        const back = cams.find((c) => /back|rear|environment/i.test(c.label)) ?? cams[cams.length - 1];
+        await scanner.start(back.id, config, onScan, () => {});
+      } catch (e: any) {
+        setError(cameraError(e));
+        setState("idle");
+      }
+    }
+  }
+
+  function cameraError(e: any): string {
+    switch (e?.name) {
+      case "NotAllowedError": return "ไม่ได้อนุญาตให้ใช้กล้อง — เปิดสิทธิ์กล้องในเบราว์เซอร์แล้วลองใหม่";
+      case "NotFoundError":
+      case "OverconstrainedError": return "ไม่พบกล้องบนอุปกรณ์นี้ — ลองป้อนรหัสแทน";
+      case "NotReadableError": return "กล้องถูกใช้งานโดยแอปอื่น — ปิดแล้วลองใหม่";
+      default: return `เปิดกล้องไม่ได้: ${e?.message ?? e?.name ?? "unknown"} — ลองป้อนรหัสแทน`;
     }
   }
 
