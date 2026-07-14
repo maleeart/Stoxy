@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
 import {
   LayoutDashboard,
   Package,
@@ -21,6 +20,7 @@ import {
   ShoppingCart,
   PackageOpen,
   Undo2,
+  QrCode,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -46,6 +46,7 @@ const navItems: NavItem[] = [
   { label: "หน้าหลัก",    href: "/dashboard",    icon: LayoutDashboard, section: "หลัก" },
   { label: "คลังอุปกรณ์", href: "/inventory",    icon: Package,         section: "หลัก" },
   { label: "สแกน QR",     href: "/scan",         icon: ScanLine,        section: "หลัก" },
+  { label: "พิมพ์ QR",    href: "/qr",           icon: QrCode,          section: "หลัก" },
   // Workflow — staff only (hidden in sidebar for admin/supervisor)
   { label: "เบิกของ",     href: "/requisition",  icon: PackageOpen,     section: "ดำเนินการ", staffOnly: true },
   { label: "ยืม-คืน",    href: "/borrow",       icon: ArrowLeftRight,  section: "ดำเนินการ", staffOnly: true },
@@ -79,7 +80,6 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
   const isSupervisor = stoxyUser?.role === "supervisor";
   const { data: hasActiveAudit = false } = useHasActiveAudit(!isAdmin && !isSupervisor ? stoxyUser?.uid : undefined);
-  const [qrPopup, setQrPopup] = useState(false);
 
   async function handleLogout() {
     try {
@@ -139,7 +139,6 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 const isActive =
                   pathname === item.href ||
                   (item.href !== "/dashboard" && pathname.startsWith(item.href));
-                const isQR = item.href === "/scan";
                 const cls = cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group relative w-full text-left",
                   isActive
@@ -179,11 +178,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                     )}
                   </>
                 );
-                return isQR ? (
-                  <button key={item.href} title={collapsed ? item.label : undefined} onClick={() => setQrPopup(true)} className={cls}>
-                    {inner}
-                  </button>
-                ) : (
+                return (
                   <Link key={item.href} href={item.href} title={collapsed ? item.label : undefined} className={cls}>
                     {inner}
                   </Link>
@@ -228,20 +223,6 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           {!collapsed && "ออกจากระบบ"}
         </button>
       </div>
-
-      {/* QR popup */}
-      {qrPopup && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50" onClick={() => setQrPopup(false)}>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 flex flex-col items-center gap-3 shadow-2xl mx-4" onClick={(e) => e.stopPropagation()}>
-            <ScanLine className="w-12 h-12 text-[#1D4ED8]" />
-            <p className="text-lg font-bold text-gray-900 dark:text-white">สแกน QR Code</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 text-center">อยู่ระหว่างพัฒนา<br/>จะเปิดให้ใช้งานเร็วๆ นี้</p>
-            <button onClick={() => setQrPopup(false)} className="mt-2 px-6 py-2 bg-[#1D4ED8] text-white rounded-xl text-sm font-medium hover:opacity-90">
-              ตกลง
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Collapse Toggle */}
       <button
