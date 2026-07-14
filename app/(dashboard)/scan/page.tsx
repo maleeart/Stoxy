@@ -2,11 +2,14 @@
 
 import { useEffect, useRef, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { searchInventoryItems } from "@/services/inventory.service";
+import { getAuditSessions } from "@/services/audit.service";
+import { useAuth } from "@/hooks/useAuth";
 import type { InventoryItem } from "@/types";
-import { ScanLine, CheckCircle, AlertCircle, Package, ArrowLeft } from "lucide-react";
-import { statusConfig } from "@/lib/utils";
+import { Eye, CheckCircle, AlertCircle, Package, ArrowLeft, ArrowLeftRight, PackageOpen, ShieldCheck } from "lucide-react";
+import { statusConfig, getItemMode } from "@/lib/utils";
 
 type ScanState = "idle" | "scanning" | "found" | "not_found";
 type ScanMode = "inventory" | "borrow" | "requisition" | "audit";
@@ -21,8 +24,23 @@ const modeLabel: Record<ScanMode, string> = {
 function ScanContent() {
   const router = useRouter();
   const params = useSearchParams();
+  const { stoxyUser } = useAuth();
   const mode = (params.get("mode") ?? "inventory") as ScanMode;
   const session = params.get("session") ?? "";
+  const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
+
+  // active audit session for the "ตรวจนับ" option in the combined menu (inventory mode only)
+  const { data: sessions = [] } = useQuery({
+    queryKey: ["audit_sessions"],
+    queryFn: getAuditSessions,
+    staleTime: 60_000,
+    enabled: mode === "inventory",
+  });
+  const activeAuditId = sessions.find(
+    (s) =>
+      s.status === "in_progress" &&
+      (isAdmin || s.assignedUsers?.includes(stoxyUser?.uid ?? "") || s.assignedUsers?.includes("all"))
+  )?.id;
   const scannerRef = useRef<HTMLDivElement>(null);
   const html5QrRef = useRef<any>(null);
   const [state, setState] = useState<ScanState>("idle");
@@ -213,25 +231,56 @@ function ScanContent() {
                   <p className="text-sm font-bold text-gray-900 dark:text-white">{item.quantityAvailable}/{item.quantity}</p>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    if (mode === "borrow") router.push(`/borrow?item=${item.id}`);
-                    else if (mode === "requisition") router.push(`/requisition?item=${item.id}`);
-                    else if (mode === "audit" && session) router.push(`/audit/${session}?q=${encodeURIComponent(item.code)}`);
-                    else router.push(`/inventory/${item.id}`);
-                  }}
-                  className="flex-1 py-2 text-sm bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors"
-                >
-                  {modeLabel[mode]}
-                </button>
-                <button
-                  onClick={reset}
-                  className="px-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                >
-                  สแกนใหม่
-                </button>
-              </div>
+              {mode === "inventory" ? (
+                // Combined menu: choose what to do with the scanned item
+                <div className="space-y-2 mb-2">
+                  {getItemMode(item.categoryId) === "borrow" ? (
+                    <button onClick={() => router.push(`/borrow?item=${item.id}`)}
+                      className="w-full flex items-center gap-2 py-2.5 px-3 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors">
+                      <ArrowLeftRight className="w-4 h-4" /> ยืมอุปกรณ์
+                    </button>
+                  ) : (
+                    <button onClick={() => router.push(`/requisition?item=${item.id}`)}
+                      className="w-full flex items-center gap-2 py-2.5 px-3 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors">
+                      <PackageOpen className="w-4 h-4" /> เบิกอุปกรณ์
+                    </button>
+                  )}
+                  {activeAuditId && (
+                    <button onClick={() => router.push(`/audit/${activeAuditId}?q=${encodeURIComponent(item.code)}`)}
+                      className="w-full flex items-center gap-2 py-2.5 px-3 text-sm font-medium border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                      <ShieldCheck className="w-4 h-4 text-gray-500" /> ตรวจนับ
+                    </button>
+                  )}
+                  <button onClick={() => router.push(`/inventory/${item.id}`)}
+                    className="w-full flex items-center gap-2 py-2.5 px-3 text-sm font-medium border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    <Eye className="w-4 h-4 text-gray-500" /> ดูรายละเอียด
+                  </button>
+                  <button onClick={reset}
+                    className="w-full py-2 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+                    สแกนใหม่
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      if (mode === "borrow") router.push(`/borrow?item=${item.id}`);
+                      else if (mode === "requisition") router.push(`/requisition?item=${item.id}`);
+                      else if (mode === "audit" && session) router.push(`/audit/${session}?q=${encodeURIComponent(item.code)}`);
+                      else router.push(`/inventory/${item.id}`);
+                    }}
+                    className="flex-1 py-2 text-sm bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors"
+                  >
+                    {modeLabel[mode]}
+                  </button>
+                  <button
+                    onClick={reset}
+                    className="px-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    สแกนใหม่
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}

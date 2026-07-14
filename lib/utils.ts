@@ -142,3 +142,11 @@ export const borrowStatusConfig = {
 export function generateQRData(itemId: string, itemCode: string): string {
   return JSON.stringify({ type: "stoxy_item", id: itemId, code: itemCode });
 }
+
+// Which workflow an item belongs to, by category.
+// ponytail: mirrors BORROWABLE/WITHDRAWABLE in borrow/requisition pages; anything
+// not borrowable is treated as requisition. Consolidate those two if they drift.
+const BORROWABLE_CATEGORIES = new Set(["tools", "meter", "safety"]);
+export function getItemMode(categoryId: string): "borrow" | "requisition" {
+  return BORROWABLE_CATEGORIES.has(categoryId) ? "borrow" : "requisition";
+}
