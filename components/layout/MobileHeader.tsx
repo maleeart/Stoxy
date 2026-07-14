@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, ScanLine } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -39,6 +39,14 @@ export function MobileHeader({ title, back, actions, className }: MobileHeaderPr
       <h1 className="flex-1 text-base font-bold text-gray-900 dark:text-white truncate">{title}</h1>
 
       <div className="flex items-center gap-1 shrink-0">
+        {/* Quick QR scan shortcut — available on every page (staff included) */}
+        <Link
+          href="/scan"
+          aria-label="สแกน QR"
+          className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 transition-all"
+        >
+          <ScanLine className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+        </Link>
         {actions}
         <ThemeToggle />
         <Link href="/profile" className="w-8 h-8 rounded-full overflow-hidden ml-0.5 hover:opacity-90 transition-opacity shrink-0">

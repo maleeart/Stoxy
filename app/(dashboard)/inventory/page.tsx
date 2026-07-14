@@ -266,12 +266,7 @@ export default function InventoryPage() {
 
   return (
     <AppShell title="คลังอุปกรณ์">
-      {!isAdmin && <MobileHeader title="คลังอุปกรณ์" actions={
-        <button onClick={() => router.push("/scan?mode=inventory")}
-          className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 transition-all">
-          <ScanLine className="w-5 h-5 text-gray-500" />
-        </button>
-      } />}
+      {!isAdmin && <MobileHeader title="คลังอุปกรณ์" />}
       <div className="px-4 sm:px-0">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">

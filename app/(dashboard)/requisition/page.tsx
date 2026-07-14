@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { MobileHeader } from "@/components/layout/MobileHeader";
@@ -14,7 +14,7 @@ import {
 import { formatDateTime, cn } from "@/lib/utils";
 import {
   PackageOpen, Search, X, CheckCircle, XCircle, Plus, Minus,
-  ShoppingCart, MapPin, Package, ScanLine,
+  ShoppingCart, MapPin, Package,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -47,7 +47,6 @@ function StaffRequisitionPage() {
   const role = useRole();
   const guard = (fn: () => void) => role === "viewer" ? toast.error("ไม่มีสิทธิ์ดำเนินการ") : fn();
   const qc = useQueryClient();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { data: items = [] } = useInventoryItems();
 
@@ -117,19 +116,13 @@ function StaffRequisitionPage() {
       <MobileHeader
         title="เบิกของ"
         actions={
-          <div className="flex items-center gap-1">
-            <button onClick={() => router.push("/scan?mode=requisition")}
-              className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 transition-all">
-              <ScanLine className="w-5 h-5 text-gray-500" />
+          cart.length > 0 ? (
+            <button onClick={() => setShowConfirm(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 text-white rounded-xl text-sm font-bold active:scale-95 transition-transform"
+            >
+              <ShoppingCart className="w-4 h-4" />{cart.length}
             </button>
-            {cart.length > 0 && (
-              <button onClick={() => setShowConfirm(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 text-white rounded-xl text-sm font-bold active:scale-95 transition-transform"
-              >
-                <ShoppingCart className="w-4 h-4" />{cart.length}
-              </button>
-            )}
-          </div>
+          ) : undefined
         }
       />
 
