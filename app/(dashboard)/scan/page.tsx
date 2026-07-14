@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
-import { searchInventoryItems } from "@/services/inventory.service";
+import { searchInventoryItems, getInventoryItem } from "@/services/inventory.service";
 import { getAuditSessions } from "@/services/audit.service";
 import { useAuth } from "@/hooks/useAuth";
 import type { InventoryItem } from "@/types";
@@ -114,18 +114,19 @@ function ScanContent() {
 
   async function lookupCode(code: string) {
     try {
-      // Parse QR JSON to get the item code, then fall through to the
-      // mode-aware found-state below. ponytail: don't route on parsed.id here —
-      // that short-circuits every mode (borrow/requisition/audit) to inventory detail.
+      // Prefer a direct getDoc by the QR's id — fast and exact. Fall back to a
+      // code search for manual entry / legacy codes. Always land on the found-state.
       let searchCode = code;
+      let byId: InventoryItem | null = null;
       try {
         const parsed = JSON.parse(code);
         if (parsed.code) searchCode = parsed.code;
+        if (parsed.id) byId = await getInventoryItem(parsed.id);
       } catch {}
 
-      const results = await searchInventoryItems(searchCode);
-      if (results.length > 0) {
-        setItem(results[0]);
+      const found = byId ?? (await searchInventoryItems(searchCode))[0] ?? null;
+      if (found) {
+        setItem(found);
         setState("found");
       } else {
         setState("not_found");

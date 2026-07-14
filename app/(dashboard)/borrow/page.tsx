@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import {
   Search, X, Camera, Clock, RotateCcw, Loader2, MapPin,
-  Package, CheckCircle, ArrowLeftRight, ChevronRight, Plus, Minus, Star, ShoppingCart,
+  Package, CheckCircle, ArrowLeftRight, ChevronRight, Plus, Minus, Star, ShoppingCart, ScanLine,
 } from "lucide-react";
 import { createRequisition, getMyRequisitions } from "@/services/requisition.service";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -355,7 +355,12 @@ function StaffBorrowPage() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-gray-900">
       {/* Unified header */}
-      <MobileHeader title="ยืม-คืน" />
+      <MobileHeader title="ยืม-คืน" actions={
+        <button onClick={() => router.push("/scan?mode=borrow")}
+          className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 transition-all">
+          <ScanLine className="w-5 h-5 text-gray-500" />
+        </button>
+      } />
 
       {/* Sub-header: segmented + search + chips */}
       <div className="px-4 pb-0 bg-white dark:bg-gray-800 sticky top-14 z-20 border-b border-gray-100 dark:border-gray-700">

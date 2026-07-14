@@ -266,9 +266,15 @@ export default function InventoryPage() {
 
   return (
     <AppShell title="คลังอุปกรณ์">
-      {!isAdmin && <MobileHeader title="คลังอุปกรณ์" />}
+      {!isAdmin && <MobileHeader title="คลังอุปกรณ์" actions={
+        <button onClick={() => router.push("/scan?mode=inventory")}
+          className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 transition-all">
+          <ScanLine className="w-5 h-5 text-gray-500" />
+        </button>
+      } />}
       <div className="px-4 sm:px-0">
-      {/* Page Header */}
+      {/* Page Header — admin toolbar (staff use MobileHeader above) */}
+      {isAdmin && (
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
         <div>
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">
@@ -290,28 +296,25 @@ export default function InventoryPage() {
               <span className="hidden sm:inline">เพิ่มรูป</span>
             </button>
           </Link>
-          {isAdmin && (
-            <>
-              <button
-                onClick={() => exportInventoryExcel(selectedItems.length > 0 ? selectedItems : filtered)}
-                className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
-              >
-                <Download className="w-4 h-4" />
-                <span className="hidden sm:inline">
-                  {selectedItems.length > 0 ? `ส่งออก (${selectedItems.length})` : "ส่งออก"}
-                </span>
-              </button>
-              <button
-                onClick={() => setShowAddDialog(true)}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
-              >
-                <Plus className="w-4 h-4" />
-                เพิ่มอุปกรณ์
-              </button>
-            </>
-          )}
+          <button
+            onClick={() => exportInventoryExcel(selectedItems.length > 0 ? selectedItems : filtered)}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            <span className="hidden sm:inline">
+              {selectedItems.length > 0 ? `ส่งออก (${selectedItems.length})` : "ส่งออก"}
+            </span>
+          </button>
+          <button
+            onClick={() => setShowAddDialog(true)}
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            เพิ่มอุปกรณ์
+          </button>
         </div>
       </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-col gap-2 mb-4">
