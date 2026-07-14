@@ -68,15 +68,13 @@ function ScanContent() {
 
   async function lookupCode(code: string) {
     try {
-      // Try parse QR JSON first
+      // Parse QR JSON to get the item code, then fall through to the
+      // mode-aware found-state below. ponytail: don't route on parsed.id here —
+      // that short-circuits every mode (borrow/requisition/audit) to inventory detail.
       let searchCode = code;
       try {
         const parsed = JSON.parse(code);
         if (parsed.code) searchCode = parsed.code;
-        if (parsed.id) {
-          router.push(`/inventory/${parsed.id}`);
-          return;
-        }
       } catch {}
 
       const results = await searchInventoryItems(searchCode);
