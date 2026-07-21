@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { formatDate } from "@/lib/utils";
+import { formatDate, isOverdue } from "@/lib/utils";
 
 type NotifGroup = {
   id: string;
@@ -113,7 +113,7 @@ export default function NotificationsPage() {
 
     // 4. Overdue borrows
     borrows
-      .filter((b) => b.status === "borrowed" && b.expectedReturnDate.toDate() < now)
+      .filter((b) => b.status === "borrowed" && isOverdue(b.expectedReturnDate))
       .forEach((b) => {
         const days = Math.floor((now.getTime() - b.expectedReturnDate.toDate().getTime()) / 86400000);
         result.push({

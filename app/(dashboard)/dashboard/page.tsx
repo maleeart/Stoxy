@@ -9,7 +9,7 @@ import { MobileHeader } from "@/components/layout/MobileHeader";
 import { useDashboardStats, useRecentMovements } from "@/hooks/useInventory";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { formatRelative, cn } from "@/lib/utils";
+import { formatRelative, cn, isOverdue } from "@/lib/utils";
 import { AppShell } from "@/components/layout/AppShell";
 import { getBorrowRecords } from "@/services/borrow.service";
 import { getRequisitions, getMyRequisitions } from "@/services/requisition.service";
@@ -291,7 +291,7 @@ export default function DashboardPage() {
   });
   const pendingAudits = auditSessions.filter((s) => s.status === "pending_approval");
   const overdueBorrows = borrows.filter(
-    (b) => b.status === "borrowed" && b.expectedReturnDate.toDate() < now
+    (b) => b.status === "borrowed" && isOverdue(b.expectedReturnDate)
   );
   const lowStockItems = items.filter(
     (i) => i.quantityAvailable <= (i.minStockLevel ?? 0) && (i.minStockLevel ?? 0) > 0

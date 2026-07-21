@@ -5,6 +5,7 @@ import { getAuditSessions } from "@/services/audit.service";
 import { getPendingCount as getAccessRequestCount } from "@/services/accessRequest.service";
 import { useInventoryItems } from "./useInventory";
 import { useMemo } from "react";
+import { isOverdue } from "@/lib/utils";
 
 export function usePendingCount() {
   const { data: items = [] } = useInventoryItems();
@@ -37,7 +38,7 @@ export function usePendingCount() {
     const pendingReqs = requisitions.filter((r) => r.status === "pending").length;
     const pendingBorrows = borrows.filter((b) => b.status === "pending_approval").length;
     const overdue = borrows.filter(
-      (b) => b.status === "borrowed" && b.expectedReturnDate.toDate() < new Date()
+      (b) => b.status === "borrowed" && isOverdue(b.expectedReturnDate)
     ).length;
     const lowStock = items.filter(
       (i) => (i.minStockLevel ?? 0) > 0 && i.quantityAvailable <= i.minStockLevel

@@ -17,7 +17,7 @@ import {
   createBorrowRequest, approveBorrowRequest, rejectBorrowRequest,
   acknowledgeReturn, submitReturn,
 } from "@/services/borrow.service";
-import { formatDate, cn } from "@/lib/utils";
+import { formatDate, cn, isOverdue } from "@/lib/utils";
 import { compressImages } from "@/lib/compress";
 import type { BorrowRecord, BorrowStatus, InventoryItem } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
@@ -1253,7 +1253,7 @@ function AdminBorrowPage() {
       ) : (
         <div className="space-y-3">
           {filtered.map((record, i) => {
-            const overdue = record.status === "borrowed" && record.expectedReturnDate.toDate() < new Date();
+            const overdue = record.status === "borrowed" && isOverdue(record.expectedReturnDate);
             return (
               <motion.div key={record.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
                 className={cn("bg-white dark:bg-gray-900 rounded-2xl border p-4",
