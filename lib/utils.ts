@@ -40,7 +40,11 @@ export function isDueSoon(ts: Timestamp | Date | undefined, days = 30): boolean 
 export function isOverdue(ts: Timestamp | Date | undefined): boolean {
   const d = toDate(ts);
   if (!d) return false;
-  return isBefore(d, new Date());
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(d);
+  due.setHours(0, 0, 0, 0);
+  return isBefore(due, today);
 }
 
 // ── Number Utilities ──────────────────────────────────────────
