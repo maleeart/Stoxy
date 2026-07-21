@@ -90,7 +90,7 @@ export default function NotificationsPage() {
           type: "borrow_pending",
           title: `ยืม: ${b.itemName}`,
           subtitle: `${b.borrowerName} · ${b.borrowerDepartment ?? ""}`,
-          href: "/borrow",
+          href: "/operations",
           urgent: false,
           date: formatDate(b.createdAt),
         });
@@ -105,7 +105,7 @@ export default function NotificationsPage() {
           type: "req_pending",
           title: `เบิก: ${r.itemName}`,
           subtitle: `${r.requesterName} · จำนวน ${r.quantity}`,
-          href: "/requisition",
+          href: "/operations",
           urgent: false,
           date: formatDate(r.createdAt),
         });
