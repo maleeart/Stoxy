@@ -405,7 +405,7 @@ function AdminRequisitionPage() {
     return (
       <AppShell title="เบิกของ">
         <div className="flex items-center gap-3 mb-4">
-          <button onClick={() => { setBrowseMode(false); setBrowseCart([]); setBrowsePurpose(""); }}
+          <button onClick={() => { setBrowseMode(false); setBrowseCart([]); setBrowseJobNo(""); setBrowsePurposeDetails(""); }}
             className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
             <X className="w-4 h-4" /> ยกเลิก
