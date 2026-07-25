@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -55,7 +55,8 @@ function StaffRequisitionPage() {
   const [category, setCategory] = useState("all");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [purpose, setPurpose] = useState("");
+  const [jobNo, setJobNo] = useState("");
+  const [purposeDetails, setPurposeDetails] = useState("");
 
   // Auto-add to cart when coming from QR scan
   useEffect(() => {
@@ -97,7 +98,7 @@ function StaffRequisitionPage() {
       for (const c of cart) {
         await createRequisition({
           itemId: c.itemId, itemCode: c.itemCode, itemName: c.itemName,
-          quantity: c.qty, purpose,
+          quantity: c.qty, purpose: `ใบงานเลขที่ ${jobNo}${purposeDetails ? ` ${purposeDetails}` : ""}`,
           requesterId: stoxyUser?.uid ?? "",
           requesterName: stoxyUser?.displayName ?? "ไม่ระบุ",
         });
@@ -106,7 +107,7 @@ function StaffRequisitionPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["requisitions"] });
       toast.success(`ส่งคำขอเบิก ${cart.length} รายการสำเร็จ`);
-      setCart([]); setPurpose(""); setShowConfirm(false);
+      setCart([]); setJobNo(""); setPurposeDetails(""); setShowConfirm(false);
     },
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
   });
@@ -284,16 +285,25 @@ function StaffRequisitionPage() {
               </div>
 
               {/* Purpose */}
-              <div className="mb-4">
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">วัตถุประสงค์ / งานที่ใช้</label>
-                <textarea value={purpose} onChange={e => setPurpose(e.target.value)}
-                  rows={3} placeholder="ระบุงานหรือเหตุผลที่ต้องการเบิก..."
-                  className="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-600 rounded-2xl bg-transparent dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 resize-none"
-                />
+              <div className="space-y-4 mb-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">ใบงานเลขที่ (ตัวเลข)</label>
+                  <input type="number" value={jobNo} onChange={e => setJobNo(e.target.value)}
+                    placeholder="กรอกตัวเลขใบงาน เช่น 1024"
+                    className="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-600 rounded-2xl bg-transparent dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">วัตถุประสงค์ / งานที่ใช้</label>
+                  <textarea value={purposeDetails} onChange={e => setPurposeDetails(e.target.value)} rows={2}
+                    placeholder="ระบุงานหรือรายละเอียดเพิ่มเติม..."
+                    className="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-600 rounded-2xl bg-transparent dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 resize-none"
+                  />
+                </div>
               </div>
 
               <button onClick={() => guard(() => submitMut.mutate())}
-                disabled={!purpose.trim() || submitMut.isPending}
+                disabled={!jobNo.trim() || submitMut.isPending}
                 className="w-full py-3.5 bg-[#1D4ED8] text-white font-bold text-sm rounded-2xl disabled:opacity-50 active:scale-[0.98] transition-transform"
               >
                 {submitMut.isPending ? "กำลังส่ง..." : `ส่งคำขอเบิก ${cart.length} รายการ`}
@@ -316,7 +326,8 @@ function AdminRequisitionPage() {
   const [browseMode, setBrowseMode] = useState(false);
   const [browseCart, setBrowseCart] = useState<CartItem[]>([]);
   const [showBrowseConfirm, setShowBrowseConfirm] = useState(false);
-  const [browsePurpose, setBrowsePurpose] = useState("");
+  const [browseJobNo, setBrowseJobNo] = useState("");
+  const [browsePurposeDetails, setBrowsePurposeDetails] = useState("");
   const [browseSearch, setBrowseSearch] = useState("");
   const [browseCategory, setBrowseCategory] = useState("all");
   const [tab, setTab] = useState<"all" | "mine">("all");
@@ -349,7 +360,7 @@ function AdminRequisitionPage() {
       for (const c of browseCart) {
         await createRequisition({
           itemId: c.itemId, itemCode: c.itemCode, itemName: c.itemName,
-          quantity: c.qty, purpose: browsePurpose,
+          quantity: c.qty, purpose: `ใบงานเลขที่ ${browseJobNo}${browsePurposeDetails ? ` ${browsePurposeDetails}` : ""}`,
           requesterId: stoxyUser?.uid ?? "",
           requesterName: stoxyUser?.displayName ?? "ไม่ระบุ",
         });
@@ -358,7 +369,7 @@ function AdminRequisitionPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["requisitions"] });
       toast.success(`ส่งคำขอเบิก ${browseCart.length} รายการสำเร็จ`);
-      setBrowseCart([]); setBrowsePurpose(""); setShowBrowseConfirm(false); setBrowseMode(false);
+      setBrowseCart([]); setBrowseJobNo(""); setBrowsePurposeDetails(""); setShowBrowseConfirm(false); setBrowseMode(false);
     },
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
   });
@@ -497,14 +508,23 @@ function AdminRequisitionPage() {
                     </div>
                   ))}
                 </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">วัตถุประสงค์ / งานที่ใช้</label>
-                  <textarea value={browsePurpose} onChange={e => setBrowsePurpose(e.target.value)} rows={3}
-                    placeholder="ระบุงานหรือเหตุผลที่ต้องการเบิก..."
-                    className="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-700 rounded-2xl bg-transparent dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 resize-none"
-                  />
+                <div className="space-y-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">ใบงานเลขที่ (ตัวเลข)</label>
+                    <input type="number" value={browseJobNo} onChange={e => setBrowseJobNo(e.target.value)}
+                      placeholder="กรอกตัวเลขใบงาน เช่น 1024"
+                      className="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-700 rounded-2xl bg-transparent dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">วัตถุประสงค์ / งานที่ใช้</label>
+                    <textarea value={browsePurposeDetails} onChange={e => setBrowsePurposeDetails(e.target.value)} rows={2}
+                      placeholder="ระบุงานหรือรายละเอียดเพิ่มเติม..."
+                      className="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-700 rounded-2xl bg-transparent dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 resize-none"
+                    />
+                  </div>
                 </div>
-                <button onClick={() => guard(() => cartMut.mutate())} disabled={!browsePurpose.trim() || cartMut.isPending}
+                <button onClick={() => guard(() => cartMut.mutate())} disabled={!browseJobNo.trim() || cartMut.isPending}
                   className="w-full py-3.5 bg-[#1D4ED8] text-white font-bold text-sm rounded-2xl disabled:opacity-50 active:scale-[0.98] transition-transform"
                 >
                   {cartMut.isPending ? "กำลังส่ง..." : `ส่งคำขอเบิก ${browseCart.length} รายการ`}

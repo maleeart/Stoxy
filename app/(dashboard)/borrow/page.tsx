@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, Suspense } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
@@ -50,7 +50,8 @@ function BorrowSheet({ item, uid, displayName, dept, onClose }: {
 }) {
   const [qty, setQty] = useState(1);
   const [returnDate, setReturnDate] = useState("");
-  const [purpose, setPurpose] = useState("");
+  const [jobNo, setJobNo] = useState("");
+  const [purposeDetails, setPurposeDetails] = useState("");
   const [photos, setPhotos] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [compressing, setCompressing] = useState(false);
@@ -64,7 +65,7 @@ function BorrowSheet({ item, uid, displayName, dept, onClose }: {
     mutationFn: async () => {
       if (!returnDate) throw new Error("กรุณาระบุวันกำหนดคืน");
       if (returnDate < minDate) throw new Error("ไม่สามารถเลือกวันย้อนหลังได้");
-      if (!purpose.trim()) throw new Error("กรุณาระบุวัตถุประสงค์");
+      if (!jobNo.trim()) throw new Error("กรุณาระบุเลขที่ใบงาน");
       setCompressing(true);
       const urls = photos.length > 0 ? await compressImages(photos) : [];
       setCompressing(false);
@@ -72,7 +73,7 @@ function BorrowSheet({ item, uid, displayName, dept, onClose }: {
         itemId: item.id, itemCode: item.code, itemName: item.name,
         quantity: qty, borrowerName: displayName, borrowerDepartment: dept,
         borrowerId: uid, expectedReturnDate: Timestamp.fromDate(new Date(returnDate)),
-        purpose, status: "pending_approval", borrowPhotos: urls, createdBy: uid,
+        purpose: `ใบงานเลขที่ ${jobNo}${purposeDetails ? ` ${purposeDetails}` : ""}`, status: "pending_approval", borrowPhotos: urls, createdBy: uid,
       } as any);
     },
     onSuccess: () => { toast.success("ส่งคำขอยืมแล้ว รอแอดมินอนุมัติ"); onClose(); },
@@ -127,12 +128,24 @@ function BorrowSheet({ item, uid, displayName, dept, onClose }: {
           </div>
 
           {/* Purpose */}
-          <div>
-            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">วัตถุประสงค์</label>
-            <textarea value={purpose} onChange={(e) => setPurpose(e.target.value)} rows={2}
-              placeholder="ระบุเหตุผลที่ยืม..."
-              className="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-600 rounded-2xl bg-[#F8FAFC] dark:bg-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/30 resize-none"
-            />
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5 block">ใบงานเลขที่ (ตัวเลข)</label>
+              <input
+                type="number"
+                value={jobNo}
+                onChange={(e) => setJobNo(e.target.value)}
+                placeholder="กรอกตัวเลขใบงาน เช่น 1024"
+                className="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-600 rounded-2xl bg-[#F8FAFC] dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/30"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5 block">รายละเอียดวัตถุประสงค์</label>
+              <textarea value={purposeDetails} onChange={(e) => setPurposeDetails(e.target.value)} rows={2}
+                placeholder="พิมพ์รายละเอียดการนำไปใช้งานตามปกติ..."
+                className="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-600 rounded-2xl bg-[#F8FAFC] dark:bg-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/30 resize-none"
+              />
+            </div>
           </div>
 
           {/* Photo */}
@@ -152,7 +165,7 @@ function BorrowSheet({ item, uid, displayName, dept, onClose }: {
             )}
           </div>
 
-          <button onClick={() => guard(() => mut.mutate())} disabled={!returnDate || !purpose.trim() || mut.isPending || compressing}
+          <button onClick={() => guard(() => mut.mutate())} disabled={!returnDate || !jobNo.trim() || mut.isPending || compressing}
             className="w-full py-4 bg-[#1D4ED8] text-white font-bold rounded-2xl disabled:opacity-50 flex items-center justify-center gap-2 text-base active:scale-[0.98] transition-transform"
           >
             {(compressing || mut.isPending) && <Loader2 className="w-5 h-5 animate-spin" />}
@@ -594,7 +607,8 @@ function GuestBorrowPage() {
   // Requisition state
   const [cart, setCart] = useState<ReqCart[]>([]);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [purpose, setPurpose] = useState("");
+  const [jobNo, setJobNo] = useState("");
+  const [purposeDetails, setPurposeDetails] = useState("");
   const [reqCategory, setReqCategory] = useState("all");
   const [reqSearch, setReqSearch] = useState("");
 
@@ -639,7 +653,7 @@ function GuestBorrowPage() {
       for (const c of cart) {
         await createRequisition({
           itemId: c.itemId, itemCode: c.itemCode, itemName: c.itemName,
-          quantity: c.qty, purpose,
+          quantity: c.qty, purpose: `ใบงานเลขที่ ${jobNo}${purposeDetails ? ` ${purposeDetails}` : ""}`,
           requesterId: stoxyUser?.uid ?? "",
           requesterName: stoxyUser?.displayName ?? "ไม่ระบุ",
         });
@@ -648,7 +662,7 @@ function GuestBorrowPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["requisitions"] });
       toast.success(`ส่งคำขอเบิก ${cart.length} รายการสำเร็จ`);
-      setCart([]); setPurpose(""); setShowConfirm(false);
+      setCart([]); setJobNo(""); setPurposeDetails(""); setShowConfirm(false);
     },
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
   });
@@ -931,14 +945,23 @@ function GuestBorrowPage() {
                   </div>
                 ))}
               </div>
-              <div className="mb-4">
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">วัตถุประสงค์ / งานที่ใช้</label>
-                <textarea value={purpose} onChange={e => setPurpose(e.target.value)} rows={3}
-                  placeholder="ระบุงานหรือเหตุผลที่ต้องการเบิก..."
-                  className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 resize-none"
-                />
+              <div className="space-y-4 mb-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">ใบงานเลขที่ (ตัวเลข)</label>
+                  <input type="number" value={jobNo} onChange={e => setJobNo(e.target.value)}
+                    placeholder="กรอกตัวเลขใบงาน เช่น 1024"
+                    className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">วัตถุประสงค์ / งานที่ใช้</label>
+                  <textarea value={purposeDetails} onChange={e => setPurposeDetails(e.target.value)} rows={2}
+                    placeholder="ระบุงานหรือรายละเอียดเพิ่มเติม..."
+                    className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 resize-none"
+                  />
+                </div>
               </div>
-              <button onClick={() => submitMut.mutate()} disabled={!purpose.trim() || submitMut.isPending}
+              <button onClick={() => submitMut.mutate()} disabled={!jobNo.trim() || submitMut.isPending}
                 className="w-full py-3.5 bg-[#1D4ED8] text-white font-bold text-sm rounded-2xl disabled:opacity-50 active:scale-[0.98] transition-transform"
               >
                 {submitMut.isPending ? "กำลังส่ง..." : `ส่งคำขอเบิก ${cart.length} รายการ`}
