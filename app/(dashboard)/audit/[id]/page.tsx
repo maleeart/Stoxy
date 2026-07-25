@@ -67,7 +67,7 @@ function AuditDetailContent() {
 
   function buildAuditItems(): AuditItem[] {
     return allItems.map(item => {
-      const counted = counts[item.id] !== undefined;
+      const counted = counts[item.id] !== undefined && counts[item.id] !== "";
       const actual = counted ? Number(counts[item.id]) : undefined;
       const status: AuditItem["status"] = !counted ? "pending"
         : actual === item.quantityAvailable ? "scanned" : "mismatch";
@@ -91,8 +91,8 @@ function AuditDetailContent() {
       itemCode: item.code,
       itemName: item.name,
       expectedQuantity: item.quantityAvailable,
-      actualQuantity: counts[item.id] !== undefined ? Number(counts[item.id]) : undefined,
-      status: (counts[item.id] === undefined
+      actualQuantity: (counts[item.id] !== undefined && counts[item.id] !== "") ? Number(counts[item.id]) : undefined,
+      status: ((counts[item.id] === undefined || counts[item.id] === "")
         ? "pending"
         : Number(counts[item.id]) === item.quantityAvailable ? "scanned" : "mismatch") as AuditItem["status"],
     }));
@@ -122,7 +122,6 @@ function AuditDetailContent() {
   const diffItems = items.filter(i => i.status === "mismatch");
   const pct = items.length > 0 ? Math.round((totalCounted / items.length) * 100) : 0;
 
-  const [confirmSubmit, setConfirmSubmit] = useState(false);
   const [showReject, setShowReject] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
 
@@ -545,7 +544,10 @@ function AuditDetailContent() {
             {isAdmin ? (
               <button
                 onClick={() => {
-                  if (totalCounted === 0) { toast.error("กรุณานับอย่างน้อย 1 รายการ"); return; }
+                  if (totalCounted < items.length) {
+                    toast.error(`กรุณากรอกจำนวนให้ครบทุกรายการ (เหลืออีก ${items.length - totalCounted} รายการ)`);
+                    return;
+                  }
                   approveMut.mutate();
                 }}
                 disabled={approveMut.isPending}
@@ -557,8 +559,10 @@ function AuditDetailContent() {
             ) : (
               <button
                 onClick={() => {
-                  if (totalCounted === 0) { toast.error("กรุณานับอย่างน้อย 1 รายการ"); return; }
-                  if (totalCounted < items.length) { setConfirmSubmit(true); return; }
+                  if (totalCounted < items.length) {
+                    toast.error(`กรุณากรอกจำนวนให้ครบทุกรายการ (เหลืออีก ${items.length - totalCounted} รายการ)`);
+                    return;
+                  }
                   submitMut.mutate();
                 }}
                 disabled={submitMut.isPending}
@@ -572,43 +576,7 @@ function AuditDetailContent() {
         </div>
       )}
 
-      {/* Confirm submit with incomplete count */}
-      <AnimatePresence>
-        {confirmSubmit && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-            onClick={() => setConfirmSubmit(false)}
-          >
-            <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
-              className="bg-white dark:bg-gray-800 rounded-3xl p-6 w-full max-w-sm space-y-4 shadow-2xl"
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/40 rounded-2xl flex items-center justify-center">
-                <AlertTriangle className="w-6 h-6 text-amber-500" />
-              </div>
-              <div>
-                <h3 className="font-bold text-gray-900 dark:text-white text-base">นับยังไม่ครบ</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  นับแล้ว <span className="font-bold text-gray-900">{totalCounted}</span> จาก <span className="font-bold text-gray-900">{items.length}</span> รายการ
-                  — ยังเหลืออีก <span className="font-bold text-red-500">{items.length - totalCounted}</span> รายการที่ยังไม่ได้นับ
-                </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">ส่งตอนนี้ได้ รายการที่ยังไม่นับจะถูกบันทึกเป็น "ยังไม่นับ"</p>
-              </div>
-              <div className="flex gap-3">
-                <button onClick={() => setConfirmSubmit(false)}
-                  className="flex-1 py-3 text-sm font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
-                  นับต่อก่อน
-                </button>
-                <button onClick={() => { setConfirmSubmit(false); submitMut.mutate(); }}
-                  disabled={submitMut.isPending}
-                  className="flex-1 py-3 text-sm font-semibold text-white bg-[#1D4ED8] rounded-2xl hover:bg-blue-700 disabled:opacity-50 transition-colors">
-                  ส่งเลย
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
 
       {/* Reject Modal */}
       <AnimatePresence>
