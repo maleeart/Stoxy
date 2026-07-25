@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { statusConfig, formatDate, formatCurrency } from "@/lib/utils";
 import {
   ArrowLeft, Package, MapPin, Tag, Calendar, Wrench,
-  Gauge, FileText, Edit, AlertTriangle, Trash2,
+  Gauge, FileText, Edit, AlertTriangle, Trash2, X,
 } from "lucide-react";
 import { exportInventoryPDF } from "@/lib/export";
 import { motion, AnimatePresence } from "framer-motion";
@@ -21,6 +21,7 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
   const { data: item, isLoading } = useInventoryItem(id);
   const deleteMut = useDeleteInventoryItem();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [viewImage, setViewImage] = useState<string | null>(null);
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
 
   async function handleDelete() {
@@ -99,7 +100,10 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
           className="lg:col-span-2 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5"
         >
           <div className="flex items-start gap-4">
-            <div className="w-16 h-16 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
+            <div
+              onClick={() => item.images?.[0] && setViewImage(item.images[0])}
+              className={`w-16 h-16 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden ${item.images?.[0] ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
+            >
               {item.images?.[0] ? (
                 <img src={item.images[0]} alt={item.name} className="w-full h-full object-cover" />
               ) : (
@@ -310,6 +314,34 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
           </AnimatePresence>
         </div>
       </div>
+      {/* Image zoom modal */}
+      <AnimatePresence>
+        {viewImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+            onClick={() => setViewImage(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative max-w-xl w-full flex flex-col items-center"
+            >
+              <img src={viewImage} alt={item.name} className="max-h-[80vh] max-w-full rounded-2xl object-contain shadow-2xl" />
+              <button
+                onClick={() => setViewImage(null)}
+                className="absolute top-4 right-4 p-2 bg-black/40 text-white rounded-full hover:bg-black/60 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </AppShell>
   );
 }
