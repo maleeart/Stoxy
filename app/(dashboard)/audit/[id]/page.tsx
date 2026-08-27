@@ -46,6 +46,7 @@ function AuditDetailContent() {
   const [search, setSearch] = useState(() => searchParams.get("q") ?? "");
   const [showDiffOnly, setShowDiffOnly] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedLocation, setSelectedLocation] = useState<string>("all");
   const [countFilter, setCountFilter] = useState<"all" | "counted" | "uncounted">("all");
 
   // Hydrate from a previously saved draft (session.items) — covers a cleared
@@ -104,6 +105,21 @@ function AuditDetailContent() {
     return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
   }, [allItems]);
 
+  const locations = useMemo(() => {
+    const map = new Map<string, string>();
+    items.forEach(it => {
+      const inv = allItems.find(a => a.id === it.itemId);
+      if (inv) {
+        const locId = inv.locationId || "";
+        const locName = inv.locationName || inv.locationId || "ไม่ระบุสถานที่";
+        if (locId || inv.locationName) {
+          map.set(locId || locName, locName);
+        }
+      }
+    });
+    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+  }, [items, allItems]);
+
   const filtered = items.filter(i => {
     if (showDiffOnly && i.status === "scanned") return false;
     if (countFilter === "counted" && i.actualQuantity == null) return false;
@@ -111,6 +127,11 @@ function AuditDetailContent() {
     if (selectedCategory !== "all") {
       const inv = allItems.find(a => a.id === i.itemId);
       if (inv?.categoryId !== selectedCategory) return false;
+    }
+    if (selectedLocation !== "all") {
+      const inv = allItems.find(a => a.id === i.itemId);
+      const locId = inv?.locationId || inv?.locationName || "";
+      if (locId !== selectedLocation) return false;
     }
     if (!search) return true;
     return i.itemName.toLowerCase().includes(search.toLowerCase()) ||
@@ -412,6 +433,40 @@ function AuditDetailContent() {
                         selectedCategory === cat.id ? "bg-white/30 text-white" : "bg-red-100 text-red-600"
                       }`}>{diffInCat}</span>
                     )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Location tabs */}
+          {locations.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+              <button
+                onClick={() => setSelectedLocation("all")}
+                className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full border transition-colors ${
+                  selectedLocation === "all"
+                    ? "bg-[#1D4ED8] text-white border-[#1D4ED8]"
+                    : "bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600"
+                }`}
+              >
+                ทุกสถานที่ ({items.length})
+              </button>
+              {locations.map(loc => {
+                const count = items.filter(i => {
+                  const inv = allItems.find(a => a.id === i.itemId);
+                  return (inv?.locationId || inv?.locationName || "") === loc.id;
+                }).length;
+                return (
+                  <button key={loc.id}
+                    onClick={() => setSelectedLocation(loc.id)}
+                    className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full border transition-colors ${
+                      selectedLocation === loc.id
+                        ? "bg-[#1D4ED8] text-white border-[#1D4ED8]"
+                        : "bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600"
+                    }`}
+                  >
+                    📍 {loc.name} ({count})
                   </button>
                 );
               })}
