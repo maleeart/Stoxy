@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -119,6 +119,14 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
   }, [categoryId, items, setValue]);
 
   async function onSubmit(data: FormData) {
+    const isDuplicate = items.some(
+      (i) => i.code.trim().toLowerCase() === data.code.trim().toLowerCase()
+    );
+    if (isDuplicate) {
+      toast.error("รหัสอุปกรณ์นี้ซ้ำกับอุปกรณ์อื่นในระบบ กรุณาเปลี่ยนรหัสใหม่");
+      return;
+    }
+
     // Guard: อื่นๆ but no custom text
     if (data.locationId === "__other__") {
       if (!customLocation.trim()) {

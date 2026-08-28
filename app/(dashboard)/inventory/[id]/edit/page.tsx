@@ -8,13 +8,14 @@ import { z } from "zod";
 import { arrayUnion, doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { AppShell } from "@/components/layout/AppShell";
-import { useInventoryItem, useUpdateInventoryItem } from "@/hooks/useInventory";
+import { useInventoryItem, useUpdateInventoryItem, useInventoryItems } from "@/hooks/useInventory";
 import { useAuth } from "@/hooks/useAuth";
 import { ArrowLeft, ImagePlus, Loader2, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { getLocations, addLocation } from "@/services/locations.service";
 import { compressImages } from "@/lib/compress";
 import { adjustStock } from "@/services/inventory.service";
+import { generateItemCode } from "@/lib/utils";
 
 const CATEGORY_LABEL: Record<string, string> = {
   meter: "มิเตอร์และเครื่องวัด",
@@ -54,6 +55,7 @@ export default function EditItemPage({ params }: { params: Promise<{ id: string 
   const router = useRouter();
   const { stoxyUser } = useAuth();
   const { data: item, isLoading, refetch } = useInventoryItem(id);
+  const { data: allItems = [] } = useInventoryItems();
   const updateItem = useUpdateInventoryItem();
 
   const [locations, setLocations] = useState<string[]>([]);
@@ -73,7 +75,7 @@ export default function EditItemPage({ params }: { params: Promise<{ id: string 
     getUnitOptions().then(setUnitOptions);
   }, []);
 
-  const { register, handleSubmit, reset, watch, formState: { errors, isDirty } } = useForm<FormData>({
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors, isDirty } } = useForm<FormData>({
     resolver: zodResolver(schema) as any,
   });
 
@@ -99,8 +101,24 @@ export default function EditItemPage({ params }: { params: Promise<{ id: string 
 
   const locationId = watch("locationId");
   const unitValue = watch("unit");
+  const categoryId = watch("categoryId");
+
+  // Track if category is changed from the original item's category, then generate code
+  useEffect(() => {
+    if (!item || !categoryId || categoryId === item.categoryId) return;
+    const existingCodes = allItems.map((i) => i.code);
+    setValue("code", generateItemCode(categoryId, existingCodes));
+  }, [categoryId, item, allItems, setValue]);
 
   async function onSubmit(data: FormData) {
+    const isDuplicate = allItems.some(
+      (i) => i.code.trim().toLowerCase() === data.code.trim().toLowerCase() && i.id !== id
+    );
+    if (isDuplicate) {
+      toast.error("รหัสอุปกรณ์นี้ซ้ำกับอุปกรณ์อื่นในระบบ กรุณาเปลี่ยนรหัสใหม่");
+      return;
+    }
+
     if (data.locationId === "__other__") {
       if (!customLocation.trim()) { setCustomLocationError(true); return; }
       const updated = await addLocation(customLocation.trim());

@@ -80,7 +80,22 @@ export function getCategoryPrefix(categoryId: string): string {
 export function generateItemCode(categoryId: string, existingCodes: string[]): string {
   const prefix = getCategoryPrefix(categoryId);
   const same = existingCodes.filter((c) => c.startsWith(prefix + "-"));
-  const next = same.length + 1;
+  
+  let maxNum = 0;
+  same.forEach(code => {
+    const parts = code.split("-");
+    const numPart = parts[parts.length - 1];
+    const parsed = parseInt(numPart, 10);
+    if (!isNaN(parsed) && parsed > maxNum) {
+      maxNum = parsed;
+    }
+  });
+
+  let next = maxNum + 1;
+  while (existingCodes.some(c => c.toLowerCase() === `${prefix}-${next.toString().padStart(4, "0")}`.toLowerCase())) {
+    next++;
+  }
+
   return `${prefix}-${next.toString().padStart(4, "0")}`;
 }
 
