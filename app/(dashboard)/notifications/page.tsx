@@ -18,7 +18,7 @@ import { formatDate, isOverdue } from "@/lib/utils";
 
 type NotifGroup = {
   id: string;
-  type: "borrow_pending" | "borrow_overdue" | "req_pending" | "audit_review" | "low_stock" | "access_request";
+  type: "borrow_pending" | "borrow_overdue" | "req_pending" | "audit_review" | "low_stock" | "access_request" | "data_anomaly";
   title: string;
   subtitle: string;
   href: string;
@@ -142,6 +142,79 @@ export default function NotificationsPage() {
         });
       });
 
+    // 6. Data anomalies (duplicates and abnormal data)
+    const codeMap = new Map<string, typeof items>();
+    items.forEach(i => {
+      if (i.code) {
+        const key = i.code.trim().toLowerCase();
+        if (!codeMap.has(key)) codeMap.set(key, []);
+        codeMap.get(key)!.push(i);
+      }
+    });
+
+    codeMap.forEach((list) => {
+      if (list.length > 1) {
+        list.forEach((item) => {
+          result.push({
+            id: `anomaly_dup_${item.id}`,
+            type: "data_anomaly",
+            title: `รหัสซ้ำ: ${item.code}`,
+            subtitle: `${item.name} ซ้ำกับอุปกรณ์อื่นอีก ${list.length - 1} รายการ`,
+            href: `/inventory/${item.id}/edit`,
+            urgent: true,
+            date: "รหัสซ้ำ",
+          });
+        });
+      }
+    });
+
+    items.forEach(i => {
+      if (i.quantityAvailable > i.quantity) {
+        result.push({
+          id: `anomaly_qty_${i.id}`,
+          type: "data_anomaly",
+          title: `สต็อกผิดปกติ: ${i.code}`,
+          subtitle: `${i.name} (พร้อมใช้ ${i.quantityAvailable} > ทั้งหมด ${i.quantity})`,
+          href: `/inventory/${i.id}/edit`,
+          urgent: true,
+          date: "จำนวนไม่ตรง",
+        });
+      }
+      if (i.quantityAvailable < 0 || i.quantity < 0) {
+        result.push({
+          id: `anomaly_neg_${i.id}`,
+          type: "data_anomaly",
+          title: `จำนวนติดลบ: ${i.code}`,
+          subtitle: `${i.name} (คงเหลือ ${i.quantityAvailable} ชิ้น)`,
+          href: `/inventory/${i.id}/edit`,
+          urgent: true,
+          date: "ติดลบ",
+        });
+      }
+      if (!i.categoryId) {
+        result.push({
+          id: `anomaly_cat_${i.id}`,
+          type: "data_anomaly",
+          title: `ไม่มีหมวดหมู่: ${i.code}`,
+          subtitle: `${i.name} กรุณาระบุหมวดหมู่เพื่อจัดระบบ`,
+          href: `/inventory/${i.id}/edit`,
+          urgent: false,
+          date: "ข้อมูลไม่ครบ",
+        });
+      }
+      if (!i.locationId && !i.locationName) {
+        result.push({
+          id: `anomaly_loc_${i.id}`,
+          type: "data_anomaly",
+          title: `ไม่มีสถานที่เก็บ: ${i.code}`,
+          subtitle: `${i.name} กรุณาระบุสถานที่เพื่อสะดวกต่อการทำงาน`,
+          href: `/inventory/${i.id}/edit`,
+          urgent: false,
+          date: "ข้อมูลไม่ครบ",
+        });
+      }
+    });
+
     return result;
   }, [items, requisitions, borrows, auditSessions, accessRequests]);
 
@@ -156,6 +229,7 @@ export default function NotificationsPage() {
     req_pending: <PackageOpen className="w-4 h-4 text-white" />,
     borrow_overdue: <Clock className="w-4 h-4 text-white" />,
     low_stock: <AlertTriangle className="w-4 h-4 text-white" />,
+    data_anomaly: <AlertTriangle className="w-4 h-4 text-white" />,
   };
 
   const colorMap: Record<NotifGroup["type"], string> = {
@@ -165,6 +239,7 @@ export default function NotificationsPage() {
     borrow_pending: "bg-[#1D4ED8]",
     req_pending: "bg-amber-500",
     low_stock: "bg-rose-400",
+    data_anomaly: "bg-red-600",
   };
 
   const labelMap: Record<NotifGroup["type"], string> = {
@@ -174,6 +249,7 @@ export default function NotificationsPage() {
     borrow_pending: "รออนุมัติยืม",
     req_pending: "รออนุมัติเบิก",
     low_stock: "สต็อกต่ำ",
+    data_anomaly: "ข้อมูลผิดปกติ",
   };
 
   return (
