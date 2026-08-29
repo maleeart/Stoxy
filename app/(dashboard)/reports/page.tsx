@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useInventoryItems } from "@/hooks/useInventory";
 import { useQuery } from "@tanstack/react-query";
@@ -30,6 +31,8 @@ export default function ReportsPage() {
     queryFn: () => getRequisitions(),
   });
 
+  const [invSortBy, setInvSortBy] = useState<"code" | "name" | "quantity" | "status">("code");
+
   const reports = [
     {
       title: "รายงานคลังอุปกรณ์",
@@ -39,9 +42,24 @@ export default function ReportsPage() {
       accent: "border-l-4 border-blue-500",
       btnClass: "border-blue-200 text-blue-700 hover:bg-blue-50",
       actions: [
-        { label: "PDF", icon: <FileText className="w-4 h-4" />, fn: () => exportInventoryPDF(items) },
-        { label: "Excel", icon: <FileSpreadsheet className="w-4 h-4" />, fn: () => exportInventoryExcel(items) },
+        { label: "PDF", icon: <FileText className="w-4 h-4" />, fn: () => exportInventoryPDF(items, invSortBy) },
+        { label: "Excel", icon: <FileSpreadsheet className="w-4 h-4" />, fn: () => exportInventoryExcel(items, invSortBy) },
       ],
+      extra: (
+        <div className="mb-4">
+          <label className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">เรียงลำดับตาม</label>
+          <select
+            value={invSortBy}
+            onChange={(e) => setInvSortBy(e.target.value as any)}
+            className="w-full text-xs font-semibold px-2 py-1.5 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-100 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500/20"
+          >
+            <option value="code">🔢 รหัสอุปกรณ์ (A-Z)</option>
+            <option value="name">📝 ชื่ออุปกรณ์ (ก-ฮ / A-Z)</option>
+            <option value="quantity">📦 คงเหลือมากที่สุด</option>
+            <option value="status">🟢 สถานะ</option>
+          </select>
+        </div>
+      )
     },
     {
       title: "รายงานการยืม-คืน",
@@ -102,6 +120,7 @@ export default function ReportsPage() {
             </div>
             <h3 className="font-bold text-gray-900 dark:text-white mb-0.5">{r.title}</h3>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">{r.description}</p>
+            {"extra" in r && r.extra}
             <div className="flex gap-2">
               {r.actions.map((a, j) => (
                 <button

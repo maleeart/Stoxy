@@ -21,8 +21,13 @@ async function createDocWithThaiFont(orientation: "portrait" | "landscape" = "po
 }
 
 // ── PDF ───────────────────────────────────────────────────────
-export async function exportInventoryPDF(items: InventoryItem[]) {
-  const sorted = [...items].sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: "base" }));
+export async function exportInventoryPDF(items: InventoryItem[], sortBy: "code" | "name" | "quantity" | "status" = "code") {
+  const sorted = [...items].sort((a, b) => {
+    if (sortBy === "name") return a.name.localeCompare(b.name, "th");
+    if (sortBy === "quantity") return b.quantityAvailable - a.quantityAvailable;
+    if (sortBy === "status") return a.status.localeCompare(b.status);
+    return a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: "base" });
+  });
   const doc = await createDocWithThaiFont("landscape");
 
   // ── Page 1+: Summary table ────────────────────────────────
@@ -178,8 +183,13 @@ export async function exportMovementsPDF(movements: StockMovement[]) {
 }
 
 // ── Excel ─────────────────────────────────────────────────────
-export function exportInventoryExcel(items: InventoryItem[]) {
-  const sorted = [...items].sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: "base" }));
+export function exportInventoryExcel(items: InventoryItem[], sortBy: "code" | "name" | "quantity" | "status" = "code") {
+  const sorted = [...items].sort((a, b) => {
+    if (sortBy === "name") return a.name.localeCompare(b.name, "th");
+    if (sortBy === "quantity") return b.quantityAvailable - a.quantityAvailable;
+    if (sortBy === "status") return a.status.localeCompare(b.status);
+    return a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: "base" });
+  });
   const headers = ["รหัส", "ชื่ออุปกรณ์", "ยี่ห้อ", "รุ่น", "หมวดหมู่", "จำนวนทั้งหมด", "คงเหลือ", "ถูกยืม", "หน่วย", "สถานะ", "สถานที่", "ราคาซื้อ", "หมายเหตุ"];
   const rows = sorted.map((i) => [
     i.code, i.name, i.brand ?? "", i.model ?? "", i.categoryName ?? "",
