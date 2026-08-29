@@ -22,18 +22,19 @@ async function createDocWithThaiFont(orientation: "portrait" | "landscape" = "po
 
 // ── PDF ───────────────────────────────────────────────────────
 export async function exportInventoryPDF(items: InventoryItem[]) {
+  const sorted = [...items].sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: "base" }));
   const doc = await createDocWithThaiFont("landscape");
 
   // ── Page 1+: Summary table ────────────────────────────────
   doc.setFontSize(16);
   doc.text("รายงานคลังอุปกรณ์ไฟฟ้า - Stoxy", 14, 15);
   doc.setFontSize(10);
-  doc.text(`วันที่พิมพ์: ${new Date().toLocaleDateString("th-TH")}  |  รายการทั้งหมด: ${items.length}`, 14, 22);
+  doc.text(`วันที่พิมพ์: ${new Date().toLocaleDateString("th-TH")}  |  รายการทั้งหมด: ${sorted.length}`, 14, 22);
 
   autoTable(doc, {
     startY: 28,
     head: [["รหัส", "ชื่ออุปกรณ์", "ยี่ห้อ", "หมวดหมู่", "คงเหลือ/ทั้งหมด", "หน่วย", "สถานะ", "สถานที่"]],
-    body: items.map((i) => [
+    body: sorted.map((i) => [
       i.code,
       i.name,
       i.brand ?? "-",
@@ -48,7 +49,7 @@ export async function exportInventoryPDF(items: InventoryItem[]) {
   });
 
   // ── Photo pages: 3×3 grid, only items with images ─────────
-  const withPhotos = items.filter((i) => (i.images ?? []).length > 0);
+  const withPhotos = sorted.filter((i) => (i.images ?? []).length > 0);
   if (withPhotos.length > 0) {
     // landscape: 297 × 210 mm
     const cols = 3;
@@ -178,8 +179,9 @@ export async function exportMovementsPDF(movements: StockMovement[]) {
 
 // ── Excel ─────────────────────────────────────────────────────
 export function exportInventoryExcel(items: InventoryItem[]) {
+  const sorted = [...items].sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: "base" }));
   const headers = ["รหัส", "ชื่ออุปกรณ์", "ยี่ห้อ", "รุ่น", "หมวดหมู่", "จำนวนทั้งหมด", "คงเหลือ", "ถูกยืม", "หน่วย", "สถานะ", "สถานที่", "ราคาซื้อ", "หมายเหตุ"];
-  const rows = items.map((i) => [
+  const rows = sorted.map((i) => [
     i.code, i.name, i.brand ?? "", i.model ?? "", i.categoryName ?? "",
     i.quantity, i.quantityAvailable, i.quantityBorrowed, i.unit ?? "",
     statusLabel[i.status] ?? i.status,
