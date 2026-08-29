@@ -77,8 +77,8 @@ export function getCategoryPrefix(categoryId: string): string {
   return CATEGORY_PREFIX[categoryId] ?? "ITEM";
 }
 
-export function generateItemCode(categoryId: string, existingCodes: string[]): string {
-  const prefix = getCategoryPrefix(categoryId);
+export function generateItemCode(categoryId: string, existingCodes: string[], prefixes?: Record<string, string>): string {
+  const prefix = prefixes?.[categoryId] ?? getCategoryPrefix(categoryId);
   const same = existingCodes.filter((c) => c.startsWith(prefix + "-"));
   
   let maxNum = 0;

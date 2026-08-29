@@ -60,6 +60,10 @@ export default function EditItemPage({ params }: { params: Promise<{ id: string 
 
   const [locations, setLocations] = useState<string[]>([]);
   const [unitOptions, setUnitOptions] = useState<string[]>(DEFAULT_UNITS);
+  const [prefixes, setPrefixes] = useState<Record<string, string>>({
+    meter: "MTR", tools: "TLS", safety: "SFT",
+    electrical_parts: "ELP", cable: "CBL", spareparts: "SPR",
+  });
   const [customLocation, setCustomLocation] = useState("");
   const [customLocationError, setCustomLocationError] = useState(false);
   const [customUnit, setCustomUnit] = useState("");
@@ -73,6 +77,9 @@ export default function EditItemPage({ params }: { params: Promise<{ id: string 
   useEffect(() => {
     getLocations().then(setLocations);
     getUnitOptions().then(setUnitOptions);
+    getDoc(doc(db, "settings", "prefixes")).then((snap) => {
+      if (snap.exists()) setPrefixes((p) => ({ ...p, ...snap.data() }));
+    });
   }, []);
 
   const { register, handleSubmit, reset, watch, setValue, formState: { errors, isDirty } } = useForm<FormData>({
@@ -107,8 +114,8 @@ export default function EditItemPage({ params }: { params: Promise<{ id: string 
   useEffect(() => {
     if (!item || !categoryId || categoryId === item.categoryId) return;
     const existingCodes = allItems.map((i) => i.code);
-    setValue("code", generateItemCode(categoryId, existingCodes));
-  }, [categoryId, item, allItems, setValue]);
+    setValue("code", generateItemCode(categoryId, existingCodes, prefixes));
+  }, [categoryId, item, allItems, prefixes, setValue]);
 
   async function onSubmit(data: FormData) {
     const isDuplicate = allItems.some(

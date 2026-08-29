@@ -71,6 +71,10 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
   const { data: items = [] } = useInventoryItems();
   const [locations, setLocations] = useState<string[]>([]);
   const [unitOptions, setUnitOptions] = useState<string[]>(DEFAULT_UNITS);
+  const [prefixes, setPrefixes] = useState<Record<string, string>>({
+    meter: "MTR", tools: "TLS", safety: "SFT",
+    electrical_parts: "ELP", cable: "CBL", spareparts: "SPR",
+  });
   const [customLocation, setCustomLocation] = useState("");
   const [customLocationError, setCustomLocationError] = useState(false);
   const [customUnit, setCustomUnit] = useState("");
@@ -80,6 +84,9 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
   useEffect(() => {
     getLocations().then(setLocations);
     getUnitOptions().then(setUnitOptions);
+    getDoc(doc(db, "settings", "prefixes")).then((snap) => {
+      if (snap.exists()) setPrefixes((p) => ({ ...p, ...snap.data() }));
+    });
   }, []);
 
   const {
@@ -115,8 +122,8 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
   useEffect(() => {
     if (!categoryId) return;
     const existingCodes = items.map((i) => i.code);
-    setValue("code", generateItemCode(categoryId, existingCodes));
-  }, [categoryId, items, setValue]);
+    setValue("code", generateItemCode(categoryId, existingCodes, prefixes));
+  }, [categoryId, items, prefixes, setValue]);
 
   async function onSubmit(data: FormData) {
     const isDuplicate = items.some(
