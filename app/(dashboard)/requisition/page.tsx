@@ -196,6 +196,7 @@ function StaffRequisitionPage() {
                     <input
                       type="number" min={1} max={item.quantityAvailable}
                       value={inCart.qty}
+                      onFocus={e => e.target.select()}
                       onChange={e => updateQty(item.id, Math.min(item.quantityAvailable, Math.max(1, parseInt(e.target.value) || 1)))}
                       className="w-10 text-center text-sm font-bold text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 rounded-lg py-1 bg-transparent focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
                     />
@@ -271,6 +272,7 @@ function StaffRequisitionPage() {
                       <input
                         type="number" min={1} max={c.maxQty}
                         value={c.qty}
+                        onFocus={e => e.target.select()}
                         onChange={e => updateQty(c.itemId, Math.min(c.maxQty, Math.max(1, parseInt(e.target.value) || 1)))}
                         className="w-10 text-center text-sm font-bold border border-gray-200 dark:border-gray-600 bg-transparent dark:text-white rounded-lg py-0.5 focus:outline-none focus:ring-1 focus:ring-[#1D4ED8]/30"
                       />
@@ -452,6 +454,7 @@ function AdminRequisitionPage() {
                   <div className="flex items-center gap-1.5 shrink-0">
                     <button onClick={() => browseUpdateQty(item.id, inCart.qty - 1)} className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center active:scale-95"><Minus className="w-3.5 h-3.5 text-gray-600 dark:text-gray-300" /></button>
                     <input type="number" min={1} max={item.quantityAvailable} value={inCart.qty}
+                      onFocus={e => e.target.select()}
                       onChange={e => browseUpdateQty(item.id, Math.min(item.quantityAvailable, Math.max(1, parseInt(e.target.value) || 1)))}
                       className="w-10 text-center text-sm font-bold text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 rounded-lg py-1 bg-transparent focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
                     />
@@ -500,6 +503,7 @@ function AdminRequisitionPage() {
                       <div className="flex items-center gap-1.5 shrink-0">
                         <button onClick={() => browseUpdateQty(c.itemId, c.qty - 1)} className="w-7 h-7 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center active:scale-95"><Minus className="w-3 h-3 text-gray-600 dark:text-gray-300" /></button>
                         <input type="number" min={1} max={c.maxQty} value={c.qty}
+                          onFocus={e => e.target.select()}
                           onChange={e => browseUpdateQty(c.itemId, Math.min(c.maxQty, Math.max(1, parseInt(e.target.value) || 1)))}
                           className="w-10 text-center text-sm font-bold border border-gray-200 dark:border-gray-600 bg-transparent dark:text-white rounded-lg py-0.5 focus:outline-none"
                         />
