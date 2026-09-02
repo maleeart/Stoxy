@@ -256,6 +256,63 @@ export function exportRequisitionsExcel(reqs: Requisition[]) {
   saveExcel(wb, `stoxy-requisitions-${dateStr()}.xlsx`);
 }
 
+export async function exportPurchasePDF(items: InventoryItem[]) {
+  const sorted = [...items].sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: "base" }));
+  const doc = await createDocWithThaiFont("landscape");
+
+  doc.setFontSize(16);
+  doc.text("รายงานรายการอุปกรณ์ที่ต้องสั่งซื้อ - Stoxy", 14, 15);
+  doc.setFontSize(10);
+  doc.text(`วันที่พิมพ์: ${new Date().toLocaleDateString("th-TH")}  |  รายการทั้งหมด: ${sorted.length} รายการ`, 14, 22);
+
+  autoTable(doc, {
+    startY: 28,
+    head: [["รหัส", "ชื่ออุปกรณ์", "ยี่ห้อ", "รุ่น", "หมวดหมู่", "คงเหลือ", "ขั้นต่ำ", "แนะนำสั่ง", "หน่วย", "สถานที่", "ผู้จำหน่าย"]],
+    body: sorted.map((i) => [
+      i.code,
+      i.name,
+      i.brand ?? "-",
+      i.model ?? "-",
+      i.categoryName ?? "-",
+      i.quantityAvailable,
+      i.minStockLevel ?? 0,
+      Math.max(1, (i.minStockLevel ?? 0) * 2 - i.quantityAvailable),
+      i.unit ?? "-",
+      i.locationName ?? "-",
+      i.supplier ?? "-",
+    ]),
+    styles: { font: "Sarabun", fontSize: 9 },
+    headStyles: { fillColor: [13, 33, 55], font: "Sarabun", fontStyle: "normal", textColor: 255 },
+  });
+
+  doc.save(`stoxy-purchase-${dateStr()}.pdf`);
+}
+
+export function exportPurchaseExcel(items: InventoryItem[]) {
+  const sorted = [...items].sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: "base" }));
+  const headers = ["รหัส", "ชื่ออุปกรณ์", "ยี่ห้อ", "รุ่น", "หมวดหมู่", "คงเหลือ", "ขั้นต่ำ", "แนะนำสั่งซื้อ", "หน่วย", "สถานที่", "ผู้จำหน่าย", "ราคาซื้อ", "หมายเหตุ"];
+  const rows = sorted.map((i) => [
+    i.code,
+    i.name,
+    i.brand ?? "",
+    i.model ?? "",
+    i.categoryName ?? "",
+    i.quantityAvailable,
+    i.minStockLevel ?? 0,
+    Math.max(1, (i.minStockLevel ?? 0) * 2 - i.quantityAvailable),
+    i.unit ?? "",
+    i.locationName ?? "",
+    i.supplier ?? "",
+    i.purchasePrice ?? "",
+    i.notes ?? "",
+  ]);
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "PurchaseList");
+  saveExcel(wb, `stoxy-purchase-${dateStr()}.xlsx`);
+}
+
 // ── Helpers ───────────────────────────────────────────────────
 const movementTypeLabel: Record<string, string> = {
   borrow: "ยืม",
