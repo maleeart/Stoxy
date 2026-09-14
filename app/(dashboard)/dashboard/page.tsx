@@ -37,7 +37,7 @@ const movementTypeColor: Record<string, string> = {
   return: "bg-emerald-100 text-emerald-700",
   adjustment_in: "bg-green-100 text-green-700",
   adjustment_out: "bg-orange-100 text-orange-700",
-  requisition: "bg-purple-100 text-purple-700",
+  requisition: "bg-amber-100 text-amber-700",
 };
 
 function buildChartData(movements: StockMovement[], requisitions: { createdAt: { toDate(): Date }; status: string }[], days: 7 | 30) {
