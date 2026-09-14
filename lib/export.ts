@@ -283,7 +283,7 @@ export async function exportPurchasePDF(items: InventoryItem[]) {
 
   autoTable(doc, {
     startY: 28,
-    head: [["รหัส", "ชื่ออุปกรณ์", "ยี่ห้อ", "รุ่น", "หมวดหมู่", "คงเหลือ", "แนะนำสั่งซื้อ", "หน่วย", "สถานที่", "รูปภาพ"]],
+    head: [["รหัส", "ชื่ออุปกรณ์", "ยี่ห้อ", "รุ่น", "หมวดหมู่", "คงเหลือ", "แนะนำสั่งซื้อ", "หน่วย", "สถานที่"]],
     body: sorted.map((i) => [
       i.code,
       i.name,
@@ -294,7 +294,6 @@ export async function exportPurchasePDF(items: InventoryItem[]) {
       Math.max(1, (i.minStockLevel ?? 0) * 2 - i.quantityAvailable),
       i.unit ?? "-",
       i.locationName ?? "-",
-      (i.images ?? []).length > 0 ? "มีรูปภาพ" : "-",
     ]),
     styles: { font: "Sarabun", fontSize: 9 },
     headStyles: { fillColor: [13, 33, 55], font: "Sarabun", fontStyle: "normal", textColor: 255 },
@@ -373,7 +372,7 @@ export async function exportPurchasePDF(items: InventoryItem[]) {
 
 export function exportPurchaseExcel(items: InventoryItem[]) {
   const sorted = [...items].sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: "base" }));
-  const headers = ["รหัส", "ชื่ออุปกรณ์", "ยี่ห้อ", "รุ่น", "หมวดหมู่", "คงเหลือ", "แนะนำสั่งซื้อ", "หน่วย", "สถานที่", "รูปภาพ", "ราคาซื้อ", "หมายเหตุ"];
+  const headers = ["รหัส", "ชื่ออุปกรณ์", "ยี่ห้อ", "รุ่น", "หมวดหมู่", "คงเหลือ", "แนะนำสั่งซื้อ", "หน่วย", "สถานที่", "ราคาซื้อ", "หมายเหตุ"];
   const rows = sorted.map((i) => [
     i.code,
     i.name,
@@ -384,7 +383,6 @@ export function exportPurchaseExcel(items: InventoryItem[]) {
     Math.max(1, (i.minStockLevel ?? 0) * 2 - i.quantityAvailable),
     i.unit ?? "",
     i.locationName ?? "",
-    (i.images ?? [])[0] ?? "-",
     i.purchasePrice ?? "",
     i.notes ?? "",
   ]);
