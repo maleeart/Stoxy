@@ -10,7 +10,7 @@ import { approveBorrowRequest, rejectBorrowRequest, acknowledgeReturn, adminRece
 import { uploadImages } from "@/lib/upload";
 import { getRequisitions, approveRequisition, rejectRequisition } from "@/services/requisition.service";
 import { adjustStock } from "@/services/inventory.service";
-import { formatDate } from "@/lib/utils";
+import { formatDate, cn } from "@/lib/utils";
 import {
   ArrowLeftRight, PackageOpen, BarChart3,
   CheckCircle, XCircle, Undo2, Search,
@@ -264,11 +264,26 @@ export default function OperationsPage() {
   const activeBorrows = borrows.filter(b => b.status === "borrowed");
   const pendingReqs = requisitions.filter(r => r.status === "pending");
 
-  const filteredItems = items.filter(i =>
-    !search ||
-    i.name.toLowerCase().includes(search.toLowerCase()) ||
-    i.code.toLowerCase().includes(search.toLowerCase())
-  );
+  const isLowStock = (i: InventoryItem) =>
+    ((i.minStockLevel ?? 0) > 0 && i.quantityAvailable <= (i.minStockLevel ?? 0)) ||
+    i.quantityAvailable === 0;
+
+  const filteredItems = items
+    .filter(i =>
+      !search ||
+      i.name.toLowerCase().includes(search.toLowerCase()) ||
+      i.code.toLowerCase().includes(search.toLowerCase())
+    )
+    .sort((a, b) => {
+      const aLow = isLowStock(a);
+      const bLow = isLowStock(b);
+      if (aLow && !bLow) return -1;
+      if (!aLow && bLow) return 1;
+      if (aLow && bLow) {
+        return a.quantityAvailable - b.quantityAvailable || a.code.localeCompare(b.code, undefined, { numeric: true });
+      }
+      return a.code.localeCompare(b.code, undefined, { numeric: true });
+    });
 
   // Mutations
   const approveBorrow = useMutation({
@@ -565,29 +580,52 @@ export default function OperationsPage() {
           <div className="space-y-2">
             {itemsLoading ? <Skeleton /> :
               filteredItems.length === 0 ? <div className="text-center py-16 text-gray-400 text-sm">ไม่พบอุปกรณ์</div> :
-              filteredItems.map((item, i) => (
-                <motion.div key={item.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.01 }}
-                  className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-4 flex items-center gap-3"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-gray-900 dark:text-white truncate">{item.name}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="font-mono text-xs text-blue-600">{item.code}</span>
-                      <span className="text-xs text-gray-400">
-                        คงเหลือ: <span className={`font-semibold ${item.quantityAvailable <= item.minStockLevel ? "text-red-500" : "text-gray-700 dark:text-gray-200"}`}>
-                          {item.quantityAvailable}
-                        </span>
-                      </span>
-                    </div>
-                  </div>
-                  <button onClick={() => setAdjItem(item)}
-                    className="shrink-0 px-4 py-2 text-sm font-bold bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 active:scale-95 transition-all"
+              filteredItems.map((item, i) => {
+                const low = isLowStock(item);
+                const isZero = item.quantityAvailable === 0;
+                return (
+                  <motion.div key={item.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.01 }}
+                    className={cn(
+                      "bg-white dark:bg-gray-800 rounded-2xl border p-4 flex items-center gap-3 transition-colors",
+                      low
+                        ? "border-amber-200 dark:border-amber-900/50 bg-amber-50/20 dark:bg-amber-950/10"
+                        : "border-gray-100 dark:border-gray-700"
+                    )}
                   >
-                    ปรับ
-                  </button>
-                </motion.div>
-              ))
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <p className="font-semibold text-sm text-gray-900 dark:text-white truncate">{item.name}</p>
+                        {low && (
+                          <span className={cn(
+                            "text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0",
+                            isZero
+                              ? "bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400"
+                              : "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
+                          )}>
+                            {isZero ? "หมดสต็อก" : "ต่ำกว่าเกณฑ์"}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                        <span className="font-mono text-xs text-blue-600 dark:text-blue-400">{item.code}</span>
+                        <span className="text-xs text-gray-400">
+                          คงเหลือ: <span className={`font-semibold ${low ? "text-red-500" : "text-gray-700 dark:text-gray-200"}`}>
+                            {item.quantityAvailable}
+                          </span>
+                          {item.minStockLevel ? ` / ขั้นต่ำ ${item.minStockLevel}` : ""}
+                          {item.unit ? ` ${item.unit}` : ""}
+                        </span>
+                      </div>
+                    </div>
+                    <button onClick={() => setAdjItem(item)}
+                      className="shrink-0 px-4 py-2 text-sm font-bold bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-700 active:scale-95 transition-all"
+                    >
+                      ปรับ
+                    </button>
+                  </motion.div>
+                );
+              })
             }
           </div>
         </div>
