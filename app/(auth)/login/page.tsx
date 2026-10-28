@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -101,7 +101,7 @@ export default function LoginPage() {
           </div>
 
           <p className="mt-10 text-white/30 text-[10px] text-center">
-            ผู้ดูแลระบบ : นายตวงเพชร ชัยยานนท์ &middot; วศ.4 หบอว-ธ. กบห-ธ. ชธธ.
+            ผู้ดูแลระบบ : นายตวงเพชร ชัยยานนท์ &middot; วศ.4 หบท-ธ. กบห-ธ. ชธธ.
           </p>
         </motion.div>
       </div>
@@ -175,7 +175,7 @@ export default function LoginPage() {
               Smart Tracking, Organization, e<span className="text-gray-400 font-medium">X</span>change &amp; Efficiency
             </p>
             <p className="text-[10px] text-gray-300 pt-1">
-              ผู้ดูแลระบบ : นายตวงเพชร ชัยยานนท์ &middot; วศ.4 หบอว-ธ. กบห-ธ. ชธธ.
+              ผู้ดูแลระบบ : นายตวงเพชร ชัยยานนท์ &middot; วศ.4 หบท-ธ. กบห-ธ. ชธธ.
             </p>
           </div>
 
