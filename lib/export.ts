@@ -1,7 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
-import type { InventoryItem, BorrowRecord, StockMovement } from "@/types";
+import type { InventoryItem, BorrowRecord, StockMovement, AuditSession, AuditItem } from "@/types";
 import type { Requisition } from "@/services/requisition.service";
 
 // Load & register Sarabun (Thai) font into a jsPDF instance
@@ -391,6 +391,168 @@ export function exportPurchaseExcel(items: InventoryItem[]) {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "PurchaseList");
   saveExcel(wb, `stoxy-purchase-${dateStr()}.xlsx`);
+}
+
+// ── Audit Exports ─────────────────────────────────────────────
+export async function exportAuditPDF(session: AuditSession, inventoryItems: InventoryItem[] = []) {
+  const invMap = new Map(inventoryItems.map((i) => [i.id, i]));
+  const rawItems: AuditItem[] = (session.items && session.items.length > 0)
+    ? session.items
+    : inventoryItems.map((item) => ({
+        itemId: item.id,
+        itemCode: item.code,
+        itemName: item.name,
+        expectedQuantity: item.quantityAvailable,
+        actualQuantity: undefined,
+        status: "pending" as const,
+      }));
+
+  const sorted = [...rawItems].sort((a, b) =>
+    a.itemCode.localeCompare(b.itemCode, undefined, { numeric: true, sensitivity: "base" })
+  );
+
+  const doc = await createDocWithThaiFont("landscape");
+
+  const counted = sorted.filter((i) => i.actualQuantity != null);
+  const matched = counted.filter((i) => i.actualQuantity === i.expectedQuantity).length;
+  const mismatch = counted.filter((i) => i.actualQuantity !== i.expectedQuantity).length;
+  const uncounted = sorted.length - counted.length;
+
+  const dateDisplay = session.endDate
+    ? session.endDate.toDate().toLocaleDateString("th-TH")
+    : session.startDate
+    ? session.startDate.toDate().toLocaleDateString("th-TH")
+    : new Date().toLocaleDateString("th-TH");
+
+  doc.setFontSize(16);
+  doc.text(`รายงานสรุปผลการตรวจนับสต็อก - ${session.name}`, 14, 15);
+  doc.setFontSize(10);
+  doc.text(
+    `รอบตรวจนับ: ${session.name}  |  วันที่: ${dateDisplay}  |  ทั้งหมด: ${sorted.length} (นับแล้ว: ${counted.length}, ตรงกัน: ${matched}, ต่างกัน: ${mismatch}, ยังไม่นับ: ${uncounted})`,
+    14,
+    22
+  );
+
+  autoTable(doc, {
+    startY: 28,
+    head: [["รหัส", "ชื่ออุปกรณ์", "ยี่ห้อ", "หมวดหมู่", "สถานที่", "ยอดระบบเดิม", "ยอดตรวจนับ", "ผลต่าง", "หน่วย", "สถานะการนับ"]],
+    body: sorted.map((i) => {
+      const inv = invMap.get(i.itemId) || inventoryItems.find((x) => x.code === i.itemCode);
+      const actual = i.actualQuantity != null ? i.actualQuantity : "-";
+      const diffVal = i.actualQuantity != null ? i.actualQuantity - i.expectedQuantity : null;
+      const diffStr = diffVal === null ? "-" : diffVal > 0 ? `+${diffVal}` : `${diffVal}`;
+      const statusText = i.actualQuantity == null
+        ? "ยังไม่ได้นับ"
+        : i.actualQuantity === i.expectedQuantity
+        ? "ตรงกัน"
+        : i.actualQuantity > i.expectedQuantity
+        ? `เกิน (+${i.actualQuantity - i.expectedQuantity})`
+        : `ขาด (${i.actualQuantity - i.expectedQuantity})`;
+
+      return [
+        i.itemCode,
+        i.itemName,
+        inv?.brand ?? "-",
+        inv?.categoryName ?? "-",
+        inv?.locationName ?? "-",
+        i.expectedQuantity,
+        actual,
+        diffStr,
+        inv?.unit ?? "ชิ้น",
+        statusText,
+      ];
+    }),
+    styles: { font: "Sarabun", fontSize: 9 },
+    headStyles: { fillColor: [13, 33, 55], font: "Sarabun", fontStyle: "normal", textColor: 255 },
+    columnStyles: {
+      0: { cellWidth: 26 },
+      5: { halign: "center" },
+      6: { halign: "center" },
+      7: { halign: "center" },
+      8: { halign: "center" },
+      9: { halign: "center" },
+    },
+    didParseCell: (data) => {
+      if (data.section === "body" && data.column.index === 7) {
+        const val = String(data.cell.raw);
+        if (val.startsWith("+")) {
+          data.cell.styles.textColor = [16, 149, 193];
+        } else if (val.startsWith("-")) {
+          data.cell.styles.textColor = [220, 38, 38];
+        }
+      }
+    },
+  });
+
+  const cleanName = session.name.replace(/[^a-zA-Z0-9ก-๙_-]/g, "_");
+  doc.save(`stoxy-audit-${cleanName}-${dateStr()}.pdf`);
+}
+
+export function exportAuditExcel(session: AuditSession, inventoryItems: InventoryItem[] = []) {
+  const invMap = new Map(inventoryItems.map((i) => [i.id, i]));
+  const rawItems: AuditItem[] = (session.items && session.items.length > 0)
+    ? session.items
+    : inventoryItems.map((item) => ({
+        itemId: item.id,
+        itemCode: item.code,
+        itemName: item.name,
+        expectedQuantity: item.quantityAvailable,
+        actualQuantity: undefined,
+        status: "pending" as const,
+      }));
+
+  const sorted = [...rawItems].sort((a, b) =>
+    a.itemCode.localeCompare(b.itemCode, undefined, { numeric: true, sensitivity: "base" })
+  );
+
+  const headers = [
+    "รหัส",
+    "ชื่ออุปกรณ์",
+    "ยี่ห้อ",
+    "รุ่น",
+    "หมวดหมู่",
+    "สถานที่",
+    "ยอดระบบเดิม",
+    "ยอดตรวจนับจริง",
+    "ผลต่าง",
+    "หน่วย",
+    "สถานะการนับ",
+    "หมายเหตุ",
+  ];
+
+  const rows = sorted.map((i) => {
+    const inv = invMap.get(i.itemId) || inventoryItems.find((x) => x.code === i.itemCode);
+    const actual = i.actualQuantity != null ? i.actualQuantity : "";
+    const diffVal = i.actualQuantity != null ? i.actualQuantity - i.expectedQuantity : "";
+    const statusText = i.actualQuantity == null
+      ? "ยังไม่ได้นับ"
+      : i.actualQuantity === i.expectedQuantity
+      ? "ตรงกัน"
+      : i.actualQuantity > i.expectedQuantity
+      ? `เกิน (+${i.actualQuantity - i.expectedQuantity})`
+      : `ขาด (${i.actualQuantity - i.expectedQuantity})`;
+
+    return [
+      i.itemCode,
+      i.itemName,
+      inv?.brand ?? "",
+      inv?.model ?? "",
+      inv?.categoryName ?? "",
+      inv?.locationName ?? "",
+      i.expectedQuantity,
+      actual,
+      diffVal,
+      inv?.unit ?? "ชิ้น",
+      statusText,
+      i.notes ?? "",
+    ];
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "AuditResult");
+  const cleanName = session.name.replace(/[^a-zA-Z0-9ก-๙_-]/g, "_");
+  saveExcel(wb, `stoxy-audit-${cleanName}-${dateStr()}.xlsx`);
 }
 
 // ── Helpers ───────────────────────────────────────────────────

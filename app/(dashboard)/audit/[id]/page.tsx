@@ -9,9 +9,11 @@ import { useInventoryItems } from "@/hooks/useInventory";
 import { getAuditSession, submitAuditForReview, approveAudit, rejectAudit, updateAuditItem } from "@/services/audit.service";
 import { MobileHeader } from "@/components/layout/MobileHeader";
 import { formatDate } from "@/lib/utils";
+import { exportAuditPDF, exportAuditExcel } from "@/lib/export";
 import {
   ArrowLeft, CheckCircle, AlertTriangle, Clock,
   Search, ArrowUp, ArrowDown, Minus, XCircle, ScanLine,
+  FileText, FileSpreadsheet,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -232,9 +234,25 @@ function AuditDetailContent() {
           title={session.name}
           back
           actions={
-            <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${statusColor}`}>
-              {statusLabel}
-            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => exportAuditPDF(session, allItems)}
+                className="p-1.5 text-xs font-semibold bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-red-500 rounded-lg active:scale-95 shadow-sm"
+                title="ดาวน์โหลด PDF"
+              >
+                <FileText className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => exportAuditExcel(session, allItems)}
+                className="p-1.5 text-xs font-semibold bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-emerald-600 rounded-lg active:scale-95 shadow-sm"
+                title="ดาวน์โหลด Excel"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5" />
+              </button>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${statusColor}`}>
+                {statusLabel}
+              </span>
+            </div>
           }
         />
       )}
@@ -257,9 +275,27 @@ function AuditDetailContent() {
                 : `เริ่ม: ${formatDate(session.startDate)}`}
             </p>
           </div>
-          <span className={`text-xs px-2.5 py-1 rounded-full font-semibold shrink-0 ${statusColor}`}>
-            {statusLabel}
-          </span>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => exportAuditPDF(session, allItems)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 transition-all shadow-sm"
+              title="ดาวน์โหลดสรุป PDF"
+            >
+              <FileText className="w-3.5 h-3.5 text-red-500" />
+              PDF
+            </button>
+            <button
+              onClick={() => exportAuditExcel(session, allItems)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 transition-all shadow-sm"
+              title="ดาวน์โหลดสรุป Excel"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+              Excel
+            </button>
+            <span className={`text-xs px-2.5 py-1 rounded-full font-semibold shrink-0 ${statusColor}`}>
+              {statusLabel}
+            </span>
+          </div>
         </div>
       </div>
       )}

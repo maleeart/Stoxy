@@ -7,13 +7,15 @@ import { useQuery } from "@tanstack/react-query";
 import { getBorrowRecords } from "@/services/borrow.service";
 import { getRecentMovements } from "@/services/inventory.service";
 import { getRequisitions } from "@/services/requisition.service";
+import { getAuditSessions } from "@/services/audit.service";
 import {
   exportInventoryPDF, exportInventoryExcel,
   exportBorrowsPDF, exportBorrowsExcel,
   exportMovementsPDF, exportMovementsExcel,
   exportRequisitionsPDF, exportRequisitionsExcel,
+  exportAuditPDF, exportAuditExcel,
 } from "@/lib/export";
-import { FileText, FileSpreadsheet, Package, ArrowLeftRight, Activity, PackageOpen } from "lucide-react";
+import { FileText, FileSpreadsheet, Package, ArrowLeftRight, Activity, PackageOpen, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function ReportsPage() {
@@ -30,8 +32,15 @@ export default function ReportsPage() {
     queryKey: ["requisitions_all"],
     queryFn: () => getRequisitions(),
   });
+  const { data: auditSessions = [] } = useQuery({
+    queryKey: ["audit_sessions_report"],
+    queryFn: () => getAuditSessions(),
+  });
 
   const [invSortBy, setInvSortBy] = useState<"code" | "name" | "quantity" | "status">("code");
+  const [selectedAuditId, setSelectedAuditId] = useState<string>("");
+
+  const activeAudit = auditSessions.find(s => s.id === selectedAuditId) || auditSessions[0];
 
   const reports = [
     {
@@ -96,6 +105,44 @@ export default function ReportsPage() {
         { label: "PDF", icon: <FileText className="w-4 h-4" />, fn: () => exportMovementsPDF(movements) },
         { label: "Excel", icon: <FileSpreadsheet className="w-4 h-4" />, fn: () => exportMovementsExcel(movements) },
       ],
+    },
+    {
+      title: "สรุปผลตรวจนับสต็อก (Audit)",
+      description: activeAudit
+        ? `${activeAudit.name} (${activeAudit.status === "completed" ? "เสร็จสิ้น" : activeAudit.status === "pending_approval" ? "รออนุมัติ" : "กำลังนับ"})`
+        : "ไม่พบข้อมูลรอบตรวจนับ",
+      icon: <ShieldCheck className="w-5 h-5 text-indigo-700" />,
+      iconBg: "bg-indigo-100",
+      accent: "border-l-4 border-indigo-500",
+      btnClass: "border-indigo-200 text-indigo-700 hover:bg-indigo-50",
+      actions: [
+        { label: "PDF", icon: <FileText className="w-4 h-4" />, fn: () => activeAudit && exportAuditPDF(activeAudit, items) },
+        { label: "Excel", icon: <FileSpreadsheet className="w-4 h-4" />, fn: () => activeAudit && exportAuditExcel(activeAudit, items) },
+      ],
+      extra: auditSessions.length > 0 ? (
+        <div className="mb-4">
+          <label className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">
+            เลือกรอบตรวจนับ / เดือนย้อนหลัง
+          </label>
+          <select
+            value={selectedAuditId || activeAudit?.id || ""}
+            onChange={(e) => setSelectedAuditId(e.target.value)}
+            className="w-full text-xs font-semibold px-2 py-1.5 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-100 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500/20"
+          >
+            {auditSessions.map((s) => {
+              const dateStr = s.startDate ? s.startDate.toDate().toLocaleDateString("th-TH", { month: "short", year: "2-digit" }) : "";
+              const statusTag = s.status === "completed" ? "เสร็จสิ้น" : s.status === "pending_approval" ? "รออนุมัติ" : "กำลังนับ";
+              return (
+                <option key={s.id} value={s.id}>
+                  📋 {s.name} ({dateStr}) [{statusTag}]
+                </option>
+              );
+            })}
+          </select>
+        </div>
+      ) : (
+        <div className="mb-4 text-xs text-gray-400">ยังไม่มีรอบการตรวจนับในระบบ</div>
+      ),
     },
   ];
 
