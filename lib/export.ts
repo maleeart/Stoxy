@@ -36,6 +36,67 @@ async function fetchImageAsBase64(url: string): Promise<string | null> {
   }
 }
 
+function getImageDimensions(b64: string): Promise<{ width: number; height: number }> {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined") {
+      resolve({ width: 0, height: 0 });
+      return;
+    }
+    const img = new Image();
+    img.onload = () => resolve({ width: img.naturalWidth || img.width, height: img.naturalHeight || img.height });
+    img.onerror = () => resolve({ width: 0, height: 0 });
+    img.src = b64;
+  });
+}
+
+async function renderContainedImage(
+  doc: jsPDF,
+  urlOrB64: string,
+  boxX: number,
+  boxY: number,
+  maxW: number,
+  maxH: number
+): Promise<void> {
+  try {
+    const b64 = await fetchImageAsBase64(urlOrB64);
+    if (!b64) return;
+
+    // Fill empty background with white
+    doc.setFillColor(255, 255, 255);
+    doc.rect(boxX, boxY, maxW, maxH, "F");
+
+    const dims = await getImageDimensions(b64);
+    if (!dims.width || !dims.height) {
+      const fmt = b64.startsWith("data:image/png") ? "PNG" : "JPEG";
+      doc.addImage(b64, fmt, boxX, boxY, maxW, maxH);
+      return;
+    }
+
+    const imgAspect = dims.width / dims.height;
+    const boxAspect = maxW / maxH;
+
+    let drawW = maxW;
+    let drawH = maxH;
+    let drawX = boxX;
+    let drawY = boxY;
+
+    if (imgAspect > boxAspect) {
+      drawW = maxW;
+      drawH = maxW / imgAspect;
+      drawY = boxY + (maxH - drawH) / 2;
+    } else {
+      drawH = maxH;
+      drawW = maxH * imgAspect;
+      drawX = boxX + (maxW - drawW) / 2;
+    }
+
+    const fmt = b64.startsWith("data:image/png") ? "PNG" : "JPEG";
+    doc.addImage(b64, fmt, drawX, drawY, drawW, drawH);
+  } catch {
+    /* skip broken image */
+  }
+}
+
 // ── PDF ───────────────────────────────────────────────────────
 export async function exportInventoryPDF(items: InventoryItem[], sortBy: "code" | "name" | "quantity" | "status" = "code") {
   const sorted = [...items].sort((a, b) => {
@@ -110,14 +171,8 @@ export async function exportInventoryPDF(items: InventoryItem[], sortBy: "code" 
         doc.setLineWidth(0.3);
         doc.roundedRect(x, y, cellW - 3, cellH, 2, 2, "S");
 
-        // draw image
-        try {
-          const b64 = await fetchImageAsBase64(imgUrl);
-          if (b64) {
-            const fmt = b64.startsWith("data:image/png") ? "PNG" : "JPEG";
-            doc.addImage(b64, fmt, x + 1.5, y + 1.5, cellW - 6, imgH - 3);
-          }
-        } catch { /* skip broken image */ }
+        // draw image (contain aspect ratio + white background)
+        await renderContainedImage(doc, imgUrl, x + 1.5, y + 1.5, cellW - 6, imgH - 3);
 
         // label: code + name (truncate if long)
         const labelY = y + imgH + 4;
@@ -340,14 +395,8 @@ export async function exportPurchasePDF(items: InventoryItem[]) {
         doc.setLineWidth(0.3);
         doc.roundedRect(x, y, cellW - 3, cellH, 2, 2, "S");
 
-        // draw image
-        try {
-          const b64 = await fetchImageAsBase64(rawUrl);
-          if (b64) {
-            const fmt = b64.startsWith("data:image/png") ? "PNG" : "JPEG";
-            doc.addImage(b64, fmt, x + 1.5, y + 1.5, cellW - 6, imgH - 3);
-          }
-        } catch { /* skip broken image */ }
+        // draw image (contain aspect ratio + white background)
+        await renderContainedImage(doc, rawUrl, x + 1.5, y + 1.5, cellW - 6, imgH - 3);
 
         // label: code + name (truncate if long)
         const labelY = y + imgH + 3.5;
@@ -538,14 +587,8 @@ export async function exportAuditPDF(session: AuditSession, inventoryItems: Inve
         doc.setLineWidth(0.3);
         doc.roundedRect(x, y, cellW - 3, cellH, 2, 2, "S");
 
-        // draw image
-        try {
-          const b64 = await fetchImageAsBase64(rawUrl);
-          if (b64) {
-            const fmt = b64.startsWith("data:image/png") ? "PNG" : "JPEG";
-            doc.addImage(b64, fmt, x + 1.5, y + 1.5, cellW - 6, imgH - 3);
-          }
-        } catch { /* skip broken image */ }
+        // draw image (contain aspect ratio + white background)
+        await renderContainedImage(doc, rawUrl, x + 1.5, y + 1.5, cellW - 6, imgH - 3);
 
         // label: code + brand/model
         const labelY = y + imgH + 3.5;
