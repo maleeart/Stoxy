@@ -97,7 +97,8 @@ export async function exportInventoryPDF(items: InventoryItem[], sortBy: "code" 
       );
 
       const slice = withPhotos.slice(p * perPage, (p + 1) * perPage);
-      slice.forEach((item, idx) => {
+      for (let idx = 0; idx < slice.length; idx++) {
+        const item = slice[idx];
         const col = idx % cols;
         const row = Math.floor(idx / cols);
         const x = marginX + col * cellW;
@@ -111,10 +112,10 @@ export async function exportInventoryPDF(items: InventoryItem[], sortBy: "code" 
 
         // draw image
         try {
-          // base64 data URL works directly; http URLs need fetch below
-          if (imgUrl.startsWith("data:")) {
-            const fmt = imgUrl.startsWith("data:image/png") ? "PNG" : "JPEG";
-            doc.addImage(imgUrl, fmt, x + 1.5, y + 1.5, cellW - 6, imgH - 3);
+          const b64 = await fetchImageAsBase64(imgUrl);
+          if (b64) {
+            const fmt = b64.startsWith("data:image/png") ? "PNG" : "JPEG";
+            doc.addImage(b64, fmt, x + 1.5, y + 1.5, cellW - 6, imgH - 3);
           }
         } catch { /* skip broken image */ }
 
@@ -128,7 +129,7 @@ export async function exportInventoryPDF(items: InventoryItem[], sortBy: "code" 
         const name = item.name.length > 28 ? item.name.slice(0, 26) + "…" : item.name;
         doc.text(name, x + 2, labelY + 5);
         doc.setTextColor(0, 0, 0);
-      });
+      }
     }
   }
 
@@ -484,6 +485,104 @@ export async function exportAuditPDF(session: AuditSession, inventoryItems: Inve
     },
   });
 
+  // ── Photo pages: 3×3 grid, only items with images ─────────
+  const withPhotos = sorted
+    .map((item) => {
+      const inv = invMap.get(item.itemId) || inventoryItems.find((x) => x.code === item.itemCode);
+      return {
+        ...item,
+        images: inv?.images ?? [],
+        brand: inv?.brand,
+        model: inv?.model,
+        unit: inv?.unit ?? "ชิ้น",
+      };
+    })
+    .filter((i) => i.images.length > 0);
+
+  if (withPhotos.length > 0) {
+    const cols = 3;
+    const rows = 3;
+    const perPage = cols * rows;
+    const marginX = 14;
+    const marginY = 20;
+    const pageW = 297;
+    const pageH = 210;
+    const cellW = (pageW - marginX * 2) / cols;
+    const imgH = 40;
+    const labelH = 14;
+    const cellH = imgH + labelH + 2;
+
+    for (let p = 0; p < Math.ceil(withPhotos.length / perPage); p++) {
+      doc.addPage("landscape");
+      doc.setFont("Sarabun");
+      doc.setFontSize(13);
+      doc.text(`รูปภาพอุปกรณ์รอบตรวจนับ - ${session.name}`, marginX, 13);
+      doc.setFontSize(9);
+      doc.text(
+        `หน้า ${p + 1} / ${Math.ceil(withPhotos.length / perPage)}  |  แสดงอุปกรณ์ที่มีรูป ${withPhotos.length} รายการ`,
+        marginX,
+        18,
+      );
+
+      const slice = withPhotos.slice(p * perPage, (p + 1) * perPage);
+      for (let idx = 0; idx < slice.length; idx++) {
+        const item = slice[idx];
+        const col = idx % cols;
+        const row = Math.floor(idx / cols);
+        const x = marginX + col * cellW;
+        const y = marginY + row * cellH;
+        const rawUrl = item.images[0];
+
+        // draw border
+        doc.setDrawColor(220, 220, 220);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(x, y, cellW - 3, cellH, 2, 2, "S");
+
+        // draw image
+        try {
+          const b64 = await fetchImageAsBase64(rawUrl);
+          if (b64) {
+            const fmt = b64.startsWith("data:image/png") ? "PNG" : "JPEG";
+            doc.addImage(b64, fmt, x + 1.5, y + 1.5, cellW - 6, imgH - 3);
+          }
+        } catch { /* skip broken image */ }
+
+        // label: code + brand/model
+        const labelY = y + imgH + 3.5;
+        doc.setFontSize(8);
+        doc.setTextColor(80, 80, 80);
+        const brandModel = [item.brand, item.model].filter(Boolean).join(" - ");
+        doc.text(`${item.itemCode} ${brandModel ? `(${brandModel})` : ""}`, x + 2, labelY);
+
+        // name
+        doc.setFontSize(9);
+        doc.setTextColor(20, 20, 20);
+        const name = item.itemName.length > 28 ? item.itemName.slice(0, 26) + "…" : item.itemName;
+        doc.text(name, x + 2, labelY + 4.5);
+
+        // count result
+        doc.setFontSize(8);
+        if (item.actualQuantity == null) {
+          doc.setTextColor(156, 163, 175);
+          doc.text(`ยังไม่ได้นับ (ยอดเดิม: ${item.expectedQuantity} ${item.unit})`, x + 2, labelY + 8.5);
+        } else {
+          const diff = item.actualQuantity - item.expectedQuantity;
+          if (diff === 0) {
+            doc.setTextColor(16, 185, 129); // emerald
+            doc.text(`นับได้: ${item.actualQuantity} ${item.unit} (ตรงตามระบบ)`, x + 2, labelY + 8.5);
+          } else if (diff > 0) {
+            doc.setTextColor(29, 78, 216); // blue
+            doc.text(`นับได้: ${item.actualQuantity} ${item.unit} (เกิน +${diff})`, x + 2, labelY + 8.5);
+          } else {
+            doc.setTextColor(220, 38, 38); // red
+            doc.text(`นับได้: ${item.actualQuantity} ${item.unit} (ขาด ${diff})`, x + 2, labelY + 8.5);
+          }
+        }
+        doc.setTextColor(0, 0, 0);
+      }
+    }
+  }
+
   const cleanName = session.name.replace(/[^a-zA-Z0-9ก-๙_-]/g, "_");
   doc.save(`stoxy-audit-${cleanName}-${dateStr()}.pdf`);
 }
@@ -517,6 +616,7 @@ export function exportAuditExcel(session: AuditSession, inventoryItems: Inventor
     "ผลต่าง",
     "หน่วย",
     "สถานะการนับ",
+    "รูปภาพ",
     "หมายเหตุ",
   ];
 
@@ -544,6 +644,7 @@ export function exportAuditExcel(session: AuditSession, inventoryItems: Inventor
       diffVal,
       inv?.unit ?? "ชิ้น",
       statusText,
+      (inv?.images ?? [])[0] ?? "-",
       i.notes ?? "",
     ];
   });
