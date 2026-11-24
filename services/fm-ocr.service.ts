@@ -352,9 +352,9 @@ export async function parseFMPdf(file: File): Promise<ParsedFMData> {
     if (typeof DecompressionStream !== "undefined") {
       try {
         const ds = new DecompressionStream("deflate");
-        const resp = new Response(s).body?.pipeThrough(ds);
+        const resp = new Response(new Blob([s as any])).body?.pipeThrough(ds);
         if (resp) {
-          const ab = await new Response(resp).arrayBuffer();
+          const ab = await new Response(resp as any).arrayBuffer();
           txt = new TextDecoder("latin1").decode(new Uint8Array(ab));
         }
       } catch (err) {

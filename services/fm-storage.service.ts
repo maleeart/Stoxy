@@ -177,7 +177,7 @@ export async function uploadFMFile(file: File, folder = "fm_documents"): Promise
 export async function resolveAttachmentUrl(url: string): Promise<string> {
   if (!url) return "";
 
-  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/")) {
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/") || url.startsWith("blob:")) {
     return url;
   }
 
