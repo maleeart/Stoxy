@@ -16,7 +16,7 @@ import {
 import { db } from "@/lib/firebase";
 import { recordStockMovement } from "./inventory.service";
 import { notifyLine } from "@/lib/notifyLine";
-import type { FMWorkOrder, FMWorkOrderItem, InventoryItem } from "@/types";
+import type { FMWorkOrder, FMWorkOrderItem, FMWorkOrderStatus, InventoryItem } from "@/types";
 
 const COL = "fm_workorders";
 
