@@ -5,7 +5,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { MobileHeader } from "@/components/layout/MobileHeader";
 import { getFMWorkOrders, createFMWorkOrder } from "@/services/fm.service";
-import { getAllUsers } from "@/services/auth.service";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Wrench, Plus, Search, Clock, CheckCircle2, AlertTriangle,
@@ -81,25 +80,14 @@ export default function FMWorkOrdersPage() {
   const [isOcrScanning, setIsOcrScanning] = useState(false);
   const [ocrTab, setOcrTab] = useState<"file" | "text">("file");
   const [ocrTextInput, setOcrTextInput] = useState("");
-  const [assignedTechnicianId, setAssignedTechnicianId] = useState("");
-  const [assignedTechnicianName, setAssignedTechnicianName] = useState("");
-  const [assignedDepartment, setAssignedDepartment] = useState("");
-  const [assignorName, setAssignorName] = useState("");
+  const currentUserName =
+    stoxyUser?.displayName || stoxyUser?.nickname || stoxyUser?.email || "ผู้ใช้งานระบบ";
+  const currentUserDepartment = stoxyUser?.department || "";
 
   const { data: workOrders = [], isLoading } = useQuery({
     queryKey: ["fm_workorders"],
     queryFn: getFMWorkOrders,
   });
-
-  const { data: allUsers = [] } = useQuery({
-    queryKey: ["all_users"],
-    queryFn: getAllUsers,
-    enabled: isAdmin && showCreateModal,
-  });
-
-  const staffUsers = allUsers.filter(
-    (u) => u.role === "staff" || u.role === "admin" || u.role === "manager"
-  );
 
   const resetForm = () => {
     setWorkOrderNumber("");
@@ -118,10 +106,6 @@ export default function FMWorkOrdersPage() {
     setScannedFileName("");
     setScannedFieldCount(0);
     setIsOcrScanning(false);
-    setAssignedTechnicianId("");
-    setAssignedTechnicianName("");
-    setAssignedDepartment("");
-    setAssignorName("");
   };
 
   const handlePdfScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,9 +134,6 @@ export default function FMWorkOrdersPage() {
       if (parsed.title) setTitle(parsed.title);
       if (parsed.description) setDescription(parsed.description);
       if (parsed.location) setLocation(parsed.location);
-      if (parsed.assignedTechnicianName) setAssignedTechnicianName(parsed.assignedTechnicianName);
-      if (parsed.assignedDepartment) setAssignedDepartment(parsed.assignedDepartment);
-      if (parsed.assignorName) setAssignorName(parsed.assignorName);
 
       setScannedFileName(file.name);
       setScannedFieldCount(parsed.fieldsDetectedCount);
@@ -187,9 +168,6 @@ export default function FMWorkOrdersPage() {
     if (parsed.title) setTitle(parsed.title);
     if (parsed.description) setDescription(parsed.description);
     if (parsed.location) setLocation(parsed.location);
-    if (parsed.assignedTechnicianName) setAssignedTechnicianName(parsed.assignedTechnicianName);
-    if (parsed.assignedDepartment) setAssignedDepartment(parsed.assignedDepartment);
-    if (parsed.assignorName) setAssignorName(parsed.assignorName);
 
     setScannedFileName("ข้อความจาก FreeThaiOCR / dr-kana");
     setScannedFieldCount(parsed.fieldsDetectedCount);
@@ -213,9 +191,6 @@ export default function FMWorkOrdersPage() {
     setTitle("RQ-2026-000136 ประกอบและติดตั้งพัดลมติดผนังขนาด 30 นิ้ว จำนวน 4 ตัว");
     setDescription("RQ-2026-000136 ประกอบและติดตั้งพัดลมติดผนังขนาด 30 นิ้ว จำนวน 4 ตัว / โรงอาหาร อหข. / งามพล จุมรี ติดต่อ 69605");
     setLocation("โรงอาหาร อหข.");
-    setAssignedTechnicianName("นายตวงเพชร ชัยยานนท์");
-    setAssignedDepartment("รวธ. ชธธ. กบห-ธ. หบท-ธ.");
-    setAssignorName("นายตวงเพชร ชัยยานนท์");
     setScannedFileName("(ตัวอย่าง) ใบงาน FM 6090.pdf");
     setScannedFieldCount(15);
     toast.info("โหลดข้อมูลตัวอย่าง FM 6090 เรียบร้อยแล้ว");
@@ -251,10 +226,11 @@ export default function FMWorkOrdersPage() {
         title: title.trim(),
         description: description.trim() || undefined,
         location: location.trim(),
-        assignedTechnicianId: assignedTechnicianId || undefined,
-        assignedTechnicianName: assignedTechnicianName.trim() || undefined,
-        assignedDepartment: assignedDepartment.trim() || undefined,
-        assignorName: assignorName.trim() || undefined,
+        assignedTechnicianId: stoxyUser?.uid || undefined,
+        assignedTechnicianName: currentUserName,
+        assignedDepartment: currentUserDepartment || undefined,
+        assignedEmail: stoxyUser?.email || undefined,
+        assignedPhone: stoxyUser?.phone || undefined,
         createdBy: stoxyUser?.uid ?? "",
       });
     },
@@ -908,137 +884,36 @@ export default function FMWorkOrdersPage() {
                   </div>
                 </div>
 
-                {/* Section: ผู้ดำเนินการ (ช่าง) & ผู้มอบหมาย */}
-                <div className="p-3.5 bg-blue-50/50 dark:bg-blue-900/20 rounded-2xl space-y-3 border border-blue-100 dark:border-blue-800">
-                  <p className="text-xs font-bold text-blue-900 dark:text-blue-300 uppercase tracking-wider flex items-center gap-1.5">
-                    <Wrench className="w-3.5 h-3.5 text-[#1D4ED8]" /> ผู้ดำเนินการ & ผู้มอบหมายงาน
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
-                        มอบหมายช่างผู้รับผิดชอบ (เลือกกลุ่ม หรือ รายบุคคล)
-                      </label>
-                      <select
-                        value={assignedTechnicianId}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setAssignedTechnicianId(val);
-
-                          // Handle Groups
-                          if (val === "group:all") {
-                            setAssignedTechnicianName("ทีมช่างทั้งหมด");
-                            setAssignedDepartment("ฝ่ายซ่อมบำรุง");
-                          } else if (val === "group:electrical") {
-                            setAssignedTechnicianName("กลุ่มช่างไฟฟ้า");
-                            setAssignedDepartment("แผนกไฟฟ้า");
-                          } else if (val === "group:maintenance") {
-                            setAssignedTechnicianName("กลุ่มช่างซ่อมบำรุง");
-                            setAssignedDepartment("แผนกซ่อมบำรุงอาคาร");
-                          } else if (val === "group:plumbing") {
-                            setAssignedTechnicianName("กลุ่มช่างประปา");
-                            setAssignedDepartment("แผนกสุขาภิบาลและประปา");
-                          } else if (val === "group:aircon") {
-                            setAssignedTechnicianName("กลุ่มช่างระบบปรับอากาศ");
-                            setAssignedDepartment("แผนกเครื่องกลและปรับอากาศ");
-                          } else if (val === "custom") {
-                            setAssignedTechnicianName("");
-                          } else if (val === "") {
-                            setAssignedTechnicianName("");
-                          } else {
-                            // Individual user
-                            const u = staffUsers.find((x) => x.uid === val);
-                            if (u) {
-                              setAssignedTechnicianName(u.displayName || u.email || "");
-                              if (u.department) setAssignedDepartment(u.department);
-                            }
-                          }
-                        }}
-                        className="w-full px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
-                      >
-                        <option value="">-- ไม่ระบุช่างเจาะจง (ช่างทุกคนเห็น) --</option>
-                        <optgroup label="👥 มอบหมายเป็นกลุ่มช่าง">
-                          <option value="group:all">👥 ทีมช่างทั้งหมด (ทุกคนเข้าถึงได้)</option>
-                          <option value="group:electrical">⚡ กลุ่มช่างไฟฟ้า</option>
-                          <option value="group:maintenance">🔧 กลุ่มช่างซ่อมบำรุง / อาคาร</option>
-                          <option value="group:plumbing">💧 กลุ่มช่างประปา</option>
-                          <option value="group:aircon">❄️ กลุ่มช่างระบบปรับอากาศ</option>
-                        </optgroup>
-                        <optgroup label="👤 มอบหมายช่างรายบุคคล">
-                          {staffUsers.map((u) => (
-                            <option key={u.uid} value={u.uid}>
-                              👤 {u.displayName || u.email} ({u.role})
-                            </option>
-                          ))}
-                        </optgroup>
-                        <option value="custom">✏️ พิมพ์ระบุเอง</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
-                        ชื่อช่างผู้ดำเนินการ / กลุ่มช่าง (แก้ไข/พิมพ์ได้)
-                      </label>
-                      <input
-                        type="text"
-                        value={assignedTechnicianName}
-                        onChange={(e) => setAssignedTechnicianName(e.target.value)}
-                        placeholder="เช่น นายตวงเพชร ชัยยานนท์ หรือ กลุ่มช่างไฟฟ้า"
-                        className="w-full px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
-                      />
-                    </div>
+                {/* Section: ผู้ดำเนินการ (ดึงข้อมูลผู้ใช้งานขณะนั้นอัตโนมัติ ไม่ต้องกรอก) */}
+                <div className="p-3.5 bg-blue-50/60 dark:bg-blue-900/20 rounded-2xl space-y-2 border border-blue-100 dark:border-blue-800">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-blue-900 dark:text-blue-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <Wrench className="w-3.5 h-3.5 text-[#1D4ED8]" /> ผู้ดำเนินการ
+                    </p>
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/60 text-[#1D4ED8] dark:text-blue-300">
+                      ระบุอัตโนมัติตามผู้ใช้งานขณะนี้
+                    </span>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
-                        หน่วยงานช่าง
-                      </label>
-                      <input
-                        type="text"
-                        value={assignedDepartment}
-                        onChange={(e) => setAssignedDepartment(e.target.value)}
-                        placeholder="เช่น รวธ. ชธธ. กบห-ธ."
-                        className="w-full px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
-                      />
+                  <div className="flex items-center gap-3 p-2.5 bg-white dark:bg-gray-800/90 rounded-xl border border-blue-100 dark:border-blue-800/50 shadow-xs">
+                    <div className="w-10 h-10 rounded-xl bg-[#1D4ED8] text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">
+                      {(stoxyUser?.displayName || stoxyUser?.nickname || "U").slice(0, 2).toUpperCase()}
                     </div>
-                    <div>
-                      <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
-                        ผู้มอบหมายงาน (เลือก หรือ พิมพ์ระบุ)
-                      </label>
-                      <div className="space-y-1.5">
-                        <select
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            if (val === "self") {
-                              setAssignorName(stoxyUser?.displayName || stoxyUser?.nickname || "ผู้ดูแลระบบ");
-                            } else if (val === "custom") {
-                              setAssignorName("");
-                            } else if (val) {
-                              setAssignorName(val);
-                            }
-                          }}
-                          className="w-full px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
-                        >
-                          <option value="">-- เลือกผู้มอบหมายงาน --</option>
-                          <option value="self">
-                            👤 ฉันเอง ({stoxyUser?.displayName || stoxyUser?.nickname || "ผู้ดูแลระบบ"})
-                          </option>
-                          {allUsers
-                            .filter((u) => u.role === "admin" || u.role === "manager" || u.role === "staff")
-                            .map((u) => (
-                              <option key={u.uid} value={u.displayName || u.email || ""}>
-                                👤 {u.displayName || u.email}
-                              </option>
-                            ))}
-                          <option value="custom">✏️ พิมพ์ระบุเอง</option>
-                        </select>
-                        <input
-                          type="text"
-                          value={assignorName}
-                          onChange={(e) => setAssignorName(e.target.value)}
-                          placeholder="พิมพ์ชื่อผู้มอบหมายงาน..."
-                          className="w-full px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
-                        />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-bold text-gray-900 dark:text-white truncate">
+                          {currentUserName}
+                        </p>
+                        {stoxyUser?.role && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950 text-[#1D4ED8] dark:text-blue-300 font-bold uppercase">
+                            {stoxyUser.role}
+                          </span>
+                        )}
                       </div>
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                        {currentUserDepartment ? `สังกัด / แผนก: ${currentUserDepartment}` : stoxyUser?.email || ""}
+                        {stoxyUser?.phone ? ` • โทร: ${stoxyUser.phone}` : ""}
+                      </p>
                     </div>
                   </div>
                 </div>

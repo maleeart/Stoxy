@@ -110,14 +110,19 @@ export async function submitFMWorkOrderItems(
   const wo = snap.data() as FMWorkOrder;
 
   const now = Timestamp.now();
-  await updateDoc(ref, {
+  const updateData: Record<string, any> = {
     items,
     status: "pending_review",
     submittedBy: submitterId,
     submittedByName: submitterName,
     submittedAt: now,
     updatedAt: now,
-  });
+  };
+  if (!wo.assignedTechnicianName) {
+    updateData.assignedTechnicianName = submitterName;
+    updateData.assignedTechnicianId = submitterId;
+  }
+  await updateDoc(ref, updateData);
 
   const itemCount = items.reduce((s, i) => s + i.quantity, 0);
   notifyLine(
@@ -314,7 +319,7 @@ export async function completeFMWorkOrderWithoutItems(
   const wo = snap.data() as FMWorkOrder;
 
   const now = Timestamp.now();
-  await updateDoc(ref, {
+  const updateData: Record<string, any> = {
     items: [],
     status: "pending_review",
     completedWithoutItems: true,
@@ -323,7 +328,12 @@ export async function completeFMWorkOrderWithoutItems(
     submittedAt: now,
     updatedAt: now,
     ...(notes ? { notes: wo.notes ? `${wo.notes}\n[ดำเนินการแล้ว (ไม่เบิกของ)]: ${notes}` : `[ดำเนินการแล้ว (ไม่เบิกของ)]: ${notes}` } : {}),
-  });
+  };
+  if (!wo.assignedTechnicianName) {
+    updateData.assignedTechnicianName = userName;
+    updateData.assignedTechnicianId = userId;
+  }
+  await updateDoc(ref, updateData);
 
   notifyLine(
     `🔔 ดำเนินการแล้ว (ไม่เบิกของ) ใบงาน FM-${wo.workOrderNumber} รอตรวจสอบ\nเรื่อง: ${wo.title}\nผู้ดำเนินการ: ${userName}\nสถานะ: ช่างดำเนินการแล้วโดยไม่ใช้อุปกรณ์ รอผู้ดูแลตรวจสอบและอนุมัติ`

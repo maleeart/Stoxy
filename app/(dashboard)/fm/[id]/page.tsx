@@ -691,18 +691,30 @@ export default function FMWorkOrderDetailPage() {
           {/* Technician & Assignor */}
           <div className="p-4 rounded-2xl bg-blue-50/40 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 space-y-2 text-xs">
             <p className="font-bold text-blue-900 dark:text-blue-300 flex items-center gap-1.5 pb-1 border-b border-blue-200/60 dark:border-blue-800">
-              <Wrench className="w-3.5 h-3.5 text-[#1D4ED8]" /> ผู้ดำเนินการ & ผู้มอบหมาย
+              <Wrench className="w-3.5 h-3.5 text-[#1D4ED8]" /> ข้อมูลผู้ดำเนินการ
             </p>
             <p>
-              <span className="text-gray-400">ผู้ดำเนินการ (ช่าง):</span>{" "}
+              <span className="text-gray-400">ผู้ดำเนินการ:</span>{" "}
               <span className="font-semibold text-gray-900 dark:text-white">
-                {workOrder.assignedTechnicianName || "ไม่ได้ระบุช่างเจาะจง (ช่างทุกคน)"}
+                {workOrder.assignedTechnicianName || "ผู้ใช้งานระบบ"}
               </span>
             </p>
             {workOrder.assignedDepartment && (
               <p>
-                <span className="text-gray-400">หน่วยงานช่าง:</span>{" "}
+                <span className="text-gray-400">สังกัด / หน่วยงาน:</span>{" "}
                 <span className="text-gray-800 dark:text-gray-200">{workOrder.assignedDepartment}</span>
+              </p>
+            )}
+            {workOrder.assignedPhone && (
+              <p>
+                <span className="text-gray-400">โทรศัพท์:</span>{" "}
+                <span className="text-gray-800 dark:text-gray-200">{workOrder.assignedPhone}</span>
+              </p>
+            )}
+            {workOrder.assignedEmail && (
+              <p>
+                <span className="text-gray-400">อีเมล:</span>{" "}
+                <span className="text-gray-800 dark:text-gray-200">{workOrder.assignedEmail}</span>
               </p>
             )}
             {workOrder.assignorName && (
