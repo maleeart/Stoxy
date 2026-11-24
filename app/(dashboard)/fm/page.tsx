@@ -80,6 +80,7 @@ export default function FMWorkOrdersPage() {
   const [isOcrScanning, setIsOcrScanning] = useState(false);
   const [ocrTab, setOcrTab] = useState<"file" | "text">("file");
   const [ocrTextInput, setOcrTextInput] = useState("");
+  const [assignorName, setAssignorName] = useState("");
   const currentUserName =
     stoxyUser?.displayName || stoxyUser?.nickname || stoxyUser?.email || "ผู้ใช้งานระบบ";
   const currentUserDepartment = stoxyUser?.department || "";
@@ -103,6 +104,7 @@ export default function FMWorkOrdersPage() {
     setTitle("");
     setDescription("");
     setLocation("");
+    setAssignorName("");
     setScannedFileName("");
     setScannedFieldCount(0);
     setIsOcrScanning(false);
@@ -134,6 +136,7 @@ export default function FMWorkOrdersPage() {
       if (parsed.title) setTitle(parsed.title);
       if (parsed.description) setDescription(parsed.description);
       if (parsed.location) setLocation(parsed.location);
+      if (parsed.assignorName) setAssignorName(parsed.assignorName);
 
       setScannedFileName(file.name);
       setScannedFieldCount(parsed.fieldsDetectedCount);
@@ -168,6 +171,7 @@ export default function FMWorkOrdersPage() {
     if (parsed.title) setTitle(parsed.title);
     if (parsed.description) setDescription(parsed.description);
     if (parsed.location) setLocation(parsed.location);
+    if (parsed.assignorName) setAssignorName(parsed.assignorName);
 
     setScannedFileName("ข้อความจาก FreeThaiOCR / dr-kana");
     setScannedFieldCount(parsed.fieldsDetectedCount);
@@ -191,6 +195,7 @@ export default function FMWorkOrdersPage() {
     setTitle("RQ-2026-000136 ประกอบและติดตั้งพัดลมติดผนังขนาด 30 นิ้ว จำนวน 4 ตัว");
     setDescription("RQ-2026-000136 ประกอบและติดตั้งพัดลมติดผนังขนาด 30 นิ้ว จำนวน 4 ตัว / โรงอาหาร อหข. / งามพล จุมรี ติดต่อ 69605");
     setLocation("โรงอาหาร อหข.");
+    setAssignorName("นายตวงเพชร ชัยยานนท์");
     setScannedFileName("(ตัวอย่าง) ใบงาน FM 6090.pdf");
     setScannedFieldCount(15);
     toast.info("โหลดข้อมูลตัวอย่าง FM 6090 เรียบร้อยแล้ว");
@@ -226,11 +231,11 @@ export default function FMWorkOrdersPage() {
         title: title.trim(),
         description: description.trim() || undefined,
         location: location.trim(),
-        assignedTechnicianId: stoxyUser?.uid || undefined,
-        assignedTechnicianName: currentUserName,
-        assignedDepartment: currentUserDepartment || undefined,
-        assignedEmail: stoxyUser?.email || undefined,
-        assignedPhone: stoxyUser?.phone || undefined,
+        assignorName: assignorName.trim() || undefined,
+        // Leave technician & department empty initially until someone works on the ticket
+        assignedTechnicianId: undefined,
+        assignedTechnicianName: undefined,
+        assignedDepartment: undefined,
         createdBy: stoxyUser?.uid ?? "",
       });
     },
@@ -884,37 +889,28 @@ export default function FMWorkOrdersPage() {
                   </div>
                 </div>
 
-                {/* Section: ผู้ดำเนินการ (ดึงข้อมูลผู้ใช้งานขณะนั้นอัตโนมัติ ไม่ต้องกรอก) */}
-                <div className="p-3.5 bg-blue-50/60 dark:bg-blue-900/20 rounded-2xl space-y-2 border border-blue-100 dark:border-blue-800">
+                {/* Section: ผู้มอบหมายงาน (คงไว้ตามเดิม) */}
+                <div className="p-3.5 bg-gray-50 dark:bg-gray-700/50 rounded-2xl space-y-2 border border-gray-100 dark:border-gray-700">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-bold text-blue-900 dark:text-blue-300 uppercase tracking-wider flex items-center gap-1.5">
-                      <Wrench className="w-3.5 h-3.5 text-[#1D4ED8]" /> ผู้ดำเนินการ
+                    <p className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <User className="w-3.5 h-3.5 text-[#1D4ED8]" /> ข้อมูลการมอบหมายงาน
                     </p>
-                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/60 text-[#1D4ED8] dark:text-blue-300">
-                      ระบุอัตโนมัติตามผู้ใช้งานขณะนี้
+                    <span className="text-[11px] text-gray-400">
+                      (ผู้ดำเนินการจะระบุอัตโนมัติเมื่อมีผู้เข้ามาดำเนินการใบงาน)
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-3 p-2.5 bg-white dark:bg-gray-800/90 rounded-xl border border-blue-100 dark:border-blue-800/50 shadow-xs">
-                    <div className="w-10 h-10 rounded-xl bg-[#1D4ED8] text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">
-                      {(stoxyUser?.displayName || stoxyUser?.nickname || "U").slice(0, 2).toUpperCase()}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="text-xs font-bold text-gray-900 dark:text-white truncate">
-                          {currentUserName}
-                        </p>
-                        {stoxyUser?.role && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950 text-[#1D4ED8] dark:text-blue-300 font-bold uppercase">
-                            {stoxyUser.role}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                        {currentUserDepartment ? `สังกัด / แผนก: ${currentUserDepartment}` : stoxyUser?.email || ""}
-                        {stoxyUser?.phone ? ` • โทร: ${stoxyUser.phone}` : ""}
-                      </p>
-                    </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
+                      ผู้มอบหมายงาน
+                    </label>
+                    <input
+                      type="text"
+                      value={assignorName}
+                      onChange={(e) => setAssignorName(e.target.value)}
+                      placeholder="ระบุชื่อผู้มอบหมายงาน (ดึงจากเอกสาร หรือ พิมพ์เอง)..."
+                      className="w-full px-3.5 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                    />
                   </div>
                 </div>
               </div>

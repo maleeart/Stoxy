@@ -15,6 +15,7 @@ import {
   setFMWorkOrderWaitingParts,
   resumeFMWorkOrderToPending,
   completeFMWorkOrderWithoutItems,
+  claimFMWorkOrder,
   adminUpdateFMWorkOrderStatus,
 } from "@/services/fm.service";
 import { useInventoryItems } from "@/hooks/useInventory";
@@ -112,7 +113,8 @@ export default function FMWorkOrderDetailPage() {
         id,
         workingItems,
         stoxyUser?.uid ?? "",
-        stoxyUser?.displayName || stoxyUser?.nickname || "ช่างผู้ดำเนินการ"
+        stoxyUser?.displayName || stoxyUser?.nickname || "ช่างผู้ดำเนินการ",
+        stoxyUser?.department
       ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["fm_workorder", id] });
@@ -124,7 +126,14 @@ export default function FMWorkOrderDetailPage() {
   });
 
   const updateItemsMut = useMutation({
-    mutationFn: () => updateFMWorkOrderItems(id, workingItems),
+    mutationFn: () =>
+      updateFMWorkOrderItems(
+        id,
+        workingItems,
+        stoxyUser?.uid ?? "",
+        stoxyUser?.displayName || stoxyUser?.nickname || "ช่างผู้ดำเนินการ",
+        stoxyUser?.department
+      ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["fm_workorder", id] });
       qc.invalidateQueries({ queryKey: ["fm_workorders"] });
@@ -212,13 +221,31 @@ export default function FMWorkOrderDetailPage() {
       completeFMWorkOrderWithoutItems(
         id,
         stoxyUser?.uid ?? "",
-        stoxyUser?.displayName || stoxyUser?.nickname || "ผู้ดำเนินการ"
+        stoxyUser?.displayName || stoxyUser?.nickname || "ผู้ดำเนินการ",
+        undefined,
+        stoxyUser?.department
       ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["fm_workorder", id] });
       qc.invalidateQueries({ queryKey: ["fm_workorders"] });
       qc.invalidateQueries({ queryKey: ["fm_active_count"] });
       toast.success("ส่งดำเนินการแล้ว (ไม่เบิกของ) รอผู้ดูแลอนุมัติเรียบร้อยแล้ว");
+    },
+    onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
+  });
+
+  const claimWorkOrderMut = useMutation({
+    mutationFn: () =>
+      claimFMWorkOrder(
+        id,
+        stoxyUser?.uid ?? "",
+        stoxyUser?.displayName || stoxyUser?.nickname || "ผู้ใช้งานระบบ",
+        stoxyUser?.department
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["fm_workorder", id] });
+      qc.invalidateQueries({ queryKey: ["fm_workorders"] });
+      toast.success("บันทึกชื่อคุณเป็นผู้ดำเนินการใบงานนี้เรียบร้อยแล้ว");
     },
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
   });
@@ -690,21 +717,42 @@ export default function FMWorkOrderDetailPage() {
 
           {/* Technician & Assignor */}
           <div className="p-4 rounded-2xl bg-blue-50/40 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 space-y-2 text-xs">
-            <p className="font-bold text-blue-900 dark:text-blue-300 flex items-center gap-1.5 pb-1 border-b border-blue-200/60 dark:border-blue-800">
-              <Wrench className="w-3.5 h-3.5 text-[#1D4ED8]" /> ข้อมูลผู้ดำเนินการ
-            </p>
+            <div className="flex items-center justify-between pb-1 border-b border-blue-200/60 dark:border-blue-800">
+              <p className="font-bold text-blue-900 dark:text-blue-300 flex items-center gap-1.5">
+                <Wrench className="w-3.5 h-3.5 text-[#1D4ED8]" /> ข้อมูลผู้ดำเนินการ & ผู้มอบหมาย
+              </p>
+              {!workOrder.assignedTechnicianName &&
+                workOrder.status !== "completed" &&
+                workOrder.status !== "cancelled" && (
+                  <button
+                    type="button"
+                    onClick={() => claimWorkOrderMut.mutate()}
+                    disabled={claimWorkOrderMut.isPending}
+                    className="px-2.5 py-1 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-lg text-[11px] font-bold shadow-xs transition-all flex items-center gap-1 disabled:opacity-50"
+                  >
+                    ✋ รับเป็นผู้ดำเนินการ
+                  </button>
+                )}
+            </div>
+
             <p>
               <span className="text-gray-400">ผู้ดำเนินการ:</span>{" "}
-              <span className="font-semibold text-gray-900 dark:text-white">
-                {workOrder.assignedTechnicianName || "ผู้ใช้งานระบบ"}
+              {workOrder.assignedTechnicianName ? (
+                <span className="font-semibold text-gray-900 dark:text-white">
+                  {workOrder.assignedTechnicianName}
+                </span>
+              ) : (
+                <span className="text-amber-600 dark:text-amber-400 font-medium italic">
+                  - (เว้นว่างไว้ รอผู้ดำเนินการเข้ามาทำรายการ)
+                </span>
+              )}
+            </p>
+            <p>
+              <span className="text-gray-400">สังกัด / หน่วยงานช่าง:</span>{" "}
+              <span className="text-gray-800 dark:text-gray-200">
+                {workOrder.assignedDepartment || "-"}
               </span>
             </p>
-            {workOrder.assignedDepartment && (
-              <p>
-                <span className="text-gray-400">สังกัด / หน่วยงาน:</span>{" "}
-                <span className="text-gray-800 dark:text-gray-200">{workOrder.assignedDepartment}</span>
-              </p>
-            )}
             {workOrder.assignedPhone && (
               <p>
                 <span className="text-gray-400">โทรศัพท์:</span>{" "}
@@ -717,15 +765,15 @@ export default function FMWorkOrderDetailPage() {
                 <span className="text-gray-800 dark:text-gray-200">{workOrder.assignedEmail}</span>
               </p>
             )}
-            {workOrder.assignorName && (
-              <p>
-                <span className="text-gray-400">ผู้มอบหมายงาน:</span>{" "}
-                <span className="text-gray-800 dark:text-gray-200">{workOrder.assignorName}</span>
-              </p>
-            )}
+            <p className="pt-1 border-t border-dashed border-blue-100 dark:border-blue-900/60">
+              <span className="text-gray-400">ผู้มอบหมายงาน:</span>{" "}
+              <span className="font-semibold text-gray-900 dark:text-white">
+                {workOrder.assignorName || "-"}
+              </span>
+            </p>
             {workOrder.assignedDate && (
               <p>
-                <span className="text-gray-400">วันที่มอบหมาย:</span>{" "}
+                <span className="text-gray-400">วันที่มอบหมาย / รับงาน:</span>{" "}
                 <span className="text-gray-800 dark:text-gray-200">
                   {formatDate(workOrder.assignedDate)}
                 </span>

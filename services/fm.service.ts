@@ -102,7 +102,8 @@ export async function submitFMWorkOrderItems(
   id: string,
   items: FMWorkOrderItem[],
   submitterId: string,
-  submitterName: string
+  submitterName: string,
+  submitterDepartment?: string
 ): Promise<void> {
   const ref = doc(db, COL, id);
   const snap = await getDoc(ref);
@@ -121,24 +122,43 @@ export async function submitFMWorkOrderItems(
   if (!wo.assignedTechnicianName) {
     updateData.assignedTechnicianName = submitterName;
     updateData.assignedTechnicianId = submitterId;
+    if (submitterDepartment) {
+      updateData.assignedDepartment = submitterDepartment;
+    }
+    updateData.assignedDate = now;
   }
   await updateDoc(ref, updateData);
 
   const itemCount = items.reduce((s, i) => s + i.quantity, 0);
   notifyLine(
-    `🔔 ส่งรายการอุปกรณ์ใบงาน FM-${wo.workOrderNumber} รอตรวจสอบ\nเรื่อง: ${wo.title}\nผู้ดำเนินการ: ${submitterName}\nอุปกรณ์: ${items.length} รายการ (${itemCount} ชิ้น)\nกรุณาเข้าตรวจสอบและอนุมัติในระบบ`
+    `🔔 ส่งรายการอุปกรณ์ใบงาน FM-${wo.workOrderNumber} รอตรวจสอบ\nเรื่อง: ${wo.title}\nผู้ดำเนินการ: ${wo.assignedTechnicianName || submitterName}\nอุปกรณ์: ${items.length} รายการ (${itemCount} ชิ้น)\nกรุณาเข้าตรวจสอบและอนุมัติในระบบ`
   );
 }
 
 export async function updateFMWorkOrderItems(
   id: string,
-  items: FMWorkOrderItem[]
+  items: FMWorkOrderItem[],
+  updaterId?: string,
+  updaterName?: string,
+  updaterDepartment?: string
 ): Promise<void> {
   const ref = doc(db, COL, id);
-  await updateDoc(ref, {
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error("ไม่พบใบแจ้งงาน FM");
+  const wo = snap.data() as FMWorkOrder;
+
+  const now = Timestamp.now();
+  const updateData: Record<string, any> = {
     items,
-    updatedAt: Timestamp.now(),
-  });
+    updatedAt: now,
+  };
+  if (!wo.assignedTechnicianName && updaterName) {
+    updateData.assignedTechnicianName = updaterName;
+    if (updaterId) updateData.assignedTechnicianId = updaterId;
+    if (updaterDepartment) updateData.assignedDepartment = updaterDepartment;
+    updateData.assignedDate = now;
+  }
+  await updateDoc(ref, updateData);
 }
 
 export async function approveFMWorkOrder(
@@ -311,7 +331,8 @@ export async function completeFMWorkOrderWithoutItems(
   id: string,
   userId: string,
   userName: string,
-  notes?: string
+  notes?: string,
+  userDepartment?: string
 ): Promise<void> {
   const ref = doc(db, COL, id);
   const snap = await getDoc(ref);
@@ -332,15 +353,42 @@ export async function completeFMWorkOrderWithoutItems(
   if (!wo.assignedTechnicianName) {
     updateData.assignedTechnicianName = userName;
     updateData.assignedTechnicianId = userId;
+    if (userDepartment) {
+      updateData.assignedDepartment = userDepartment;
+    }
+    updateData.assignedDate = now;
   }
   await updateDoc(ref, updateData);
 
   notifyLine(
-    `🔔 ดำเนินการแล้ว (ไม่เบิกของ) ใบงาน FM-${wo.workOrderNumber} รอตรวจสอบ\nเรื่อง: ${wo.title}\nผู้ดำเนินการ: ${userName}\nสถานะ: ช่างดำเนินการแล้วโดยไม่ใช้อุปกรณ์ รอผู้ดูแลตรวจสอบและอนุมัติ`
+    `🔔 ดำเนินการแล้ว (ไม่เบิกของ) ใบงาน FM-${wo.workOrderNumber} รอตรวจสอบ\nเรื่อง: ${wo.title}\nผู้ดำเนินการ: ${wo.assignedTechnicianName || userName}\nสถานะ: ช่างดำเนินการแล้วโดยไม่ใช้อุปกรณ์ รอผู้ดูแลตรวจสอบและอนุมัติ`
   );
 }
 
 export const submitFMWorkOrderWithoutItems = completeFMWorkOrderWithoutItems;
+
+export async function claimFMWorkOrder(
+  id: string,
+  technicianId: string,
+  technicianName: string,
+  department?: string
+): Promise<void> {
+  const ref = doc(db, COL, id);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error("ไม่พบใบแจ้งงาน FM");
+  const wo = snap.data() as FMWorkOrder;
+  const now = Timestamp.now();
+  await updateDoc(ref, {
+    assignedTechnicianId: technicianId,
+    assignedTechnicianName: technicianName,
+    ...(department ? { assignedDepartment: department } : {}),
+    assignedDate: now,
+    updatedAt: now,
+  });
+  notifyLine(
+    `👤 ช่างรับดำเนินการใบงาน FM-${wo.workOrderNumber}\nเรื่อง: ${wo.title}\nผู้ดำเนินการ: ${technicianName}${department ? ` (${department})` : ""}`
+  );
+}
 
 export async function adminUpdateFMWorkOrderStatus(
   id: string,
