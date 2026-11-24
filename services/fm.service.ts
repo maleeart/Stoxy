@@ -22,7 +22,7 @@ import type { FMWorkOrder, FMWorkOrderItem, FMWorkOrderStatus, InventoryItem } f
 const COL = "fm_workorders";
 
 export async function getFMWorkOrders(): Promise<FMWorkOrder[]> {
-  const q = query(collection(db, COL), orderBy("createdAt", "desc"), limit(100));
+  const q = query(collection(db, COL), orderBy("createdAt", "desc"), limit(500));
   const snap = await getDocs(q);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() } as FMWorkOrder));
 }

@@ -10,9 +10,9 @@ import {
   Wrench, Plus, Search, Clock, CheckCircle2, AlertTriangle,
   ChevronRight, X, FileText, MapPin, User, Building, Calendar,
   Sparkles, UploadCloud, FileUp, Loader2, Trash2, ExternalLink, Users, Download, ClipboardPaste,
-  Image as ImageIcon, Camera,
+  Image as ImageIcon, Camera, ArrowUpDown, Filter, RotateCcw,
 } from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import { formatDate, toDate } from "@/lib/utils";
 import { parseFMPdf, parseFMOcrText } from "@/services/fm-ocr.service";
 import { compressImages } from "@/lib/compress";
 import { toast } from "sonner";
@@ -59,8 +59,19 @@ export default function FMWorkOrdersPage() {
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
   const qc = useQueryClient();
 
+  type SortOption =
+    | "number_desc"
+    | "number_asc"
+    | "requestDate_desc"
+    | "requestDate_asc"
+    | "useDate_asc"
+    | "createdAt_desc";
+
   const [tab, setTab] = useState<"all" | FMWorkOrderStatus>("all");
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("number_desc");
+  const [workTypeFilter, setWorkTypeFilter] = useState<string>("all");
+  const [onlyMyTasks, setOnlyMyTasks] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Create Form State
@@ -339,19 +350,127 @@ export default function FMWorkOrdersPage() {
         w.assignedTechnicianId === stoxyUser?.uid)
   );
 
+  // Distinct work types from work orders
+  const defaultWorkTypes = [
+    "ระบบไฟฟ้า",
+    "ระบบประปา",
+    "ระบบปรับอากาศ",
+    "งานอาคารและสถานที่",
+    "งานทั่วไป",
+  ];
+  const distinctWorkTypes = Array.from(
+    new Set([
+      ...defaultWorkTypes,
+      ...workOrders
+        .map((w) => w.workType?.trim())
+        .filter((t): t is string => Boolean(t)),
+    ])
+  );
+
   const filteredOrders = workOrders
     .filter((w) => {
+      // 1. Status Filter
       if (tab !== "all" && w.status !== tab) return false;
-      if (!search.trim()) return true;
-      const q = search.toLowerCase();
-      return (
-        w.workOrderNumber?.toLowerCase().includes(q) ||
-        w.title?.toLowerCase().includes(q) ||
-        w.location?.toLowerCase().includes(q) ||
-        w.requesterName?.toLowerCase().includes(q) ||
-        w.assignedTechnicianName?.toLowerCase().includes(q)
-      );
+
+      // 2. Work Type Filter
+      if (workTypeFilter !== "all" && w.workType !== workTypeFilter) return false;
+
+      // 3. Only My Tasks Filter
+      if (onlyMyTasks) {
+        const uid = stoxyUser?.uid;
+        const name = (stoxyUser?.displayName || stoxyUser?.nickname || "").toLowerCase();
+        const isMyJob =
+          (uid && w.assignedTechnicianId === uid) ||
+          (name && w.assignedTechnicianName?.toLowerCase().includes(name));
+        if (!isMyJob) return false;
+      }
+
+      // 4. Search Filter
+      if (search.trim()) {
+        const q = search.trim().toLowerCase();
+        const matches =
+          (w.workOrderNumber && w.workOrderNumber.toLowerCase().includes(q)) ||
+          (`fm-${w.workOrderNumber}`.toLowerCase().includes(q)) ||
+          (w.title && w.title.toLowerCase().includes(q)) ||
+          (w.description && w.description.toLowerCase().includes(q)) ||
+          (w.location && w.location.toLowerCase().includes(q)) ||
+          (w.requesterName && w.requesterName.toLowerCase().includes(q)) ||
+          (w.requesterDepartment && w.requesterDepartment.toLowerCase().includes(q)) ||
+          (w.assignedTechnicianName && w.assignedTechnicianName.toLowerCase().includes(q)) ||
+          (w.assignedDepartment && w.assignedDepartment.toLowerCase().includes(q)) ||
+          (w.workType && w.workType.toLowerCase().includes(q)) ||
+          (w.coordinatorName && w.coordinatorName.toLowerCase().includes(q)) ||
+          (w.notes && w.notes.toLowerCase().includes(q));
+        if (!matches) return false;
+      }
+
+      return true;
+    })
+    .sort((a, b) => {
+      // Default: sort by work order number descending (จาก มาก ไป น้อย)
+      if (sortBy === "number_desc") {
+        const numA = a.workOrderNumber || "";
+        const numB = b.workOrderNumber || "";
+        return numB.localeCompare(numA, undefined, { numeric: true, sensitivity: "base" });
+      }
+      if (sortBy === "number_asc") {
+        const numA = a.workOrderNumber || "";
+        const numB = b.workOrderNumber || "";
+        return numA.localeCompare(numB, undefined, { numeric: true, sensitivity: "base" });
+      }
+      if (sortBy === "requestDate_desc") {
+        const timeA = toDate(a.requestDate)?.getTime() || 0;
+        const timeB = toDate(b.requestDate)?.getTime() || 0;
+        return timeB - timeA;
+      }
+      if (sortBy === "requestDate_asc") {
+        const timeA = toDate(a.requestDate)?.getTime() || 0;
+        const timeB = toDate(b.requestDate)?.getTime() || 0;
+        return timeA - timeB;
+      }
+      if (sortBy === "useDate_asc") {
+        const timeA = toDate(a.useDate)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+        const timeB = toDate(b.useDate)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+        return timeA - timeB;
+      }
+      if (sortBy === "createdAt_desc") {
+        const timeA = toDate(a.createdAt)?.getTime() || 0;
+        const timeB = toDate(b.createdAt)?.getTime() || 0;
+        return timeB - timeA;
+      }
+      return 0;
     });
+
+  const hasActiveFilters =
+    Boolean(search.trim()) ||
+    tab !== "all" ||
+    workTypeFilter !== "all" ||
+    onlyMyTasks ||
+    sortBy !== "number_desc";
+
+  const resetAllFilters = () => {
+    setSearch("");
+    setTab("all");
+    setWorkTypeFilter("all");
+    setOnlyMyTasks(false);
+    setSortBy("number_desc");
+  };
+
+  const statusTabs: [string, string, number][] = [
+    ["all", "ทั้งหมด", workOrders.length],
+    ["pending", "รอดำเนินการ", workOrders.filter((w) => w.status === "pending").length],
+    ["waiting_parts", "รอจัดซื้อ/หาอุปกรณ์", workOrders.filter((w) => w.status === "waiting_parts").length],
+    ["pending_review", "รอตรวจสอบ", workOrders.filter((w) => w.status === "pending_review").length],
+    ["completed", "เสร็จสิ้น", workOrders.filter((w) => w.status === "completed").length],
+  ];
+  const rejectedCount = workOrders.filter((w) => w.status === "rejected").length;
+  if (rejectedCount > 0) {
+    statusTabs.push(["rejected", "ส่งกลับแก้ไข", rejectedCount]);
+  }
+  const cancelledCount = workOrders.filter((w) => w.status === "cancelled").length;
+  if (cancelledCount > 0) {
+    statusTabs.push(["cancelled", "ยกเลิก", cancelledCount]);
+  }
 
   return (
     <AppShell title="ใบแจ้งงานซ่อม (FM)">
@@ -432,51 +551,160 @@ export default function FMWorkOrdersPage() {
         )}
       </div>
 
-      {/* Search and Tabs */}
+      {/* Search and Filters */}
       <div className="space-y-3 mb-5">
-        <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="ค้นหาเลขที่ใบงาน, ชื่องาน, สถานที่, ผู้แจ้ง, ช่าง..."
-            className="w-full pl-10 pr-4 py-2.5 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 transition-all"
-          />
+        {/* Search row with Sort By & Work Type controls */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          {/* Search Box */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="ค้นหาเลขที่ใบงาน (เช่น 6090), ชื่องาน, สถานที่, ผู้แจ้ง, ช่าง..."
+              className="w-full pl-10 pr-9 py-2.5 text-xs sm:text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 transition-all shadow-xs"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full transition-colors"
+                title="ล้างข้อความค้นหา"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Quick controls: Sort By & Work Type Filter */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-0.5 sm:pb-0 scrollbar-none">
+            {/* Sort By Select */}
+            <div className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shrink-0 shadow-xs">
+              <ArrowUpDown className="w-3.5 h-3.5 text-[#1D4ED8] shrink-0" />
+              <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 shrink-0">
+                เรียงตาม:
+              </span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                className="text-xs font-bold text-gray-800 dark:text-gray-200 bg-transparent border-none outline-none cursor-pointer pr-1 focus:ring-0"
+              >
+                <option value="number_desc" className="text-gray-900 dark:text-gray-100">
+                  เลขที่ใบงาน (มาก → น้อย)
+                </option>
+                <option value="number_asc" className="text-gray-900 dark:text-gray-100">
+                  เลขที่ใบงาน (น้อย → มาก)
+                </option>
+                <option value="requestDate_desc" className="text-gray-900 dark:text-gray-100">
+                  วันที่แจ้ง (ใหม่ล่าสุด)
+                </option>
+                <option value="requestDate_asc" className="text-gray-900 dark:text-gray-100">
+                  วันที่แจ้ง (เก่าสุด)
+                </option>
+                <option value="useDate_asc" className="text-gray-900 dark:text-gray-100">
+                  วันที่ต้องการใช้ (เร็วสุด)
+                </option>
+                <option value="createdAt_desc" className="text-gray-900 dark:text-gray-100">
+                  วันที่สร้างใบงาน (ล่าสุด)
+                </option>
+              </select>
+            </div>
+
+            {/* Work Type Filter Select */}
+            <div className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shrink-0 shadow-xs">
+              <Filter className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400 shrink-0" />
+              <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 shrink-0">
+                ประเภท:
+              </span>
+              <select
+                value={workTypeFilter}
+                onChange={(e) => setWorkTypeFilter(e.target.value)}
+                className="text-xs font-semibold text-gray-800 dark:text-gray-200 bg-transparent border-none outline-none cursor-pointer pr-1 focus:ring-0"
+              >
+                <option value="all" className="text-gray-900 dark:text-gray-100">
+                  ทุกประเภทงาน
+                </option>
+                {distinctWorkTypes.map((type) => (
+                  <option key={type} value={type} className="text-gray-900 dark:text-gray-100">
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* My Tasks Toggle */}
+            <button
+              type="button"
+              onClick={() => setOnlyMyTasks((prev) => !prev)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs border transition-all shrink-0 shadow-xs ${
+                onlyMyTasks
+                  ? "bg-blue-50 dark:bg-blue-900/40 text-[#1D4ED8] dark:text-blue-300 border-blue-200 dark:border-blue-800 font-bold"
+                  : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium"
+              }`}
+              title="แสดงเฉพาะงานที่ฉันรับผิดชอบ"
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>งานของฉัน</span>
+            </button>
+          </div>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {(
-            [
-              ["all", "ทั้งหมด", workOrders.length],
-              ["pending", "รอดำเนินการ", workOrders.filter((w) => w.status === "pending").length],
-              ["waiting_parts", "รอจัดซื้อ/หาอุปกรณ์", workOrders.filter((w) => w.status === "waiting_parts").length],
-              ["pending_review", "รอตรวจสอบ", workOrders.filter((w) => w.status === "pending_review").length],
-              ["completed", "เสร็จสิ้น", workOrders.filter((w) => w.status === "completed").length],
-            ] as const
-          ).map(([val, label, count]) => {
-            const active = tab === val;
-            return (
-              <button
-                key={val}
-                onClick={() => setTab(val as any)}
-                className={`shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                  active
-                    ? "bg-[#1D4ED8] text-white shadow-sm"
-                    : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-                }`}
-              >
-                {label}
-                <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                    active ? "bg-white/20 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-500"
+        {/* Status Filter Tabs & Reset */}
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none flex-1">
+            {statusTabs.map(([val, label, count]) => {
+              const active = tab === val;
+              return (
+                <button
+                  key={val}
+                  onClick={() => setTab(val as any)}
+                  className={`shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                    active
+                      ? "bg-[#1D4ED8] text-white shadow-sm"
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
                   }`}
                 >
-                  {count}
-                </span>
-              </button>
-            );
-          })}
+                  {label}
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                      active ? "bg-white/20 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-500"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Active Filter Indicators & Reset Button */}
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={resetAllFilters}
+              className="flex items-center gap-1 text-[11px] font-semibold text-gray-500 hover:text-rose-600 dark:hover:text-rose-400 px-2 py-1 rounded-lg transition-colors shrink-0"
+              title="รีเซ็ตตัวกรองและการค้นหาทั้งหมด"
+            >
+              <RotateCcw className="w-3 h-3" />
+              ล้างตัวกรอง
+            </button>
+          )}
+        </div>
+
+        {/* Results summary bar */}
+        <div className="flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400 px-1">
+          <span>
+            พบ <strong className="text-gray-900 dark:text-white font-bold">{filteredOrders.length}</strong> จาก ทั้งหมด {workOrders.length} ใบงาน
+          </span>
+          <span className="text-[10px] text-gray-400">
+            {sortBy === "number_desc" && "เรียงตาม: เลขที่ใบงาน (มาก → น้อย)"}
+            {sortBy === "number_asc" && "เรียงตาม: เลขที่ใบงาน (น้อย → มาก)"}
+            {sortBy === "requestDate_desc" && "เรียงตาม: วันที่แจ้ง (ใหม่ล่าสุด)"}
+            {sortBy === "requestDate_asc" && "เรียงตาม: วันที่แจ้ง (เก่าสุด)"}
+            {sortBy === "useDate_asc" && "เรียงตาม: วันที่ต้องการใช้ (เร็วสุด)"}
+            {sortBy === "createdAt_desc" && "เรียงตาม: วันที่สร้าง (ล่าสุด)"}
+          </span>
         </div>
       </div>
 
@@ -491,8 +719,20 @@ export default function FMWorkOrdersPage() {
               ไม่พบใบแจ้งงาน FM
             </p>
             <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-              {search ? "ลองค้นหาด้วยคำอื่น" : "ยังไม่มีรายการใบงานในหมวดนี้"}
+              {hasActiveFilters
+                ? "ไม่พบใบงานที่ตรงตามเงื่อนไขการค้นหาหรือตัวกรองที่เลือก"
+                : "ยังไม่มีรายการใบงานในหมวดนี้"}
             </p>
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={resetAllFilters}
+                className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-[#1D4ED8] bg-blue-50 dark:bg-blue-900/30 rounded-xl hover:bg-blue-100 transition-colors"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                ล้างตัวกรองทั้งหมด
+              </button>
+            )}
           </div>
         ) : (
           filteredOrders.map((wo, i) => {
