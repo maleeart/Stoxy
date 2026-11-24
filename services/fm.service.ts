@@ -254,6 +254,77 @@ export async function rejectFMWorkOrder(
   );
 }
 
+export async function setFMWorkOrderWaitingParts(
+  id: string,
+  userId: string,
+  userName: string,
+  reason?: string
+): Promise<void> {
+  const ref = doc(db, COL, id);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error("ไม่พบใบแจ้งงาน FM");
+  const wo = snap.data() as FMWorkOrder;
+
+  const now = Timestamp.now();
+  await updateDoc(ref, {
+    status: "waiting_parts",
+    waitingPartsReason: reason || "รอจัดซื้อ/หาอุปกรณ์เพื่อดำเนินการ",
+    waitingPartsBy: userId,
+    waitingPartsByName: userName,
+    waitingPartsAt: now,
+    updatedAt: now,
+  });
+
+  notifyLine(
+    `⏳ ใบงาน FM-${wo.workOrderNumber} เปลี่ยนสถานะเป็น "รอจัดซื้อ/หาอุปกรณ์"\nเรื่อง: ${wo.title}\nผู้แจ้ง: ${userName}${reason ? `\nรายละเอียด: ${reason}` : ""}`
+  );
+}
+
+export async function resumeFMWorkOrderToPending(id: string): Promise<void> {
+  const ref = doc(db, COL, id);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error("ไม่พบใบแจ้งงาน FM");
+  const wo = snap.data() as FMWorkOrder;
+
+  const now = Timestamp.now();
+  await updateDoc(ref, {
+    status: "pending",
+    updatedAt: now,
+  });
+
+  notifyLine(
+    `🔄 ใบงาน FM-${wo.workOrderNumber} เปลี่ยนสถานะกลับเป็น "รอดำเนินการ"\nเรื่อง: ${wo.title}`
+  );
+}
+
+export async function completeFMWorkOrderWithoutItems(
+  id: string,
+  userId: string,
+  userName: string,
+  notes?: string
+): Promise<void> {
+  const ref = doc(db, COL, id);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error("ไม่พบใบแจ้งงาน FM");
+  const wo = snap.data() as FMWorkOrder;
+
+  const now = Timestamp.now();
+  await updateDoc(ref, {
+    items: [],
+    status: "completed",
+    completedWithoutItems: true,
+    approvedBy: userId,
+    approvedByName: userName,
+    approvedAt: now,
+    updatedAt: now,
+    ...(notes ? { notes: wo.notes ? `${wo.notes}\n[ดำเนินการเสร็จสิ้น (ไม่เบิกของ)]: ${notes}` : `[ดำเนินการเสร็จสิ้น (ไม่เบิกของ)]: ${notes}` } : {}),
+  });
+
+  notifyLine(
+    `✅ ดำเนินการแล้ว (ไม่เบิกของ) ใบงาน FM-${wo.workOrderNumber}\nเรื่อง: ${wo.title}\nผู้ดำเนินการ: ${userName}\nสถานะ: เสร็จสิ้นโดยไม่ใช้อุปกรณ์จากคลัง`
+  );
+}
+
 export async function deleteFMWorkOrder(id: string): Promise<void> {
   await deleteDoc(doc(db, COL, id));
 }

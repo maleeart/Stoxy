@@ -317,7 +317,7 @@ function StaffRequisitionPage() {
                   >
                     <option value="">-- ไม่ระบุใบงาน FM (กรอกเลขที่เอง) --</option>
                     {fmWorkOrders
-                      .filter((f) => f.status === "pending" || f.status === "pending_review")
+                      .filter((f) => f.status === "pending" || f.status === "pending_review" || f.status === "waiting_parts")
                       .map((f) => (
                         <option key={f.id} value={f.id}>
                           FM-{f.workOrderNumber}: {f.title.slice(0, 45)}
@@ -578,7 +578,7 @@ function AdminRequisitionPage() {
                     >
                       <option value="">-- ไม่ระบุใบงาน FM (กรอกเลขที่เอง) --</option>
                       {fmWorkOrders
-                        .filter((f) => f.status === "pending" || f.status === "pending_review")
+                        .filter((f) => f.status === "pending" || f.status === "pending_review" || f.status === "waiting_parts")
                         .map((f) => (
                           <option key={f.id} value={f.id}>
                             FM-{f.workOrderNumber}: {f.title.slice(0, 45)}

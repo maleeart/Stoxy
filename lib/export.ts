@@ -725,6 +725,7 @@ export async function exportFMReportPDF(workOrders: FMWorkOrder[], monthYearStr?
 
   const statusTh: Record<string, string> = {
     pending: "รอดำเนินการ",
+    waiting_parts: "รอจัดซื้อ/หาอุปกรณ์",
     pending_review: "รอตรวจสอบ",
     completed: "เสร็จสิ้น",
     rejected: "ส่งกลับแก้ไข",
@@ -776,6 +777,7 @@ export async function exportFMReportPDF(workOrders: FMWorkOrder[], monthYearStr?
 export function exportFMReportExcel(workOrders: FMWorkOrder[], monthYearStr?: string) {
   const statusTh: Record<string, string> = {
     pending: "รอดำเนินการ",
+    waiting_parts: "รอจัดซื้อ/หาอุปกรณ์",
     pending_review: "รอตรวจสอบ",
     completed: "เสร็จสิ้น",
     rejected: "ส่งกลับแก้ไข",

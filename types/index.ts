@@ -356,6 +356,7 @@ export interface AuditSummary {
 // ── FM Work Order (ใบแจ้งงานซ่อม) ──────────────────────────────
 export type FMWorkOrderStatus =
   | "pending"
+  | "waiting_parts"
   | "pending_review"
   | "completed"
   | "rejected"
@@ -396,6 +397,11 @@ export interface FMWorkOrder {
   assignedDate?: Timestamp;
   items?: FMWorkOrderItem[];
   status: FMWorkOrderStatus;
+  completedWithoutItems?: boolean;
+  waitingPartsReason?: string;
+  waitingPartsBy?: string;
+  waitingPartsByName?: string;
+  waitingPartsAt?: Timestamp;
   submittedBy?: string;
   submittedByName?: string;
   submittedAt?: Timestamp;

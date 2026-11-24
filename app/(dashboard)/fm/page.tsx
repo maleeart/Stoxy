@@ -26,6 +26,11 @@ const statusConfig: Record<FMWorkOrderStatus, { label: string; badge: string; bo
     badge: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300",
     border: "border-amber-200 dark:border-amber-800",
   },
+  waiting_parts: {
+    label: "รอจัดซื้อ/หาอุปกรณ์",
+    badge: "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300",
+    border: "border-orange-200 dark:border-orange-800",
+  },
   pending_review: {
     label: "รอตรวจสอบ",
     badge: "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300",
@@ -384,6 +389,7 @@ export default function FMWorkOrdersPage() {
             [
               ["all", "ทั้งหมด", workOrders.length],
               ["pending", "รอดำเนินการ", workOrders.filter((w) => w.status === "pending").length],
+              ["waiting_parts", "รอจัดซื้อ/หาอุปกรณ์", workOrders.filter((w) => w.status === "waiting_parts").length],
               ["pending_review", "รอตรวจสอบ", workOrders.filter((w) => w.status === "pending_review").length],
               ["completed", "เสร็จสิ้น", workOrders.filter((w) => w.status === "completed").length],
             ] as const
@@ -456,8 +462,15 @@ export default function FMWorkOrdersPage() {
                         </span>
                       )}
                       <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${cfg.badge}`}>
-                        {cfg.label}
+                        {wo.status === "completed" && wo.completedWithoutItems
+                          ? "เสร็จสิ้น (ไม่เบิกของ)"
+                          : cfg.label}
                       </span>
+                      {wo.status === "waiting_parts" && wo.waitingPartsReason && (
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-lg bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800/60 max-w-[200px] truncate" title={wo.waitingPartsReason}>
+                          รอ: {wo.waitingPartsReason}
+                        </span>
+                      )}
                     </div>
 
                     <div className="text-xs text-gray-400 flex items-center gap-1 shrink-0">
