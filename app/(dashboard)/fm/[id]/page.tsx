@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
@@ -17,6 +17,8 @@ import {
   completeFMWorkOrderWithoutItems,
   claimFMWorkOrder,
   adminUpdateFMWorkOrderStatus,
+  saveFMWorkOrderRequesterSignature,
+  clearFMWorkOrderRequesterSignature,
 } from "@/services/fm.service";
 import { useInventoryItems } from "@/hooks/useInventory";
 import { useAuth } from "@/hooks/useAuth";
@@ -24,9 +26,9 @@ import {
   Wrench, ArrowLeft, Calendar, MapPin, User, Building, Phone,
   Mail, FileText, CheckCircle2, AlertTriangle, Clock, Plus,
   Trash2, X, Search, Check, Ban, ExternalLink, Printer, Download, Save,
-  PackageSearch, Edit3,
+  PackageSearch, Edit3, PenTool, RotateCcw,
 } from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatDateTime } from "@/lib/utils";
 import { openAttachmentInNewTab, downloadAttachmentFile } from "@/services/fm-storage.service";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -271,6 +273,135 @@ export default function FMWorkOrderDetailPage() {
     },
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาดในการเปลี่ยนสถานะ"),
   });
+
+  // Requester Signature Pad State
+  const [showSignModal, setShowSignModal] = useState(false);
+  const [signerName, setSignerName] = useState("");
+  const [signerEmployeeId, setSignerEmployeeId] = useState("");
+  const [hasDrawnSignature, setHasDrawnSignature] = useState(false);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Initialize signature modal canvas when opened
+  useEffect(() => {
+    if (!showSignModal) return;
+    const timer = setTimeout(() => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.floor(rect.width) || 400;
+      canvas.height = 180;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.strokeStyle = "#0f172a";
+      }
+      setHasDrawnSignature(false);
+    }, 60);
+    return () => clearTimeout(timer);
+  }, [showSignModal]);
+
+  const getCanvasCoords = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY,
+    };
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    try {
+      canvas.setPointerCapture(e.pointerId);
+    } catch {}
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const { x, y } = getCanvasCoords(e);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    setIsDrawing(true);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!isDrawing) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const { x, y } = getCanvasCoords(e);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    setHasDrawnSignature(true);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!isDrawing) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    try {
+      canvas.releasePointerCapture(e.pointerId);
+    } catch {}
+    setIsDrawing(false);
+  };
+
+  const clearCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    setHasDrawnSignature(false);
+  };
+
+  const saveSignatureMut = useMutation({
+    mutationFn: (data: { signatureUrl: string; signedName: string; employeeId?: string }) =>
+      saveFMWorkOrderRequesterSignature(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["fm_workorder", id] });
+      qc.invalidateQueries({ queryKey: ["fm_workorders"] });
+      toast.success("บันทึกการลงนามรับทราบเรียบร้อยแล้ว");
+      setShowSignModal(false);
+    },
+    onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาดในการบันทึกลายเซ็น"),
+  });
+
+  const clearSignatureMut = useMutation({
+    mutationFn: () => clearFMWorkOrderRequesterSignature(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["fm_workorder", id] });
+      qc.invalidateQueries({ queryKey: ["fm_workorders"] });
+      toast.success("ลบลายเซ็นเรียบร้อยแล้ว");
+    },
+    onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
+  });
+
+  const handleSaveSignature = () => {
+    if (!signerName.trim()) {
+      toast.error("กรุณาระบุชื่อผู้ลงนาม");
+      return;
+    }
+    const canvas = canvasRef.current;
+    if (!canvas || !hasDrawnSignature) {
+      toast.error("กรุณาลงลายมือชื่อในช่องก่อนบันทึก");
+      return;
+    }
+    const signatureUrl = canvas.toDataURL("image/png");
+    saveSignatureMut.mutate({
+      signatureUrl,
+      signedName: signerName.trim(),
+      employeeId: signerEmployeeId.trim() || undefined,
+    });
+  };
 
   if (isLoading) {
     return (
@@ -778,6 +909,111 @@ export default function FMWorkOrderDetailPage() {
                   {formatDate(workOrder.assignedDate)}
                 </span>
               </p>
+            )}
+          </div>
+        </div>
+
+        {/* Requester Acknowledgment Signature Section */}
+        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-gray-50 to-blue-50/30 dark:from-gray-700/30 dark:to-blue-950/20 border border-gray-100 dark:border-gray-700/60">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-200/60 dark:border-gray-700">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-900/50 text-[#1D4ED8] dark:text-blue-300 flex items-center justify-center shrink-0">
+                  <PenTool className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white flex items-center gap-2">
+                    <span>การลงนามรับทราบของผู้แจ้งงาน</span>
+                    {workOrder.requesterSignatureUrl ? (
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" /> ลงนามแล้ว
+                      </span>
+                    ) : (
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                        รอลงนามรับทราบ
+                      </span>
+                    )}
+                  </h4>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                    ลงนามรับทราบการดำเนินการ (สามารถลงนามล่วงหน้าขณะรอดำเนินการได้)
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSignerName(workOrder.requesterSignedName || workOrder.requesterName || "");
+                    setSignerEmployeeId(workOrder.requesterEmployeeId || "");
+                    setShowSignModal(true);
+                  }}
+                  className="w-full sm:w-auto px-3.5 py-2 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95"
+                >
+                  <PenTool className="w-3.5 h-3.5" />
+                  <span>
+                    {workOrder.requesterSignatureUrl
+                      ? "ลงนามใหม่ / ปรับปรุงลายเซ็น"
+                      : "✍️ ลงนามรับทราบ (ผู้แจ้งงาน)"}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Signature Content */}
+            {workOrder.requesterSignatureUrl ? (
+              <div className="pt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  <div className="p-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 shadow-xs max-w-[220px]">
+                    <img
+                      src={workOrder.requesterSignatureUrl}
+                      alt="ลายเซ็นผู้แจ้งงาน"
+                      className="max-h-20 w-auto object-contain mx-auto"
+                    />
+                  </div>
+                  <div className="space-y-1 text-xs text-gray-600 dark:text-gray-300">
+                    <p>
+                      <span className="text-gray-400">ชื่อผู้ลงนาม:</span>{" "}
+                      <strong className="text-gray-900 dark:text-white">
+                        {workOrder.requesterSignedName || workOrder.requesterName}
+                      </strong>
+                    </p>
+                    <p>
+                      <span className="text-gray-400">รหัสประจำตัว:</span>{" "}
+                      <span className="font-mono text-gray-800 dark:text-gray-200">
+                        {workOrder.requesterEmployeeId || "-"}
+                      </span>
+                    </p>
+                    <p>
+                      <span className="text-gray-400">วันที่และเวลาที่ลงนาม:</span>{" "}
+                      <span className="text-gray-800 dark:text-gray-200 font-medium">
+                        {formatDateTime(workOrder.requesterSignedAt)}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+
+                {(isAdmin || workOrder.status === "pending") && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirm("ต้องการลบลายเซ็นการรับทราบนี้หรือไม่?")) {
+                        clearSignatureMut.mutate();
+                      }
+                    }}
+                    disabled={clearSignatureMut.isPending}
+                    className="text-[11px] text-gray-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors flex items-center gap-1"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> ลบลายเซ็น
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="pt-3 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                <p className="italic">
+                  ยังไม่มีการลงนามรับทราบ · สามารถกดปุ่ม &quot;ลงนามรับทราบ (ผู้แจ้งงาน)&quot; ด้านบนเพื่อลงนามล่วงหน้า หรือเมื่อดำเนินการเสร็จสิ้น
+                </p>
+              </div>
             )}
           </div>
         </div>
@@ -1434,6 +1670,157 @@ export default function FMWorkOrderDetailPage() {
                   className="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-xs font-bold active:scale-95 transition-all disabled:opacity-50"
                 >
                   {rejectMut.isPending ? "กำลังบันทึก..." : "ยืนยันส่งกลับแก้ไข"}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Requester Signature Pad Modal */}
+      <AnimatePresence>
+        {showSignModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-xs"
+              onClick={() => setShowSignModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="relative w-full max-w-lg bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700 p-6 z-10 space-y-4 max-h-[92vh] overflow-y-auto"
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-100 dark:bg-blue-900/50 text-[#1D4ED8] dark:text-blue-300 flex items-center justify-center shrink-0">
+                    <PenTool className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base text-gray-900 dark:text-white">
+                      ลงนามรับทราบการดำเนินการ
+                    </h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      ผู้แจ้งงานลงนามรับทราบใบงาน FM-{workOrder.workOrderNumber}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowSignModal(false)}
+                  className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-xl"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Form fields */}
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Signer Name */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                      ชื่อผู้ลงนาม (ผู้แจ้งงาน) <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={signerName}
+                      onChange={(e) => setSignerName(e.target.value)}
+                      placeholder="ระบุชื่อผู้ลงนาม"
+                      className="w-full px-3.5 py-2 text-xs bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                    />
+                  </div>
+
+                  {/* Employee ID */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                      รหัสประจำตัว <span className="text-gray-400 font-normal">(ถ้ามี)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={signerEmployeeId}
+                      onChange={(e) => setSignerEmployeeId(e.target.value)}
+                      placeholder="เช่น 591996"
+                      className="w-full px-3.5 py-2 text-xs bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* Signed At timestamp indicator */}
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40 text-xs">
+                  <span className="text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-[#1D4ED8]" />
+                    วันที่และเวลาขณะลงนาม:
+                  </span>
+                  <span className="font-semibold text-[#1D4ED8] dark:text-blue-300">
+                    {formatDateTime(new Date())}
+                  </span>
+                </div>
+
+                {/* Canvas Drawing Area */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                      <span>ลงลายมือชื่อ</span>
+                      <span className="text-rose-500">*</span>
+                      <span className="text-[11px] text-gray-400 font-normal">
+                        (ใช้นิ้วหรือปากกาเซ็นลงในกรอบ)
+                      </span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={clearCanvas}
+                      className="text-xs text-rose-600 hover:text-rose-700 font-semibold flex items-center gap-1 transition-colors px-2 py-0.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/30"
+                    >
+                      <RotateCcw className="w-3 h-3" /> ล้างลายเซ็น
+                    </button>
+                  </div>
+
+                  <div className="relative border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl bg-white overflow-hidden shadow-inner touch-none">
+                    <canvas
+                      ref={canvasRef}
+                      className="w-full h-44 cursor-crosshair block"
+                      style={{ touchAction: "none" }}
+                      onPointerDown={handlePointerDown}
+                      onPointerMove={handlePointerMove}
+                      onPointerUp={handlePointerUp}
+                      onPointerCancel={handlePointerUp}
+                      onPointerLeave={handlePointerUp}
+                    />
+                    {!hasDrawnSignature && (
+                      <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center text-gray-300 text-xs select-none">
+                        <PenTool className="w-6 h-6 mb-1 opacity-40" />
+                        <span>เซ็นลายมือชื่อที่นี่</span>
+                      </div>
+                    )}
+                    <div className="absolute bottom-4 left-6 right-6 border-b border-gray-200 pointer-events-none" />
+                  </div>
+                  <p className="text-[11px] text-gray-400 mt-1">
+                    * สามารถลงนามไว้ล่วงหน้าขณะรอดำเนินการได้ โดยระบบจะคงสถานะปัจจุบันของใบงานไว้ตามเดิม
+                  </p>
+                </div>
+              </div>
+
+              {/* Modal Buttons */}
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100 dark:border-gray-700">
+                <button
+                  type="button"
+                  onClick={() => setShowSignModal(false)}
+                  className="px-4 py-2 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveSignature}
+                  disabled={saveSignatureMut.isPending}
+                  className="px-5 py-2.5 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-blue-500/20 active:scale-95 disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  <Save className="w-4 h-4" />
+                  {saveSignatureMut.isPending ? "กำลังบันทึก..." : "บันทึกการลงนาม"}
                 </button>
               </div>
             </motion.div>

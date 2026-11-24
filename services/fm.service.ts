@@ -465,6 +465,52 @@ export async function clearSingleFMWorkOrderPerformer(id: string): Promise<void>
   });
 }
 
+export async function saveFMWorkOrderRequesterSignature(
+  id: string,
+  data: {
+    signatureUrl: string;
+    signedName: string;
+    employeeId?: string;
+  }
+): Promise<void> {
+  const ref = doc(db, COL, id);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error("ไม่พบใบแจ้งงาน FM");
+  const wo = snap.data() as FMWorkOrder;
+
+  const now = Timestamp.now();
+  const updateData: Record<string, any> = {
+    requesterSignatureUrl: data.signatureUrl,
+    requesterSignedName: data.signedName.trim(),
+    requesterSignedAt: now,
+    updatedAt: now,
+  };
+
+  if (data.employeeId && data.employeeId.trim()) {
+    updateData.requesterEmployeeId = data.employeeId.trim();
+  } else {
+    updateData.requesterEmployeeId = deleteField();
+  }
+
+  await updateDoc(ref, updateData);
+
+  notifyLine(
+    `✍️ ผู้แจ้งงานลงนามรับทราบใบงาน FM-${wo.workOrderNumber}\nเรื่อง: ${wo.title}\nผู้ลงนาม: ${data.signedName.trim()}${data.employeeId && data.employeeId.trim() ? ` (รหัส: ${data.employeeId.trim()})` : ""}`
+  );
+}
+
+export async function clearFMWorkOrderRequesterSignature(id: string): Promise<void> {
+  const ref = doc(db, COL, id);
+  await updateDoc(ref, {
+    requesterSignatureUrl: deleteField(),
+    requesterSignedName: deleteField(),
+    requesterEmployeeId: deleteField(),
+    requesterSignedAt: deleteField(),
+    updatedAt: Timestamp.now(),
+  });
+}
+
 export async function deleteFMWorkOrder(id: string): Promise<void> {
   await deleteDoc(doc(db, COL, id));
 }
+

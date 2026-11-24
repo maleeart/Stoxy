@@ -409,6 +409,10 @@ export interface FMWorkOrder {
   approvedByName?: string;
   approvedAt?: Timestamp;
   rejectedReason?: string;
+  requesterSignatureUrl?: string;
+  requesterSignedName?: string;
+  requesterEmployeeId?: string;
+  requesterSignedAt?: Timestamp;
   notes?: string;
   createdBy: string;
   createdAt: Timestamp;
