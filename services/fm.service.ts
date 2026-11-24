@@ -332,6 +332,43 @@ export async function completeFMWorkOrderWithoutItems(
 
 export const submitFMWorkOrderWithoutItems = completeFMWorkOrderWithoutItems;
 
+export async function adminUpdateFMWorkOrderStatus(
+  id: string,
+  newStatus: FMWorkOrderStatus,
+  adminId: string,
+  adminName: string,
+  note?: string
+): Promise<void> {
+  const ref = doc(db, COL, id);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error("ไม่พบใบแจ้งงาน FM");
+  const wo = snap.data() as FMWorkOrder;
+
+  const now = Timestamp.now();
+  const updateData: Record<string, any> = {
+    status: newStatus,
+    updatedAt: now,
+  };
+
+  if (newStatus === "completed") {
+    updateData.approvedBy = adminId;
+    updateData.approvedByName = adminName;
+    updateData.approvedAt = now;
+  }
+
+  if (note && note.trim()) {
+    updateData.notes = wo.notes
+      ? `${wo.notes}\n[Admin ปรับสถานะเป็น "${newStatus}" โดย ${adminName}]: ${note.trim()}`
+      : `[Admin ปรับสถานะเป็น "${newStatus}" โดย ${adminName}]: ${note.trim()}`;
+  }
+
+  await updateDoc(ref, updateData);
+
+  notifyLine(
+    `⚙️ ผู้ดูแลระบบปรับเปลี่ยนสถานะใบงาน FM-${wo.workOrderNumber}\nเรื่อง: ${wo.title}\nสถานะใหม่: ${newStatus}\nปรับโดย: ${adminName}${note ? `\nหมายเหตุ: ${note}` : ""}`
+  );
+}
+
 export async function deleteFMWorkOrder(id: string): Promise<void> {
   await deleteDoc(doc(db, COL, id));
 }

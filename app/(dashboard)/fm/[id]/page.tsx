@@ -15,6 +15,7 @@ import {
   setFMWorkOrderWaitingParts,
   resumeFMWorkOrderToPending,
   completeFMWorkOrderWithoutItems,
+  adminUpdateFMWorkOrderStatus,
 } from "@/services/fm.service";
 import { useInventoryItems } from "@/hooks/useInventory";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,7 +23,7 @@ import {
   Wrench, ArrowLeft, Calendar, MapPin, User, Building, Phone,
   Mail, FileText, CheckCircle2, AlertTriangle, Clock, Plus,
   Trash2, X, Search, Check, Ban, ExternalLink, Printer, Download, Save,
-  PackageSearch,
+  PackageSearch, Edit3,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { openAttachmentInNewTab, downloadAttachmentFile } from "@/services/fm-storage.service";
@@ -92,6 +93,11 @@ export default function FMWorkOrderDetailPage() {
   // Waiting parts modal
   const [showWaitingPartsModal, setShowWaitingPartsModal] = useState(false);
   const [waitingPartsReason, setWaitingPartsReason] = useState("");
+
+  // Admin status override modal
+  const [showAdminStatusModal, setShowAdminStatusModal] = useState(false);
+  const [targetStatus, setTargetStatus] = useState<FMWorkOrderStatus>("pending");
+  const [statusChangeNote, setStatusChangeNote] = useState("");
 
   // Sync loaded items once
   if (workOrder && !hasInitializedItems) {
@@ -217,6 +223,28 @@ export default function FMWorkOrderDetailPage() {
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
   });
 
+  const adminStatusMut = useMutation({
+    mutationFn: () =>
+      adminUpdateFMWorkOrderStatus(
+        id,
+        targetStatus,
+        stoxyUser?.uid ?? "",
+        stoxyUser?.displayName || stoxyUser?.nickname || "ผู้ดูแลระบบ",
+        statusChangeNote
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["fm_workorder", id] });
+      qc.invalidateQueries({ queryKey: ["fm_workorders"] });
+      qc.invalidateQueries({ queryKey: ["fm_active_count"] });
+      toast.success(
+        `เปลี่ยนสถานะเป็น "${statusConfig[targetStatus]?.label || targetStatus}" สำเร็จ`
+      );
+      setShowAdminStatusModal(false);
+      setStatusChangeNote("");
+    },
+    onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาดในการเปลี่ยนสถานะ"),
+  });
+
   if (isLoading) {
     return (
       <AppShell title="ใบแจ้งงานซ่อม (FM)">
@@ -243,6 +271,7 @@ export default function FMWorkOrderDetailPage() {
 
   const cfg = statusConfig[workOrder.status] || statusConfig.pending;
   const canEditItems =
+    isAdmin ||
     workOrder.status === "pending" ||
     workOrder.status === "waiting_parts" ||
     workOrder.status === "rejected" ||
@@ -452,20 +481,38 @@ export default function FMWorkOrderDetailPage() {
       )}
 
       {workOrder.status === "completed" && (
-        <div className="bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4 mb-4 flex items-center gap-3 shadow-sm">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-          <div>
-            <p className="text-sm font-bold text-emerald-900 dark:text-emerald-200">
-              {workOrder.completedWithoutItems
-                ? "ดำเนินการเสร็จสิ้นเรียบร้อยแล้ว (ไม่เบิกของ)"
-                : "อนุมัติและตัดสต็อกเรียบร้อยแล้ว"}
-            </p>
-            <p className="text-xs text-emerald-700 dark:text-emerald-400">
-              {workOrder.completedWithoutItems ? "บันทึกโดย" : "อนุมัติโดย"}{" "}
-              {workOrder.approvedByName || "ผู้ดูแลระบบ"} เมื่อ{" "}
-              {formatDate(workOrder.approvedAt)}
-            </p>
+        <div className="bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+          <div className="flex items-start sm:items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5 sm:mt-0" />
+            <div>
+              <p className="text-sm font-bold text-emerald-900 dark:text-emerald-200">
+                {workOrder.completedWithoutItems
+                  ? "ดำเนินการเสร็จสิ้นเรียบร้อยแล้ว (ไม่เบิกของ)"
+                  : "อนุมัติและตัดสต็อกเรียบร้อยแล้ว"}
+              </p>
+              <p className="text-xs text-emerald-700 dark:text-emerald-400">
+                {workOrder.completedWithoutItems ? "บันทึกโดย" : "อนุมัติโดย"}{" "}
+                {workOrder.approvedByName || "ผู้ดูแลระบบ"} เมื่อ{" "}
+                {formatDate(workOrder.approvedAt)}
+              </p>
+            </div>
           </div>
+          {isAdmin && (
+            <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={() => {
+                  setTargetStatus(workOrder.status);
+                  setStatusChangeNote("");
+                  setShowAdminStatusModal(true);
+                }}
+                className="w-full sm:w-auto px-3.5 py-2 bg-white dark:bg-gray-800 hover:bg-emerald-100/50 dark:hover:bg-gray-700 text-emerald-800 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 text-center flex items-center justify-center gap-1.5"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>แก้ไขสถานะ (Admin)</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -501,6 +548,21 @@ export default function FMWorkOrderDetailPage() {
                     ? "เสร็จสิ้น (ไม่เบิกของ)"
                     : cfg.label}
                 </span>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTargetStatus(workOrder.status);
+                      setStatusChangeNote("");
+                      setShowAdminStatusModal(true);
+                    }}
+                    className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/40 dark:hover:bg-blue-900/60 text-[#1D4ED8] dark:text-blue-300 border border-blue-200 dark:border-blue-800 transition-all active:scale-95 shadow-sm"
+                    title="ผู้ดูแลระบบ: แก้ไขสถานะใบงาน"
+                  >
+                    <Edit3 className="w-3 h-3" />
+                    <span>แก้ไขสถานะ (Admin)</span>
+                  </button>
+                )}
               </div>
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                 Facility Management System (แบบฟอร์ม อบก-จ.-01)
@@ -811,10 +873,12 @@ export default function FMWorkOrderDetailPage() {
         {canEditItems && (
           <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
             {/* If in pending / waiting_parts / rejected */}
-            {workOrder.status !== "pending_review" && (
+            {(workOrder.status === "pending" ||
+              workOrder.status === "waiting_parts" ||
+              workOrder.status === "rejected") && (
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                 {/* Secondary actions: รอของ หรือ เปลี่ยนสถานะ */}
-                <div className="w-full sm:w-auto">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                   {(workOrder.status === "pending" || workOrder.status === "rejected") && (
                     <button
                       type="button"
@@ -839,6 +903,21 @@ export default function FMWorkOrderDetailPage() {
                     >
                       <Clock className="w-4 h-4 shrink-0" />
                       <span>เปลี่ยนเป็นรอดำเนินการ</span>
+                    </button>
+                  )}
+
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTargetStatus(workOrder.status);
+                        setStatusChangeNote("");
+                        setShowAdminStatusModal(true);
+                      }}
+                      className="w-full sm:w-auto px-4 py-2.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/40 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800 text-[#1D4ED8] dark:text-blue-300 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 active:scale-95 shadow-sm"
+                    >
+                      <Edit3 className="w-4 h-4 shrink-0" />
+                      <span>แก้ไขสถานะ (Admin)</span>
                     </button>
                   )}
                 </div>
@@ -897,13 +976,62 @@ export default function FMWorkOrderDetailPage() {
 
             {/* If in pending_review */}
             {workOrder.status === "pending_review" && (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-end gap-2.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTargetStatus(workOrder.status);
+                      setStatusChangeNote("");
+                      setShowAdminStatusModal(true);
+                    }}
+                    className="w-full sm:w-auto px-4 py-2.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/40 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800 text-[#1D4ED8] dark:text-blue-300 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 active:scale-95 shadow-sm"
+                  >
+                    <Edit3 className="w-4 h-4 shrink-0" />
+                    <span>แก้ไขสถานะ (Admin)</span>
+                  </button>
+                )}
+                <div className="flex items-center gap-2 ml-auto w-full sm:w-auto">
+                  <button
+                    onClick={() => {
+                      updateItemsMut.mutate();
+                    }}
+                    disabled={updateItemsMut.isPending}
+                    className="w-full sm:w-auto px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-xs sm:text-sm font-bold shadow-lg shadow-purple-500/20 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    <Save className="w-4 h-4 shrink-0" />
+                    <span>
+                      {updateItemsMut.isPending
+                        ? "กำลังบันทึก..."
+                        : "บันทึกการแก้ไขรายการอุปกรณ์"}
+                    </span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* If in completed or cancelled (Admin override view) */}
+            {(workOrder.status === "completed" || workOrder.status === "cancelled") && isAdmin && (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTargetStatus(workOrder.status);
+                    setStatusChangeNote("");
+                    setShowAdminStatusModal(true);
+                  }}
+                  className="w-full sm:w-auto px-4 py-2.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/40 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800 text-[#1D4ED8] dark:text-blue-300 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 active:scale-95 shadow-sm"
+                >
+                  <Edit3 className="w-4 h-4 shrink-0" />
+                  <span>แก้ไขสถานะใบงาน (Admin)</span>
+                </button>
+
                 <button
                   onClick={() => {
                     updateItemsMut.mutate();
                   }}
                   disabled={updateItemsMut.isPending}
-                  className="w-full sm:w-auto px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-xs sm:text-sm font-bold shadow-lg shadow-purple-500/20 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto px-6 py-2.5 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-2xl text-xs sm:text-sm font-bold shadow-lg shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <Save className="w-4 h-4 shrink-0" />
                   <span>
@@ -1088,6 +1216,112 @@ export default function FMWorkOrderDetailPage() {
                   className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-orange-500/20 disabled:opacity-50"
                 >
                   {waitingPartsMut.isPending ? "กำลังบันทึก..." : "ยืนยันเปลี่ยนเป็นรอของ"}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Admin Status Override Modal */}
+      <AnimatePresence>
+        {showAdminStatusModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+              onClick={() => setShowAdminStatusModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="relative w-full max-w-lg bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700 p-6 z-10 space-y-4 max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-100 dark:bg-blue-900/50 text-[#1D4ED8] dark:text-blue-300 flex items-center justify-center shrink-0">
+                  <Edit3 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-gray-900 dark:text-white">
+                    แก้ไขสถานะใบงาน (สิทธิ์ผู้ดูแลระบบ)
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    FM-{workOrder.workOrderNumber}: {workOrder.title.slice(0, 40)}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  เลือกสถานะที่ต้องการเปลี่ยน:
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(
+                    [
+                      ["pending", "รอดำเนินการ", "bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950/40 dark:border-amber-800 dark:text-amber-300"],
+                      ["waiting_parts", "รอจัดซื้อ/หาอุปกรณ์", "bg-orange-50 border-orange-200 text-orange-800 dark:bg-orange-950/40 dark:border-orange-800 dark:text-orange-300"],
+                      ["pending_review", "รอตรวจสอบ", "bg-purple-50 border-purple-200 text-purple-800 dark:bg-purple-950/40 dark:border-purple-800 dark:text-purple-300"],
+                      ["completed", "เสร็จสิ้น", "bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300"],
+                      ["rejected", "ส่งกลับแก้ไข", "bg-rose-50 border-rose-200 text-rose-800 dark:bg-rose-950/40 dark:border-rose-800 dark:text-rose-300"],
+                      ["cancelled", "ยกเลิก", "bg-gray-100 border-gray-300 text-gray-800 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-300"],
+                    ] as const
+                  ).map(([statusKey, label, colorCls]) => {
+                    const isSelected = targetStatus === statusKey;
+                    return (
+                      <button
+                        key={statusKey}
+                        type="button"
+                        onClick={() => setTargetStatus(statusKey as FMWorkOrderStatus)}
+                        className={`p-3 rounded-2xl border text-left text-xs font-bold transition-all flex items-center justify-between ${
+                          isSelected
+                            ? "ring-2 ring-[#1D4ED8] border-blue-500 shadow-sm " + colorCls
+                            : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300"
+                        }`}
+                      >
+                        <span>{label}</span>
+                        {isSelected && <Check className="w-4 h-4 text-[#1D4ED8]" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                  หมายเหตุ / เหตุผลในการปรับเปลี่ยนสถานะ (จะบันทึกลงประวัติใบงาน)
+                </label>
+                <textarea
+                  value={statusChangeNote}
+                  onChange={(e) => setStatusChangeNote(e.target.value)}
+                  rows={2}
+                  placeholder="เช่น ปรับกลับเป็นรอดำเนินการเนื่องจากต้องแก้ไขรายการอุปกรณ์..."
+                  className="w-full px-3.5 py-2.5 text-xs bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAdminStatusModal(false);
+                    setStatusChangeNote("");
+                  }}
+                  className="px-4 py-2 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    adminStatusMut.mutate();
+                  }}
+                  disabled={adminStatusMut.isPending}
+                  className="px-5 py-2 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-blue-500/20 disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  {adminStatusMut.isPending ? "กำลังบันทึก..." : "ยืนยันเปลี่ยนสถานะ"}
                 </button>
               </div>
             </motion.div>
