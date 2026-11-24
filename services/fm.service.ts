@@ -33,6 +33,16 @@ export async function getFMWorkOrder(id: string): Promise<FMWorkOrder | null> {
   return { id: snap.id, ...snap.data() } as FMWorkOrder;
 }
 
+function cleanUndefined<T extends Record<string, any>>(obj: T): Partial<T> {
+  const cleaned: Record<string, any> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== undefined) {
+      cleaned[k] = v;
+    }
+  }
+  return cleaned as Partial<T>;
+}
+
 export async function createFMWorkOrder(data: {
   workOrderNumber: string;
   workType?: string;
@@ -60,8 +70,9 @@ export async function createFMWorkOrder(data: {
   notes?: string;
 }): Promise<string> {
   const now = Timestamp.now();
+  const cleaned = cleanUndefined(data);
   const ref = await addDoc(collection(db, COL), {
-    ...data,
+    ...cleaned,
     status: "pending",
     items: [],
     createdAt: now,
@@ -80,8 +91,9 @@ export async function updateFMWorkOrder(
   data: Partial<Omit<FMWorkOrder, "id" | "createdAt">>
 ): Promise<void> {
   const ref = doc(db, COL, id);
+  const cleaned = cleanUndefined(data);
   await updateDoc(ref, {
-    ...data,
+    ...cleaned,
     updatedAt: Timestamp.now(),
   });
 }

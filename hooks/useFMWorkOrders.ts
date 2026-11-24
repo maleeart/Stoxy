@@ -33,6 +33,7 @@ export function useActiveFMCount(uid: string | undefined, role?: string) {
           o.status === "pending" &&
           (!o.assignedTechnicianId ||
             o.assignedTechnicianId === "all" ||
+            o.assignedTechnicianId.startsWith("group:") ||
             o.assignedTechnicianId === uid)
       ).length;
     },

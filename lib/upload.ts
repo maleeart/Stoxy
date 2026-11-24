@@ -22,3 +22,14 @@ export async function uploadImages(files: File[], folder: string, timeoutMs = 10
     timeoutMs
   );
 }
+
+export async function uploadFile(file: File, folder: string, timeoutMs = 30_000): Promise<string> {
+  return withTimeout(
+    (async () => {
+      const storageRef = ref(storage, `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}-${file.name}`);
+      await uploadBytes(storageRef, file);
+      return getDownloadURL(storageRef);
+    })(),
+    timeoutMs
+  );
+}

@@ -10,9 +10,10 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   Wrench, Plus, Search, Clock, CheckCircle2, AlertTriangle,
   ChevronRight, X, FileText, MapPin, User, Building, Calendar,
-  Sparkles,
+  Sparkles, UploadCloud, FileUp, Loader2, Trash2, ExternalLink, Users,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { uploadFile } from "@/lib/upload";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -71,6 +72,8 @@ export default function FMWorkOrdersPage() {
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
   const [attachmentUrl, setAttachmentUrl] = useState("");
+  const [attachmentName, setAttachmentName] = useState("");
+  const [isUploadingPdf, setIsUploadingPdf] = useState(false);
   const [assignedTechnicianId, setAssignedTechnicianId] = useState("");
   const [assignedTechnicianName, setAssignedTechnicianName] = useState("");
   const [assignedDepartment, setAssignedDepartment] = useState("");
@@ -106,10 +109,40 @@ export default function FMWorkOrdersPage() {
     setDescription("");
     setLocation("");
     setAttachmentUrl("");
+    setAttachmentName("");
+    setIsUploadingPdf(false);
     setAssignedTechnicianId("");
     setAssignedTechnicianName("");
     setAssignedDepartment("");
     setAssignorName("");
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+      toast.error("กรุณาเลือกไฟล์เอกสาร PDF เท่านั้น");
+      return;
+    }
+
+    if (file.size > 25 * 1024 * 1024) {
+      toast.error("ขนาดไฟล์เกิน 25MB");
+      return;
+    }
+
+    try {
+      setIsUploadingPdf(true);
+      const url = await uploadFile(file, "fm_documents");
+      setAttachmentUrl(url);
+      setAttachmentName(file.name);
+      toast.success("อัปโหลดไฟล์ PDF สำเร็จแล้ว");
+    } catch (err: any) {
+      console.error("PDF upload error:", err);
+      toast.error(err?.message || "อัปโหลดไฟล์ไม่สำเร็จ กรุณาลองใหม่");
+    } finally {
+      setIsUploadingPdf(false);
+    }
   };
 
   // Prefill with Template FM 6090 sample data
@@ -128,6 +161,7 @@ export default function FMWorkOrdersPage() {
     setDescription("RQ-2026-000136 ประกอบและติดตั้งพัดลมติดผนังขนาด 30 นิ้ว จำนวน 4 ตัว / โรงอาหาร อหข. / งามพล จุมรี ติดต่อ 69605");
     setLocation("โรงอาหาร อหข.");
     setAttachmentUrl("/(ตัวอย่าง) ใบงาน FM 6090.pdf");
+    setAttachmentName("(ตัวอย่าง) ใบงาน FM 6090.pdf");
     setAssignedTechnicianName("นายตวงเพชร ชัยยานนท์");
     setAssignedDepartment("รวธ. ชธธ. กบห-ธ. หบท-ธ.");
     setAssignorName("นายตวงเพชร ชัยยานนท์");
@@ -142,13 +176,19 @@ export default function FMWorkOrdersPage() {
       if (!location.trim()) throw new Error("กรุณากรอกสถานที่");
 
       const reqDate = requestDateStr ? new Date(requestDateStr) : new Date();
-      const uDate = useDateStr ? new Date(useDateStr) : undefined;
+      let uDate: Timestamp | undefined = undefined;
+      if (useDateStr && useDateStr.trim()) {
+        const parsed = new Date(useDateStr);
+        if (!isNaN(parsed.getTime())) {
+          uDate = Timestamp.fromDate(parsed);
+        }
+      }
 
       await createFMWorkOrder({
         workOrderNumber: workOrderNumber.trim(),
-        workType: workType.trim(),
+        workType: workType.trim() || undefined,
         requestDate: Timestamp.fromDate(reqDate),
-        useDate: uDate ? Timestamp.fromDate(uDate) : undefined,
+        useDate: uDate,
         requesterName: requesterName.trim(),
         requesterDepartment: requesterDepartment.trim(),
         requesterEmail: requesterEmail.trim() || undefined,
@@ -159,7 +199,7 @@ export default function FMWorkOrdersPage() {
         description: description.trim() || undefined,
         location: location.trim(),
         attachmentUrl: attachmentUrl.trim() || undefined,
-        attachmentName: attachmentUrl ? "เอกสารแนบใบงาน" : undefined,
+        attachmentName: attachmentName.trim() || (attachmentUrl ? "เอกสารแนบใบงาน" : undefined),
         assignedTechnicianId: assignedTechnicianId || undefined,
         assignedTechnicianName: assignedTechnicianName.trim() || undefined,
         assignedDepartment: assignedDepartment.trim() || undefined,
@@ -183,6 +223,7 @@ export default function FMWorkOrdersPage() {
       w.status === "pending" &&
       (!w.assignedTechnicianId ||
         w.assignedTechnicianId === "all" ||
+        w.assignedTechnicianId.startsWith("group:") ||
         w.assignedTechnicianId === stoxyUser?.uid)
   );
 
@@ -465,6 +506,107 @@ export default function FMWorkOrdersPage() {
 
               {/* Modal Body */}
               <div className="px-6 py-4 overflow-y-auto space-y-4 flex-1">
+                {/* ── Top Section: แนบไฟล์เอกสารใบงาน PDF ── */}
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-2xl border-2 border-dashed border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <FileUp className="w-5 h-5 text-[#1D4ED8]" />
+                      <span className="text-sm font-bold text-gray-900 dark:text-white">
+                        แนบไฟล์เอกสารใบงาน (PDF)
+                      </span>
+                    </div>
+                    {attachmentUrl && (
+                      <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" /> แนบไฟล์แล้ว
+                      </span>
+                    )}
+                  </div>
+
+                  {!attachmentUrl ? (
+                    <div>
+                      <input
+                        type="file"
+                        id="pdf-upload-input"
+                        accept="application/pdf,.pdf"
+                        className="hidden"
+                        onChange={handleFileUpload}
+                        disabled={isUploadingPdf}
+                      />
+                      <label
+                        htmlFor="pdf-upload-input"
+                        className={`w-full py-4 px-4 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/80 rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center cursor-pointer transition-all shadow-sm active:scale-[0.99] ${
+                          isUploadingPdf ? "opacity-60 pointer-events-none" : ""
+                        }`}
+                      >
+                        {isUploadingPdf ? (
+                          <div className="flex items-center gap-2 text-sm font-semibold text-[#1D4ED8]">
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            <span>กำลังอัปโหลดไฟล์ PDF ขึ้นระบบ...</span>
+                          </div>
+                        ) : (
+                          <>
+                            <UploadCloud className="w-8 h-8 text-[#1D4ED8] mb-1" />
+                            <span className="text-xs font-bold text-gray-800 dark:text-gray-200">
+                              คลิกเพื่อเลือกไฟล์ PDF แนบกับใบงาน
+                            </span>
+                            <span className="text-[11px] text-gray-400 mt-0.5">
+                              รองรับไฟล์เอกสาร .pdf เช่น ใบแจ้งงานซ่อม FM ต้นฉบับ
+                            </span>
+                          </>
+                        )}
+                      </label>
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-white dark:bg-gray-800 rounded-xl border border-blue-200 dark:border-blue-700 flex items-center justify-between gap-3 shadow-sm">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-9 h-9 rounded-lg bg-red-50 text-red-600 dark:bg-red-950/40 flex items-center justify-center shrink-0">
+                          <FileText className="w-5 h-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-gray-900 dark:text-white truncate">
+                            {attachmentName || "เอกสารแนบใบงาน.pdf"}
+                          </p>
+                          <a
+                            href={attachmentUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[11px] text-[#1D4ED8] hover:underline flex items-center gap-1 mt-0.5"
+                          >
+                            เปิดดูเอกสาร <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="file"
+                          id="pdf-reupload-input"
+                          accept="application/pdf,.pdf"
+                          className="hidden"
+                          onChange={handleFileUpload}
+                        />
+                        <label
+                          htmlFor="pdf-reupload-input"
+                          className="text-xs px-2.5 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg font-medium cursor-pointer transition-colors"
+                        >
+                          เปลี่ยนไฟล์
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAttachmentUrl("");
+                            setAttachmentName("");
+                          }}
+                          className="p-1 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-lg transition-colors"
+                          title="ลบไฟล์แนบ"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* Row 1: FM Number & Work Type */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
@@ -519,6 +661,46 @@ export default function FMWorkOrdersPage() {
                       value={useDateStr}
                       onChange={(e) => setUseDateStr(e.target.value)}
                       className="w-full px-3.5 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                    />
+                  </div>
+                </div>
+
+                {/* Section: รายละเอียดการแจ้งงานบริการ */}
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                      เรื่อง / หัวข้องาน <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="เช่น RQ-2026-000136 ประกอบและติดตั้งพัดลมติดผนังขนาด 30 นิ้ว จำนวน 4 ตัว"
+                      className="w-full px-3.5 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                      สถานที่ดำเนินการ <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      placeholder="เช่น โรงอาหาร อหข., อาคาร 2 ชั้น 3"
+                      className="w-full px-3.5 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                      รายละเอียดงาน
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="รายละเอียดงานเพิ่มเติมหรือข้อกำหนด..."
+                      className="w-full px-3.5 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 resize-none"
                     />
                   </div>
                 </div>
@@ -608,58 +790,6 @@ export default function FMWorkOrdersPage() {
                   </div>
                 </div>
 
-                {/* Section: รายละเอียดการแจ้งงานบริการ */}
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                      เรื่อง / หัวข้องาน <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      placeholder="เช่น RQ-2026-000136 ประกอบและติดตั้งพัดลมติดผนังขนาด 30 นิ้ว จำนวน 4 ตัว"
-                      className="w-full px-3.5 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                      สถานที่ดำเนินการ <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                      placeholder="เช่น โรงอาหาร อหข., อาคาร 2 ชั้น 3"
-                      className="w-full px-3.5 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                      รายละเอียดงาน
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      placeholder="รายละเอียดงานเพิ่มเติมหรือข้อกำหนด..."
-                      className="w-full px-3.5 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 resize-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                      ลิงก์เอกสารแนบ / ไฟล์ PDF
-                    </label>
-                    <input
-                      type="text"
-                      value={attachmentUrl}
-                      onChange={(e) => setAttachmentUrl(e.target.value)}
-                      placeholder="URL เอกสารแนบ หรือ /(ตัวอย่าง) ใบงาน FM 6090.pdf"
-                      className="w-full px-3.5 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
-                    />
-                  </div>
-                </div>
-
                 {/* Section: ผู้ดำเนินการ (ช่าง) & ผู้มอบหมาย */}
                 <div className="p-3.5 bg-blue-50/50 dark:bg-blue-900/20 rounded-2xl space-y-3 border border-blue-100 dark:border-blue-800">
                   <p className="text-xs font-bold text-blue-900 dark:text-blue-300 uppercase tracking-wider flex items-center gap-1.5">
@@ -668,38 +798,72 @@ export default function FMWorkOrdersPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
-                        มอบหมายช่างผู้รับผิดชอบ
+                        มอบหมายช่างผู้รับผิดชอบ (เลือกกลุ่ม หรือ รายบุคคล)
                       </label>
                       <select
                         value={assignedTechnicianId}
                         onChange={(e) => {
-                          const id = e.target.value;
-                          setAssignedTechnicianId(id);
-                          const u = staffUsers.find((x) => x.uid === id);
-                          if (u) {
-                            setAssignedTechnicianName(u.displayName || u.email || "");
-                            if (u.department) setAssignedDepartment(u.department);
+                          const val = e.target.value;
+                          setAssignedTechnicianId(val);
+
+                          // Handle Groups
+                          if (val === "group:all") {
+                            setAssignedTechnicianName("ทีมช่างทั้งหมด");
+                            setAssignedDepartment("ฝ่ายซ่อมบำรุง");
+                          } else if (val === "group:electrical") {
+                            setAssignedTechnicianName("กลุ่มช่างไฟฟ้า");
+                            setAssignedDepartment("แผนกไฟฟ้า");
+                          } else if (val === "group:maintenance") {
+                            setAssignedTechnicianName("กลุ่มช่างซ่อมบำรุง");
+                            setAssignedDepartment("แผนกซ่อมบำรุงอาคาร");
+                          } else if (val === "group:plumbing") {
+                            setAssignedTechnicianName("กลุ่มช่างประปา");
+                            setAssignedDepartment("แผนกสุขาภิบาลและประปา");
+                          } else if (val === "group:aircon") {
+                            setAssignedTechnicianName("กลุ่มช่างระบบปรับอากาศ");
+                            setAssignedDepartment("แผนกเครื่องกลและปรับอากาศ");
+                          } else if (val === "custom") {
+                            setAssignedTechnicianName("");
+                          } else if (val === "") {
+                            setAssignedTechnicianName("");
+                          } else {
+                            // Individual user
+                            const u = staffUsers.find((x) => x.uid === val);
+                            if (u) {
+                              setAssignedTechnicianName(u.displayName || u.email || "");
+                              if (u.department) setAssignedDepartment(u.department);
+                            }
                           }
                         }}
                         className="w-full px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
                       >
                         <option value="">-- ไม่ระบุช่างเจาะจง (ช่างทุกคนเห็น) --</option>
-                        {staffUsers.map((u) => (
-                          <option key={u.uid} value={u.uid}>
-                            {u.displayName || u.email} ({u.role})
-                          </option>
-                        ))}
+                        <optgroup label="👥 มอบหมายเป็นกลุ่มช่าง">
+                          <option value="group:all">👥 ทีมช่างทั้งหมด (ทุกคนเข้าถึงได้)</option>
+                          <option value="group:electrical">⚡ กลุ่มช่างไฟฟ้า</option>
+                          <option value="group:maintenance">🔧 กลุ่มช่างซ่อมบำรุง / อาคาร</option>
+                          <option value="group:plumbing">💧 กลุ่มช่างประปา</option>
+                          <option value="group:aircon">❄️ กลุ่มช่างระบบปรับอากาศ</option>
+                        </optgroup>
+                        <optgroup label="👤 มอบหมายช่างรายบุคคล">
+                          {staffUsers.map((u) => (
+                            <option key={u.uid} value={u.uid}>
+                              👤 {u.displayName || u.email} ({u.role})
+                            </option>
+                          ))}
+                        </optgroup>
+                        <option value="custom">✏️ พิมพ์ระบุเอง</option>
                       </select>
                     </div>
                     <div>
                       <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
-                        หรือระบุชื่อช่างผู้ดำเนินการ
+                        ชื่อช่างผู้ดำเนินการ / กลุ่มช่าง (แก้ไข/พิมพ์ได้)
                       </label>
                       <input
                         type="text"
                         value={assignedTechnicianName}
                         onChange={(e) => setAssignedTechnicianName(e.target.value)}
-                        placeholder="เช่น นายตวงเพชร ชัยยานนท์"
+                        placeholder="เช่น นายตวงเพชร ชัยยานนท์ หรือ กลุ่มช่างไฟฟ้า"
                         className="w-full px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
                       />
                     </div>
@@ -720,15 +884,43 @@ export default function FMWorkOrdersPage() {
                     </div>
                     <div>
                       <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
-                        ผู้มอบหมายงาน
+                        ผู้มอบหมายงาน (เลือก หรือ พิมพ์ระบุ)
                       </label>
-                      <input
-                        type="text"
-                        value={assignorName}
-                        onChange={(e) => setAssignorName(e.target.value)}
-                        placeholder="ชื่อผู้มอบหมายงาน"
-                        className="w-full px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
-                      />
+                      <div className="space-y-1.5">
+                        <select
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === "self") {
+                              setAssignorName(stoxyUser?.displayName || stoxyUser?.nickname || "ผู้ดูแลระบบ");
+                            } else if (val === "custom") {
+                              setAssignorName("");
+                            } else if (val) {
+                              setAssignorName(val);
+                            }
+                          }}
+                          className="w-full px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                        >
+                          <option value="">-- เลือกผู้มอบหมายงาน --</option>
+                          <option value="self">
+                            👤 ฉันเอง ({stoxyUser?.displayName || stoxyUser?.nickname || "ผู้ดูแลระบบ"})
+                          </option>
+                          {allUsers
+                            .filter((u) => u.role === "admin" || u.role === "manager" || u.role === "staff")
+                            .map((u) => (
+                              <option key={u.uid} value={u.displayName || u.email || ""}>
+                                👤 {u.displayName || u.email}
+                              </option>
+                            ))}
+                          <option value="custom">✏️ พิมพ์ระบุเอง</option>
+                        </select>
+                        <input
+                          type="text"
+                          value={assignorName}
+                          onChange={(e) => setAssignorName(e.target.value)}
+                          placeholder="พิมพ์ชื่อผู้มอบหมายงาน..."
+                          className="w-full px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
