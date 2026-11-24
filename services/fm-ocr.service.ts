@@ -177,18 +177,22 @@ export function parseFMLines(lines: string[]): ParsedFMData {
       result.workType = after || (nextLine && !nextLine.includes(":") ? nextLine : undefined);
     }
 
-    // 2. Work Order Number
+    // 2. Work Order Number (e.g. "ใบแจ้งงานเลขที่ : 6090", NOT form code "อบก-จ.-01")
     if (
       (line.includes("ใบแจ้งงานเลขที่") ||
         line.includes("เลขที่ใบแจ้งงาน") ||
         line.includes("เลขที่ใบงาน") ||
-        line.includes("ใบแจ้งงาน")) &&
+        line.includes("เลขที่เอกสาร") ||
+        line.includes("เลขที่ :")) &&
+      !line.includes("อบก") &&
       !result.workOrderNumber
     ) {
       const after = line.split(":")[1]?.trim();
-      const val = after || nextLine;
-      const numMatch = val.match(/\d+/);
-      if (numMatch) result.workOrderNumber = numMatch[0];
+      const val = (after && after.length > 0) ? after : nextLine;
+      if (!val.includes("อบก")) {
+        const numMatch = val.match(/\d+/);
+        if (numMatch) result.workOrderNumber = numMatch[0];
+      }
     }
 
     // 3. Request Date
