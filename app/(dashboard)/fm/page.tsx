@@ -10,10 +10,10 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   Wrench, Plus, Search, Clock, CheckCircle2, AlertTriangle,
   ChevronRight, X, FileText, MapPin, User, Building, Calendar,
-  Sparkles, UploadCloud, FileUp, Loader2, Trash2, ExternalLink, Users,
+  Sparkles, UploadCloud, FileUp, Loader2, Trash2, ExternalLink, Users, Download,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
-import { uploadFile } from "@/lib/upload";
+import { uploadFMFile, openAttachmentInNewTab, downloadAttachmentFile } from "@/services/fm-storage.service";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -133,9 +133,9 @@ export default function FMWorkOrdersPage() {
 
     try {
       setIsUploadingPdf(true);
-      const url = await uploadFile(file, "fm_documents");
-      setAttachmentUrl(url);
-      setAttachmentName(file.name);
+      const res = await uploadFMFile(file, "fm_documents");
+      setAttachmentUrl(res.url);
+      setAttachmentName(res.name);
       toast.success("อัปโหลดไฟล์ PDF สำเร็จแล้ว");
     } catch (err: any) {
       console.error("PDF upload error:", err);
@@ -566,14 +566,22 @@ export default function FMWorkOrdersPage() {
                           <p className="text-xs font-bold text-gray-900 dark:text-white truncate">
                             {attachmentName || "เอกสารแนบใบงาน.pdf"}
                           </p>
-                          <a
-                            href={attachmentUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-[11px] text-[#1D4ED8] hover:underline flex items-center gap-1 mt-0.5"
-                          >
-                            เปิดดูเอกสาร <ExternalLink className="w-3 h-3" />
-                          </a>
+                          <div className="flex items-center gap-3 mt-0.5">
+                            <button
+                              type="button"
+                              onClick={() => openAttachmentInNewTab(attachmentUrl, attachmentName)}
+                              className="text-[11px] font-semibold text-[#1D4ED8] hover:underline flex items-center gap-1"
+                            >
+                              เปิดดูเอกสาร <ExternalLink className="w-3 h-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => downloadAttachmentFile(attachmentUrl, attachmentName)}
+                              className="text-[11px] text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:underline flex items-center gap-1"
+                            >
+                              ดาวน์โหลด <Download className="w-3 h-3" />
+                            </button>
+                          </div>
                         </div>
                       </div>
 

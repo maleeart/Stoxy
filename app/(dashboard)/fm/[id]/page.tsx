@@ -17,9 +17,10 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   Wrench, ArrowLeft, Calendar, MapPin, User, Building, Phone,
   Mail, FileText, CheckCircle2, AlertTriangle, Clock, Plus,
-  Trash2, X, Search, Check, Ban, ExternalLink, Printer,
+  Trash2, X, Search, Check, Ban, ExternalLink, Printer, Download,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { openAttachmentInNewTab, downloadAttachmentFile } from "@/services/fm-storage.service";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import type { FMWorkOrderItem, FMWorkOrderStatus, InventoryItem } from "@/types";
@@ -243,14 +244,23 @@ export default function FMWorkOrderDetailPage() {
 
         <div className="flex items-center gap-2">
           {workOrder.attachmentUrl && (
-            <a
-              href={workOrder.attachmentUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 transition-colors"
-            >
-              <FileText className="w-3.5 h-3.5" /> ดูเอกสารแนบ <ExternalLink className="w-3 h-3 opacity-60" />
-            </a>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => openAttachmentInNewTab(workOrder.attachmentUrl!, workOrder.attachmentName)}
+                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 transition-colors"
+              >
+                <FileText className="w-3.5 h-3.5 text-rose-500" /> ดูเอกสารแนบ <ExternalLink className="w-3 h-3 opacity-60" />
+              </button>
+              <button
+                type="button"
+                onClick={() => downloadAttachmentFile(workOrder.attachmentUrl!, workOrder.attachmentName)}
+                className="p-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 transition-colors"
+                title="ดาวน์โหลดไฟล์เอกสารแนบ"
+              >
+                <Download className="w-3.5 h-3.5" />
+              </button>
+            </div>
           )}
           <button
             onClick={() => window.print()}
@@ -410,6 +420,40 @@ export default function FMWorkOrderDetailPage() {
             <span className="font-semibold text-gray-700 dark:text-gray-300">สถานที่ดำเนินการ:</span>
             <span>{workOrder.location}</span>
           </div>
+
+          {workOrder.attachmentUrl && (
+            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-blue-50/70 to-indigo-50/70 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200 dark:border-blue-800/60 flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 dark:bg-red-950/60 flex items-center justify-center shrink-0">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-gray-900 dark:text-white truncate">
+                    {workOrder.attachmentName || "เอกสารแนบใบแจ้งงานซ่อม (PDF)"}
+                  </p>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                    เอกสารแนบต้นฉบับประจำใบแจ้งงานซ่อม
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => openAttachmentInNewTab(workOrder.attachmentUrl!, workOrder.attachmentName)}
+                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-[#1D4ED8] text-white rounded-xl hover:bg-blue-800 shadow-sm transition-all"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" /> เปิดดูเอกสาร
+                </button>
+                <button
+                  type="button"
+                  onClick={() => downloadAttachmentFile(workOrder.attachmentUrl!, workOrder.attachmentName)}
+                  className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-50 transition-all"
+                >
+                  <Download className="w-3.5 h-3.5" /> ดาวน์โหลด
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 2-Columns Grid: Requester & Technician */}
