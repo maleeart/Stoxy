@@ -13,6 +13,7 @@ async function createDocWithThaiFont(orientation: "portrait" | "landscape" = "po
     const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
     doc.addFileToVFS("Sarabun-Regular.ttf", b64);
     doc.addFont("Sarabun-Regular.ttf", "Sarabun", "normal");
+    doc.addFont("Sarabun-Regular.ttf", "Sarabun", "bold");
     doc.setFont("Sarabun");
   } catch {
     // fallback to helvetica if font fails to load
@@ -754,10 +755,10 @@ export async function exportFMReportPDF(workOrders: FMWorkOrder[], monthYearStr?
     body: rows,
     startY: 25,
     styles: { font: "Sarabun", fontSize: 8, cellPadding: 2.5 },
-    headStyles: { fillColor: [29, 78, 216], textColor: 255, fontStyle: "bold" },
+    headStyles: { fillColor: [29, 78, 216], textColor: 255, font: "Sarabun", fontStyle: "normal" },
     columnStyles: {
       0: { cellWidth: 12, halign: "center" },
-      1: { cellWidth: 24, fontStyle: "bold" },
+      1: { cellWidth: 24, font: "Sarabun", fontStyle: "normal" },
       2: { cellWidth: 22 },
       3: { cellWidth: 70 },
       4: { cellWidth: 45 },

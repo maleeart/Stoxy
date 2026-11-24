@@ -125,20 +125,33 @@ export async function submitFMWorkOrderItems(
   );
 }
 
+export async function updateFMWorkOrderItems(
+  id: string,
+  items: FMWorkOrderItem[]
+): Promise<void> {
+  const ref = doc(db, COL, id);
+  await updateDoc(ref, {
+    items,
+    updatedAt: Timestamp.now(),
+  });
+}
+
 export async function approveFMWorkOrder(
   id: string,
   approverId: string,
-  approverName?: string
+  approverName?: string,
+  customItems?: FMWorkOrderItem[]
 ): Promise<void> {
   const ref = doc(db, COL, id);
   const snap = await getDoc(ref);
   if (!snap.exists()) throw new Error("ไม่พบใบแจ้งงาน FM");
   const wo = snap.data() as FMWorkOrder;
 
-  const items = wo.items || [];
+  const items = customItems !== undefined ? customItems : (wo.items || []);
   if (items.length === 0) {
     // If no items, simply approve
     await updateDoc(ref, {
+      items: [],
       status: "completed",
       approvedBy: approverId,
       approvedByName: approverName || approverId,
@@ -170,8 +183,9 @@ export async function approveFMWorkOrder(
   const now = Timestamp.now();
   const batch = writeBatch(db);
 
-  // Update FM status
+  // Update FM status and items
   batch.update(ref, {
+    items,
     status: "completed",
     approvedBy: approverId,
     approvedByName: approverName || approverId,

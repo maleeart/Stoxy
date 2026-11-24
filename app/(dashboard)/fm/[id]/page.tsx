@@ -8,6 +8,7 @@ import { MobileHeader } from "@/components/layout/MobileHeader";
 import {
   getFMWorkOrder,
   submitFMWorkOrderItems,
+  updateFMWorkOrderItems,
   approveFMWorkOrder,
   rejectFMWorkOrder,
   deleteFMWorkOrder,
@@ -17,7 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   Wrench, ArrowLeft, Calendar, MapPin, User, Building, Phone,
   Mail, FileText, CheckCircle2, AlertTriangle, Clock, Plus,
-  Trash2, X, Search, Check, Ban, ExternalLink, Printer, Download,
+  Trash2, X, Search, Check, Ban, ExternalLink, Printer, Download, Save,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { openAttachmentInNewTab, downloadAttachmentFile } from "@/services/fm-storage.service";
@@ -103,12 +104,23 @@ export default function FMWorkOrderDetailPage() {
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
   });
 
+  const updateItemsMut = useMutation({
+    mutationFn: () => updateFMWorkOrderItems(id, workingItems),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["fm_workorder", id] });
+      qc.invalidateQueries({ queryKey: ["fm_workorders"] });
+      toast.success("บันทึกการแก้ไขรายการอุปกรณ์เรียบร้อยแล้ว");
+    },
+    onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาดในการบันทึก"),
+  });
+
   const approveMut = useMutation({
     mutationFn: () =>
       approveFMWorkOrder(
         id,
         stoxyUser?.uid ?? "",
-        stoxyUser?.displayName || stoxyUser?.nickname || "ผู้ดูแลระบบ"
+        stoxyUser?.displayName || stoxyUser?.nickname || "ผู้ดูแลระบบ",
+        workingItems
       ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["fm_workorder", id] });
@@ -171,7 +183,10 @@ export default function FMWorkOrderDetailPage() {
   }
 
   const cfg = statusConfig[workOrder.status] || statusConfig.pending;
-  const canEditItems = workOrder.status === "pending" || workOrder.status === "rejected";
+  const canEditItems =
+    workOrder.status === "pending" ||
+    workOrder.status === "rejected" ||
+    workOrder.status === "pending_review";
 
   const addItemToWorkOrder = (inv: InventoryItem) => {
     setWorkingItems((prev) => {
@@ -296,6 +311,9 @@ export default function FMWorkOrderDetailPage() {
               <p className="text-xs text-purple-700 dark:text-purple-400">
                 ส่งโดย {workOrder.submittedByName || "ช่าง"} เมื่อ{" "}
                 {formatDate(workOrder.submittedAt)}
+              </p>
+              <p className="text-[11px] text-purple-600 dark:text-purple-300 mt-1 font-medium">
+                💡 สามารถแก้ไข ปรับจำนวน หรือเพิ่ม/ลบรายการอุปกรณ์ด้านล่างได้ก่อนอนุมัติ
               </p>
             </div>
           </div>
@@ -674,21 +692,34 @@ export default function FMWorkOrderDetailPage() {
           </div>
         )}
 
-        {/* Action button to submit items for review */}
-        {canEditItems && workingItems.length > 0 && (
+        {/* Action button to submit or update items */}
+        {canEditItems && (
           <div className="pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-end">
-            <button
-              onClick={() => {
-                if (confirm("ยืนยันส่งรายการอุปกรณ์สำหรับใบงานนี้เพื่อให้ผู้ดูแลอนุมัติ?")) {
-                  submitItemsMut.mutate();
-                }
-              }}
-              disabled={submitItemsMut.isPending}
-              className="px-6 py-3 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-2xl text-sm font-bold shadow-lg shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
-            >
-              <Check className="w-4 h-4" />
-              {submitItemsMut.isPending ? "กำลังบันทึก..." : "ยืนยันและส่งรอตรวจสอบ"}
-            </button>
+            {workOrder.status === "pending_review" ? (
+              <button
+                onClick={() => {
+                  updateItemsMut.mutate();
+                }}
+                disabled={updateItemsMut.isPending}
+                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-sm font-bold shadow-lg shadow-purple-500/20 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
+              >
+                <Save className="w-4 h-4" />
+                {updateItemsMut.isPending ? "กำลังบันทึก..." : "บันทึกการแก้ไขรายการอุปกรณ์"}
+              </button>
+            ) : workingItems.length > 0 ? (
+              <button
+                onClick={() => {
+                  if (confirm("ยืนยันส่งรายการอุปกรณ์สำหรับใบงานนี้เพื่อให้ผู้ดูแลอนุมัติ?")) {
+                    submitItemsMut.mutate();
+                  }
+                }}
+                disabled={submitItemsMut.isPending}
+                className="px-6 py-3 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-2xl text-sm font-bold shadow-lg shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
+              >
+                <Check className="w-4 h-4" />
+                {submitItemsMut.isPending ? "กำลังบันทึก..." : "ยืนยันและส่งรอตรวจสอบ"}
+              </button>
+            ) : null}
           </div>
         )}
       </div>
