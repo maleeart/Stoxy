@@ -212,7 +212,7 @@ export default function FMWorkOrderDetailPage() {
       qc.invalidateQueries({ queryKey: ["fm_workorder", id] });
       qc.invalidateQueries({ queryKey: ["fm_workorders"] });
       qc.invalidateQueries({ queryKey: ["fm_active_count"] });
-      toast.success("บันทึกดำเนินการเสร็จสิ้น (ไม่เบิกของ) เรียบร้อยแล้ว");
+      toast.success("ส่งดำเนินการแล้ว (ไม่เบิกของ) รอผู้ดูแลอนุมัติเรียบร้อยแล้ว");
     },
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
   });
@@ -362,8 +362,8 @@ export default function FMWorkOrderDetailPage() {
       {/* Status Alert Banners */}
       {workOrder.status === "waiting_parts" && (
         <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-2xl p-4 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-orange-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-orange-500 text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5 sm:mt-0">
               <PackageSearch className="w-5 h-5" />
             </div>
             <div>
@@ -378,7 +378,7 @@ export default function FMWorkOrderDetailPage() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
             <button
               onClick={() => {
                 if (confirm("เปลี่ยนสถานะกลับเป็น 'รอดำเนินการ'?")) {
@@ -386,7 +386,7 @@ export default function FMWorkOrderDetailPage() {
                 }
               }}
               disabled={resumePendingMut.isPending}
-              className="px-3.5 py-1.5 bg-white dark:bg-gray-800 hover:bg-orange-100/50 dark:hover:bg-gray-700 text-orange-700 dark:text-orange-300 border border-orange-300 dark:border-orange-700 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95"
+              className="w-full sm:w-auto px-3.5 py-2 bg-white dark:bg-gray-800 hover:bg-orange-100/50 dark:hover:bg-gray-700 text-orange-700 dark:text-orange-300 border border-orange-300 dark:border-orange-700 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 text-center"
             >
               เปลี่ยนกลับเป็นรอดำเนินการ
             </button>
@@ -395,40 +395,56 @@ export default function FMWorkOrderDetailPage() {
       )}
 
       {workOrder.status === "pending_review" && (
-        <div className="bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800 rounded-2xl p-4 mb-4 flex items-center justify-between gap-3 shadow-sm">
-          <div className="flex items-center gap-3">
-            <Clock className="w-5 h-5 text-purple-600 shrink-0" />
+        <div className="bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800 rounded-2xl p-4 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5 sm:mt-0">
+              <Clock className="w-5 h-5" />
+            </div>
             <div>
               <p className="text-sm font-bold text-purple-900 dark:text-purple-200">
-                รอผู้ดูแลตรวจสอบและอนุมัติตัดสต็อก
+                {workOrder.completedWithoutItems
+                  ? "รอผู้ดูแลตรวจสอบและอนุมัติ (ดำเนินการแล้ว ไม่เบิกของ)"
+                  : "รอผู้ดูแลตรวจสอบและอนุมัติตัดสต็อก"}
               </p>
-              <p className="text-xs text-purple-700 dark:text-purple-400">
+              <p className="text-xs text-purple-700 dark:text-purple-400 mt-0.5">
                 ส่งโดย {workOrder.submittedByName || "ช่าง"} เมื่อ{" "}
                 {formatDate(workOrder.submittedAt)}
               </p>
               <p className="text-[11px] text-purple-600 dark:text-purple-300 mt-1 font-medium">
-                💡 สามารถแก้ไข ปรับจำนวน หรือเพิ่ม/ลบรายการอุปกรณ์ด้านล่างได้ก่อนอนุมัติ
+                {workOrder.completedWithoutItems
+                  ? "💡 ช่างแจ้งว่าดำเนินการเรียบร้อยแล้วโดยไม่ใช้อุปกรณ์ หากต้องการเบิกอุปกรณ์เพิ่มเติม สามารถเลือกเพิ่มด้านล่างก่อนอนุมัติได้"
+                  : "💡 สามารถแก้ไข ปรับจำนวน หรือเพิ่ม/ลบรายการอุปกรณ์ด้านล่างได้ก่อนอนุมัติ"}
               </p>
             </div>
           </div>
           {isAdmin && (
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto pt-1 sm:pt-0">
               <button
                 onClick={() => setShowRejectModal(true)}
-                className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition-colors"
+                className="flex-1 sm:flex-none px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition-colors text-center"
               >
                 ส่งกลับแก้ไข
               </button>
               <button
                 onClick={() => {
-                  if (confirm("ยืนยันการอนุมัติและตัดสต็อกตามรายการที่เลือก?")) {
+                  if (
+                    confirm(
+                      workOrder.completedWithoutItems || workingItems.length === 0
+                        ? "ยืนยันการอนุมัติปิดใบงาน (ไม่เบิกของ)?"
+                        : "ยืนยันการอนุมัติและตัดสต็อกตามรายการที่เลือก?"
+                    )
+                  ) {
                     approveMut.mutate();
                   }
                 }}
                 disabled={approveMut.isPending}
-                className="px-4 py-1.5 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50"
+                className="flex-1 sm:flex-none px-4 py-2 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50 text-center"
               >
-                {approveMut.isPending ? "กำลังตัดสต็อก..." : "อนุมัติตัดสต็อก"}
+                {approveMut.isPending
+                  ? "กำลังบันทึก..."
+                  : workOrder.completedWithoutItems || workingItems.length === 0
+                  ? "อนุมัติปิดใบงาน"
+                  : "อนุมัติตัดสต็อก"}
               </button>
             </div>
           )}
@@ -647,7 +663,7 @@ export default function FMWorkOrderDetailPage() {
 
       {/* ── Section: รายการอุปกรณ์ที่ใช้/เบิกสำหรับใบงานนี้ ── */}
       <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm space-y-4 mb-20">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="font-bold text-base text-gray-900 dark:text-white flex items-center gap-2">
               <Wrench className="w-4 h-4 text-[#1D4ED8]" />
@@ -662,7 +678,7 @@ export default function FMWorkOrderDetailPage() {
           {canEditItems && (
             <button
               onClick={() => setShowItemPicker(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-xl text-xs font-bold active:scale-95 transition-all shadow-md shadow-blue-500/20"
+              className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-xl text-xs sm:text-sm font-bold active:scale-95 transition-all shadow-md shadow-blue-500/20"
             >
               <Plus className="w-4 h-4" /> เลือกอุปกรณ์จากคลัง
             </button>
@@ -793,100 +809,111 @@ export default function FMWorkOrderDetailPage() {
 
         {/* Action button bar */}
         {canEditItems && (
-          <div className="pt-4 border-t border-gray-100 dark:border-gray-700 flex flex-wrap items-center justify-between gap-3">
-            {/* Left side actions: รอของ / เปลี่ยนสถานะ */}
-            <div className="flex items-center gap-2">
-              {(workOrder.status === "pending" || workOrder.status === "rejected") && (
-                <button
-                  type="button"
-                  onClick={() => setShowWaitingPartsModal(true)}
-                  className="px-4 py-2.5 bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/40 dark:hover:bg-orange-900/60 border border-orange-300 dark:border-orange-800 text-orange-700 dark:text-orange-300 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 active:scale-95 shadow-sm"
-                >
-                  <PackageSearch className="w-4 h-4 text-orange-600" />
-                  รอของ (จัดซื้อ/หาอุปกรณ์)
-                </button>
-              )}
+          <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
+            {/* If in pending / waiting_parts / rejected */}
+            {workOrder.status !== "pending_review" && (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                {/* Secondary actions: รอของ หรือ เปลี่ยนสถานะ */}
+                <div className="w-full sm:w-auto">
+                  {(workOrder.status === "pending" || workOrder.status === "rejected") && (
+                    <button
+                      type="button"
+                      onClick={() => setShowWaitingPartsModal(true)}
+                      className="w-full sm:w-auto px-4 py-2.5 bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/40 dark:hover:bg-orange-900/60 border border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-300 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 active:scale-95 shadow-sm"
+                    >
+                      <PackageSearch className="w-4 h-4 text-orange-500 shrink-0" />
+                      <span>รอของ (จัดซื้อ/หาอุปกรณ์)</span>
+                    </button>
+                  )}
 
-              {workOrder.status === "waiting_parts" && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (confirm("เปลี่ยนสถานะกลับเป็น 'รอดำเนินการ'?")) {
-                      resumePendingMut.mutate();
-                    }
-                  }}
-                  disabled={resumePendingMut.isPending}
-                  className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 active:scale-95"
-                >
-                  <Clock className="w-4 h-4" />
-                  เปลี่ยนเป็นรอดำเนินการ
-                </button>
-              )}
-            </div>
+                  {workOrder.status === "waiting_parts" && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (confirm("เปลี่ยนสถานะกลับเป็น 'รอดำเนินการ'?")) {
+                          resumePendingMut.mutate();
+                        }
+                      }}
+                      disabled={resumePendingMut.isPending}
+                      className="w-full sm:w-auto px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 active:scale-95"
+                    >
+                      <Clock className="w-4 h-4 shrink-0" />
+                      <span>เปลี่ยนเป็นรอดำเนินการ</span>
+                    </button>
+                  )}
+                </div>
 
-            {/* Right side actions: ดำเนินการแล้ว (ไม่เบิกของ), บันทึกการแก้ไข, หรือ ส่งรอตรวจสอบ */}
-            <div className="flex items-center gap-2 ml-auto">
-              {/* ดำเนินการแล้ว (ไม่เบิกของ) Button */}
-              {(workOrder.status === "pending" ||
-                workOrder.status === "waiting_parts" ||
-                workOrder.status === "rejected") && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (
-                      confirm(
-                        "ยืนยันว่าดำเนินการงานนี้เสร็จสิ้นเรียบร้อยแล้ว โดยไม่เบิกใช้อุปกรณ์จากคลัง?"
-                      )
-                    ) {
-                      completeWithoutItemsMut.mutate();
-                    }
-                  }}
-                  disabled={completeWithoutItemsMut.isPending}
-                  className="px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 border border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-200 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 active:scale-95 disabled:opacity-50 shadow-sm"
-                >
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  {completeWithoutItemsMut.isPending
-                    ? "กำลังบันทึก..."
-                    : "ดำเนินการแล้ว (ไม่เบิกของ)"}
-                </button>
-              )}
+                {/* Primary / Completion actions */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
+                  {/* ปุ่มดำเนินการแล้ว (ไม่เบิกของ) -> ส่งไปสถานะ รอตรวจสอบ */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (
+                        confirm(
+                          "ยืนยันว่าดำเนินการงานนี้เสร็จสิ้นแล้ว โดยไม่เบิกใช้อุปกรณ์จากคลัง?\n\n(ระบบจะส่งไปที่สถานะ 'รอตรวจสอบ' เพื่อให้ผู้ดูแลตรวจสอบและอนุมัติ)"
+                        )
+                      ) {
+                        completeWithoutItemsMut.mutate();
+                      }
+                    }}
+                    disabled={completeWithoutItemsMut.isPending}
+                    className="w-full sm:w-auto px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 shadow-sm"
+                  >
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>
+                      {completeWithoutItemsMut.isPending
+                        ? "กำลังส่ง..."
+                        : "ดำเนินการแล้ว (ไม่เบิกของ)"}
+                    </span>
+                  </button>
 
-              {/* บันทึกการแก้ไข (pending_review) */}
-              {workOrder.status === "pending_review" && (
+                  {/* ยืนยันและส่งรอตรวจสอบ (เมื่อมี workingItems > 0) */}
+                  {workingItems.length > 0 && (
+                    <button
+                      onClick={() => {
+                        if (
+                          confirm(
+                            "ยืนยันส่งรายการอุปกรณ์สำหรับใบงานนี้เพื่อให้ผู้ดูแลอนุมัติ?"
+                          )
+                        ) {
+                          submitItemsMut.mutate();
+                        }
+                      }}
+                      disabled={submitItemsMut.isPending}
+                      className="w-full sm:w-auto px-5 py-2.5 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-2xl text-xs sm:text-sm font-bold shadow-lg shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      <Check className="w-4 h-4 shrink-0" />
+                      <span>
+                        {submitItemsMut.isPending
+                          ? "กำลังบันทึก..."
+                          : `ยืนยันและส่งรอตรวจสอบ (${workingItems.length} รายการ)`}
+                      </span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* If in pending_review */}
+            {workOrder.status === "pending_review" && (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-end gap-2.5">
                 <button
                   onClick={() => {
                     updateItemsMut.mutate();
                   }}
                   disabled={updateItemsMut.isPending}
-                  className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-xs sm:text-sm font-bold shadow-lg shadow-purple-500/20 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
+                  className="w-full sm:w-auto px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-xs sm:text-sm font-bold shadow-lg shadow-purple-500/20 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  <Save className="w-4 h-4" />
-                  {updateItemsMut.isPending ? "กำลังบันทึก..." : "บันทึกการแก้ไขรายการอุปกรณ์"}
+                  <Save className="w-4 h-4 shrink-0" />
+                  <span>
+                    {updateItemsMut.isPending
+                      ? "กำลังบันทึก..."
+                      : "บันทึกการแก้ไขรายการอุปกรณ์"}
+                  </span>
                 </button>
-              )}
-
-              {/* ยืนยันและส่งรอตรวจสอบ */}
-              {canEditItems &&
-                workOrder.status !== "pending_review" &&
-                workingItems.length > 0 && (
-                  <button
-                    onClick={() => {
-                      if (
-                        confirm(
-                          "ยืนยันส่งรายการอุปกรณ์สำหรับใบงานนี้เพื่อให้ผู้ดูแลอนุมัติ?"
-                        )
-                      ) {
-                        submitItemsMut.mutate();
-                      }
-                    }}
-                    disabled={submitItemsMut.isPending}
-                    className="px-5 py-2.5 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-2xl text-xs sm:text-sm font-bold shadow-lg shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
-                  >
-                    <Check className="w-4 h-4" />
-                    {submitItemsMut.isPending ? "กำลังบันทึก..." : "ยืนยันและส่งรอตรวจสอบ"}
-                  </button>
-                )}
-            </div>
+              </div>
+            )}
           </div>
         )}
       </div>

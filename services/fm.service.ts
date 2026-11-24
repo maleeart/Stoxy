@@ -153,11 +153,15 @@ export async function approveFMWorkOrder(
     await updateDoc(ref, {
       items: [],
       status: "completed",
+      completedWithoutItems: true,
       approvedBy: approverId,
       approvedByName: approverName || approverId,
       approvedAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     });
+    notifyLine(
+      `✅ อนุมัติใบงาน FM-${wo.workOrderNumber} (ไม่เบิกของ)\nเรื่อง: ${wo.title}\nอนุมัติโดย: ${approverName || approverId}\nสถานะ: เสร็จสิ้น`
+    );
     return;
   }
 
@@ -187,6 +191,7 @@ export async function approveFMWorkOrder(
   batch.update(ref, {
     items,
     status: "completed",
+    completedWithoutItems: false,
     approvedBy: approverId,
     approvedByName: approverName || approverId,
     approvedAt: now,
@@ -311,19 +316,21 @@ export async function completeFMWorkOrderWithoutItems(
   const now = Timestamp.now();
   await updateDoc(ref, {
     items: [],
-    status: "completed",
+    status: "pending_review",
     completedWithoutItems: true,
-    approvedBy: userId,
-    approvedByName: userName,
-    approvedAt: now,
+    submittedBy: userId,
+    submittedByName: userName,
+    submittedAt: now,
     updatedAt: now,
-    ...(notes ? { notes: wo.notes ? `${wo.notes}\n[ดำเนินการเสร็จสิ้น (ไม่เบิกของ)]: ${notes}` : `[ดำเนินการเสร็จสิ้น (ไม่เบิกของ)]: ${notes}` } : {}),
+    ...(notes ? { notes: wo.notes ? `${wo.notes}\n[ดำเนินการแล้ว (ไม่เบิกของ)]: ${notes}` : `[ดำเนินการแล้ว (ไม่เบิกของ)]: ${notes}` } : {}),
   });
 
   notifyLine(
-    `✅ ดำเนินการแล้ว (ไม่เบิกของ) ใบงาน FM-${wo.workOrderNumber}\nเรื่อง: ${wo.title}\nผู้ดำเนินการ: ${userName}\nสถานะ: เสร็จสิ้นโดยไม่ใช้อุปกรณ์จากคลัง`
+    `🔔 ดำเนินการแล้ว (ไม่เบิกของ) ใบงาน FM-${wo.workOrderNumber} รอตรวจสอบ\nเรื่อง: ${wo.title}\nผู้ดำเนินการ: ${userName}\nสถานะ: ช่างดำเนินการแล้วโดยไม่ใช้อุปกรณ์ รอผู้ดูแลตรวจสอบและอนุมัติ`
   );
 }
+
+export const submitFMWorkOrderWithoutItems = completeFMWorkOrderWithoutItems;
 
 export async function deleteFMWorkOrder(id: string): Promise<void> {
   await deleteDoc(doc(db, COL, id));
