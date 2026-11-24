@@ -12,6 +12,7 @@ import {
   Timestamp,
   writeBatch,
   increment,
+  deleteField,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { recordStockMovement } from "./inventory.service";
@@ -425,6 +426,43 @@ export async function adminUpdateFMWorkOrderStatus(
   notifyLine(
     `⚙️ ผู้ดูแลระบบปรับเปลี่ยนสถานะใบงาน FM-${wo.workOrderNumber}\nเรื่อง: ${wo.title}\nสถานะใหม่: ${newStatus}\nปรับโดย: ${adminName}${note ? `\nหมายเหตุ: ${note}` : ""}`
   );
+}
+
+export async function clearFMWorkOrdersPerformer(onlyUncompleted: boolean = true): Promise<number> {
+  const snap = await getDocs(collection(db, COL));
+  const batch = writeBatch(db);
+  let count = 0;
+
+  for (const docSnap of snap.docs) {
+    const data = docSnap.data() as FMWorkOrder;
+    if (onlyUncompleted && (data.status === "completed" || data.status === "cancelled")) {
+      continue;
+    }
+    if (data.assignedTechnicianName || data.assignedDepartment || data.assignedTechnicianId) {
+      batch.update(doc(db, COL, docSnap.id), {
+        assignedTechnicianName: deleteField(),
+        assignedTechnicianId: deleteField(),
+        assignedDepartment: deleteField(),
+        updatedAt: Timestamp.now(),
+      });
+      count++;
+    }
+  }
+
+  if (count > 0) {
+    await batch.commit();
+  }
+  return count;
+}
+
+export async function clearSingleFMWorkOrderPerformer(id: string): Promise<void> {
+  const ref = doc(db, COL, id);
+  await updateDoc(ref, {
+    assignedTechnicianName: deleteField(),
+    assignedTechnicianId: deleteField(),
+    assignedDepartment: deleteField(),
+    updatedAt: Timestamp.now(),
+  });
 }
 
 export async function deleteFMWorkOrder(id: string): Promise<void> {

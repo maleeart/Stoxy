@@ -16,6 +16,7 @@ import {
   resumeFMWorkOrderToPending,
   completeFMWorkOrderWithoutItems,
   claimFMWorkOrder,
+  clearSingleFMWorkOrderPerformer,
   adminUpdateFMWorkOrderStatus,
 } from "@/services/fm.service";
 import { useInventoryItems } from "@/hooks/useInventory";
@@ -248,6 +249,16 @@ export default function FMWorkOrderDetailPage() {
       toast.success("บันทึกชื่อคุณเป็นผู้ดำเนินการใบงานนี้เรียบร้อยแล้ว");
     },
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
+  });
+
+  const clearSinglePerformerMut = useMutation({
+    mutationFn: () => clearSingleFMWorkOrderPerformer(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["fm_workorder", id] });
+      qc.invalidateQueries({ queryKey: ["fm_workorders"] });
+      toast.success("ล้างข้อมูลผู้ดำเนินการและสังกัดของใบงานนี้เรียบร้อยแล้ว");
+    },
+    onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาดในการล้างข้อมูล"),
   });
 
   const adminStatusMut = useMutation({
@@ -735,18 +746,35 @@ export default function FMWorkOrderDetailPage() {
                 )}
             </div>
 
-            <p>
-              <span className="text-gray-400">ผู้ดำเนินการ:</span>{" "}
-              {workOrder.assignedTechnicianName ? (
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  {workOrder.assignedTechnicianName}
-                </span>
-              ) : (
-                <span className="text-amber-600 dark:text-amber-400 font-medium italic">
-                  - (เว้นว่างไว้ รอผู้ดำเนินการเข้ามาทำรายการ)
-                </span>
+            <div className="flex items-center justify-between gap-2">
+              <p>
+                <span className="text-gray-400">ผู้ดำเนินการ:</span>{" "}
+                {workOrder.assignedTechnicianName ? (
+                  <span className="font-semibold text-gray-900 dark:text-white">
+                    {workOrder.assignedTechnicianName}
+                  </span>
+                ) : (
+                  <span className="text-amber-600 dark:text-amber-400 font-medium italic">
+                    - (เว้นว่างไว้ รอผู้ดำเนินการเข้ามาทำรายการ)
+                  </span>
+                )}
+              </p>
+              {isAdmin && workOrder.assignedTechnicianName && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (confirm("ต้องการล้างข้อมูลผู้ดำเนินการและสังกัดของใบงานนี้ เพื่อให้เว้นว่างรอคนมาทำต่อใช่หรือไม่?")) {
+                      clearSinglePerformerMut.mutate();
+                    }
+                  }}
+                  disabled={clearSinglePerformerMut.isPending}
+                  className="px-2 py-0.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 rounded-md text-[10px] font-semibold transition-all shrink-0"
+                  title="ล้างค่าผู้ดำเนินการและสังกัด"
+                >
+                  {clearSinglePerformerMut.isPending ? "..." : "🔄 ล้างค่า"}
+                </button>
               )}
-            </p>
+            </div>
             <p>
               <span className="text-gray-400">สังกัด / หน่วยงานช่าง:</span>{" "}
               <span className="text-gray-800 dark:text-gray-200">
