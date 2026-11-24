@@ -913,15 +913,9 @@ export default function FMWorkOrderDetailPage() {
 
             <p>
               <span className="text-gray-400">ผู้ดำเนินการ:</span>{" "}
-              {workOrder.assignedTechnicianName ? (
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  {workOrder.assignedTechnicianName}
-                </span>
-              ) : (
-                <span className="text-amber-600 dark:text-amber-400 font-medium italic">
-                  - (เว้นว่างไว้ รอผู้ดำเนินการเข้ามาทำรายการ)
-                </span>
-              )}
+              <span className="font-semibold text-gray-900 dark:text-white">
+                {workOrder.assignedTechnicianName || "-"}
+              </span>
             </p>
             <p>
               <span className="text-gray-400">สังกัด / หน่วยงานช่าง:</span>{" "}
