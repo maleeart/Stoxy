@@ -700,6 +700,37 @@ export function exportAuditExcel(session: AuditSession, inventoryItems: Inventor
   saveExcel(wb, `stoxy-audit-${cleanName}-${dateStr()}.xlsx`);
 }
 
+export function getFMReportStatus(wo: FMWorkOrder): string {
+  if (wo.status === "completed") {
+    const compTs = wo.approvedAt || wo.updatedAt || wo.requesterSignedAt || wo.submittedAt;
+    const dateStr = compTs?.toDate
+      ? compTs.toDate().toLocaleDateString("th-TH")
+      : compTs instanceof Date
+      ? compTs.toLocaleDateString("th-TH")
+      : "";
+    return dateStr ? `เสร็จสิ้น (${dateStr})` : "เสร็จสิ้น";
+  }
+
+  if (wo.status === "waiting_parts") {
+    const reason = wo.waitingPartsReason?.trim();
+    if (reason && reason !== "รอจัดซื้อ/หาอุปกรณ์เพื่อดำเนินการ") {
+      return `รอจัดซื้อ/หา (${reason})`;
+    }
+    return "รอจัดซื้อ/หา";
+  }
+
+  const statusTh: Record<string, string> = {
+    pending: "รอดำเนินการ",
+    waiting_parts: "รอจัดซื้อ/หา",
+    pending_review: "รอตรวจสอบ",
+    completed: "เสร็จสิ้น",
+    rejected: "ส่งกลับแก้ไข",
+    cancelled: "ยกเลิก",
+  };
+
+  return statusTh[wo.status] || wo.status;
+}
+
 export async function exportFMReportPDF(workOrders: FMWorkOrder[], monthYearStr?: string) {
   const doc = await createDocWithThaiFont("landscape");
 
@@ -723,15 +754,6 @@ export async function exportFMReportPDF(workOrders: FMWorkOrder[], monthYearStr?
     "อุปกรณ์ที่ใช้",
   ];
 
-  const statusTh: Record<string, string> = {
-    pending: "รอดำเนินการ",
-    waiting_parts: "รอจัดซื้อ/หาอุปกรณ์",
-    pending_review: "รอตรวจสอบ",
-    completed: "เสร็จสิ้น",
-    rejected: "ส่งกลับแก้ไข",
-    cancelled: "ยกเลิก",
-  };
-
   const rows = workOrders.map((wo, index) => {
     const itemsText = (wo.items || []).length > 0
       ? (wo.items || []).map((it, i) => `${i + 1}. ${it.itemName} (${it.quantity} ${it.unit || "ชิ้น"})`).join("\n")
@@ -746,7 +768,7 @@ export async function exportFMReportPDF(workOrders: FMWorkOrder[], monthYearStr?
       `${wo.title}\nสถานที่: ${wo.location}`,
       `${wo.requesterName}\n${wo.requesterDepartment}`,
       wo.assignedTechnicianName || "-",
-      statusTh[wo.status] || wo.status,
+      getFMReportStatus(wo),
       itemsText,
     ];
   });
@@ -758,14 +780,14 @@ export async function exportFMReportPDF(workOrders: FMWorkOrder[], monthYearStr?
     styles: { font: "Sarabun", fontSize: 8, cellPadding: 2.5 },
     headStyles: { fillColor: [29, 78, 216], textColor: 255, font: "Sarabun", fontStyle: "normal" },
     columnStyles: {
-      0: { cellWidth: 12, halign: "center" },
+      0: { cellWidth: 10, halign: "center" },
       1: { cellWidth: 24, font: "Sarabun", fontStyle: "normal" },
-      2: { cellWidth: 22 },
-      3: { cellWidth: 70 },
-      4: { cellWidth: 45 },
-      5: { cellWidth: 35 },
-      6: { cellWidth: 24, halign: "center" },
-      7: { cellWidth: 45 },
+      2: { cellWidth: 20 },
+      3: { cellWidth: 65 },
+      4: { cellWidth: 42 },
+      5: { cellWidth: 32 },
+      6: { cellWidth: 35, halign: "center" },
+      7: { cellWidth: 42 },
     },
     alternateRowStyles: { fillColor: [248, 250, 252] },
   });
@@ -775,15 +797,6 @@ export async function exportFMReportPDF(workOrders: FMWorkOrder[], monthYearStr?
 }
 
 export function exportFMReportExcel(workOrders: FMWorkOrder[], monthYearStr?: string) {
-  const statusTh: Record<string, string> = {
-    pending: "รอดำเนินการ",
-    waiting_parts: "รอจัดซื้อ/หาอุปกรณ์",
-    pending_review: "รอตรวจสอบ",
-    completed: "เสร็จสิ้น",
-    rejected: "ส่งกลับแก้ไข",
-    cancelled: "ยกเลิก",
-  };
-
   // Sheet 1: Summary of FM Work Orders
   const sheet1Headers = [
     "ลำดับ",
@@ -835,7 +848,7 @@ export function exportFMReportExcel(workOrders: FMWorkOrder[], monthYearStr?: st
       wo.assignedTechnicianName || "",
       wo.assignedDepartment || "",
       wo.assignorName || "",
-      statusTh[wo.status] || wo.status,
+      getFMReportStatus(wo),
       itemCount,
       totalQty,
       wo.approvedByName || "",
@@ -875,7 +888,7 @@ export function exportFMReportExcel(workOrders: FMWorkOrder[], monthYearStr?: st
         it.unit || "ชิ้น",
         it.notes || "",
         wo.assignedTechnicianName || "",
-        statusTh[wo.status] || wo.status,
+        getFMReportStatus(wo),
         reqDate,
       ]);
     }

@@ -886,8 +886,14 @@ export default function FMWorkOrderDetailPage() {
                   ใบแจ้งงานซ่อม เลขที่ {workOrder.workOrderNumber}
                 </span>
                 <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${cfg.badge}`}>
-                  {workOrder.status === "completed" && workOrder.completedWithoutItems
-                    ? "เสร็จสิ้น (ไม่เบิกของ)"
+                  {workOrder.status === "completed"
+                    ? `เสร็จสิ้น${(() => {
+                        const compTs = workOrder.approvedAt || workOrder.updatedAt || workOrder.requesterSignedAt || workOrder.submittedAt;
+                        const dStr = compTs ? formatDate(compTs) : "";
+                        return dStr ? ` (${dStr})` : "";
+                      })()}${workOrder.completedWithoutItems ? " (ไม่เบิกของ)" : ""}`
+                    : workOrder.status === "waiting_parts"
+                    ? `รอจัดซื้อ/หา${workOrder.waitingPartsReason && workOrder.waitingPartsReason.trim() !== "รอจัดซื้อ/หาอุปกรณ์เพื่อดำเนินการ" ? ` (${workOrder.waitingPartsReason.trim()})` : ""}`
                     : cfg.label}
                 </span>
                 {isAdmin && (
@@ -1574,7 +1580,16 @@ export default function FMWorkOrderDetailPage() {
               SFM-{workOrder.workOrderNumber}
             </span>
             <p className="text-[11px] text-gray-600 mt-1">
-              สถานะ: {statusConfig[workOrder.status]?.label || workOrder.status}
+              สถานะ:{" "}
+              {workOrder.status === "completed"
+                ? `เสร็จสิ้น${(() => {
+                    const compTs = workOrder.approvedAt || workOrder.updatedAt || workOrder.requesterSignedAt || workOrder.submittedAt;
+                    const dStr = compTs ? formatDate(compTs) : "";
+                    return dStr ? ` (${dStr})` : "";
+                  })()}`
+                : workOrder.status === "waiting_parts"
+                ? `รอจัดซื้อ/หา${workOrder.waitingPartsReason && workOrder.waitingPartsReason.trim() !== "รอจัดซื้อ/หาอุปกรณ์เพื่อดำเนินการ" ? ` (${workOrder.waitingPartsReason.trim()})` : ""}`
+                : statusConfig[workOrder.status]?.label || workOrder.status}
             </p>
           </div>
         </div>
