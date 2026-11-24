@@ -10,10 +10,10 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   Wrench, Plus, Search, Clock, CheckCircle2, AlertTriangle,
   ChevronRight, X, FileText, MapPin, User, Building, Calendar,
-  Sparkles, UploadCloud, FileUp, Loader2, Trash2, ExternalLink, Users, Download,
+  Sparkles, UploadCloud, FileUp, Loader2, Trash2, ExternalLink, Users, Download, ClipboardPaste,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
-import { parseFMPdf } from "@/services/fm-ocr.service";
+import { parseFMPdf, parseFMOcrText } from "@/services/fm-ocr.service";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -74,6 +74,8 @@ export default function FMWorkOrdersPage() {
   const [scannedFileName, setScannedFileName] = useState("");
   const [scannedFieldCount, setScannedFieldCount] = useState(0);
   const [isOcrScanning, setIsOcrScanning] = useState(false);
+  const [ocrTab, setOcrTab] = useState<"file" | "text">("file");
+  const [ocrTextInput, setOcrTextInput] = useState("");
   const [assignedTechnicianId, setAssignedTechnicianId] = useState("");
   const [assignedTechnicianName, setAssignedTechnicianName] = useState("");
   const [assignedDepartment, setAssignedDepartment] = useState("");
@@ -159,6 +161,36 @@ export default function FMWorkOrdersPage() {
       setIsOcrScanning(false);
       e.target.value = "";
     }
+  };
+
+  const handleApplyOcrText = () => {
+    if (!ocrTextInput.trim()) {
+      toast.error("กรุณาวางข้อความก่อนกดดึงข้อมูล");
+      return;
+    }
+    const parsed = parseFMOcrText(ocrTextInput);
+    if (parsed.workOrderNumber) setWorkOrderNumber(parsed.workOrderNumber);
+    if (parsed.workType) setWorkType(parsed.workType);
+    if (parsed.requestDateStr) setRequestDateStr(parsed.requestDateStr);
+    if (parsed.useDateStr) setUseDateStr(parsed.useDateStr);
+    if (parsed.requesterName) setRequesterName(parsed.requesterName);
+    if (parsed.requesterDepartment) setRequesterDepartment(parsed.requesterDepartment);
+    if (parsed.requesterEmail) setRequesterEmail(parsed.requesterEmail);
+    if (parsed.requesterPhone) setRequesterPhone(parsed.requesterPhone);
+    if (parsed.coordinatorName) setCoordinatorName(parsed.coordinatorName);
+    if (parsed.coordinatorPhone) setCoordinatorPhone(parsed.coordinatorPhone);
+    if (parsed.title) setTitle(parsed.title);
+    if (parsed.description) setDescription(parsed.description);
+    if (parsed.location) setLocation(parsed.location);
+    if (parsed.assignedTechnicianName) setAssignedTechnicianName(parsed.assignedTechnicianName);
+    if (parsed.assignedDepartment) setAssignedDepartment(parsed.assignedDepartment);
+    if (parsed.assignorName) setAssignorName(parsed.assignorName);
+
+    setScannedFileName("ข้อความจาก FreeThaiOCR / dr-kana");
+    setScannedFieldCount(parsed.fieldsDetectedCount);
+    toast.success(
+      `⚡ ดึงข้อมูลสำเร็จ (${parsed.fieldsDetectedCount} รายการ) กรอกลงฟอร์มเรียบร้อยแล้ว`
+    );
   };
 
   // Prefill with Template FM 6090 sample data
@@ -521,8 +553,8 @@ export default function FMWorkOrdersPage() {
               {/* Modal Body */}
               <div className="px-6 py-4 overflow-y-auto space-y-4 flex-1">
                 {/* ── Top Section: สแกนข้อมูลจากไฟล์เอกสารใบงาน PDF (OCR Auto-Fill) ── */}
-                <div className="p-4 bg-gradient-to-r from-blue-50/90 via-indigo-50/70 to-purple-50/60 dark:from-blue-950/40 dark:via-indigo-950/30 dark:to-purple-950/20 rounded-2xl border-2 border-dashed border-blue-200 dark:border-blue-800">
-                  <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="p-4 bg-gradient-to-r from-blue-50/90 via-indigo-50/70 to-purple-50/60 dark:from-blue-950/40 dark:via-indigo-950/30 dark:to-purple-950/20 rounded-2xl border-2 border-dashed border-blue-200 dark:border-blue-800 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-lg bg-[#1D4ED8] text-white flex items-center justify-center text-xs font-bold shadow-xs">
                         <Sparkles className="w-4 h-4" />
@@ -538,75 +570,143 @@ export default function FMWorkOrdersPage() {
                     </span>
                   </div>
 
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                    เลือกหรือลากไฟล์ PDF ใบแจ้งงาน FM มาวาง ระบบจะอ่านและกรอกข้อมูลลงแบบฟอร์มด้านล่างทันที โดย<strong>ไม่บันทึกไฟล์ลงเซิร์ฟเวอร์</strong>
-                  </p>
+                  {/* Mode Tabs */}
+                  <div className="flex items-center gap-1.5 p-1 bg-white/70 dark:bg-gray-800/70 rounded-xl border border-gray-200/80 dark:border-gray-700/80 w-fit">
+                    <button
+                      type="button"
+                      onClick={() => setOcrTab("file")}
+                      className={`text-xs px-3 py-1 rounded-lg font-semibold transition-all ${
+                        ocrTab === "file"
+                          ? "bg-[#1D4ED8] text-white shadow-xs"
+                          : "text-gray-600 dark:text-gray-300 hover:text-gray-900"
+                      }`}
+                    >
+                      📄 เลือกไฟล์ PDF สแกนทันที
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setOcrTab("text")}
+                      className={`text-xs px-3 py-1 rounded-lg font-semibold transition-all ${
+                        ocrTab === "text"
+                          ? "bg-[#1D4ED8] text-white shadow-xs"
+                          : "text-gray-600 dark:text-gray-300 hover:text-gray-900"
+                      }`}
+                    >
+                      📋 วางข้อความจาก FreeThaiOCR / dr-kana
+                    </button>
+                  </div>
 
-                  {!scannedFileName ? (
+                  {/* Tab 1: File Upload */}
+                  {ocrTab === "file" && (
                     <div>
-                      <input
-                        type="file"
-                        id="pdf-scan-input"
-                        accept="application/pdf,.pdf"
-                        className="hidden"
-                        onChange={handlePdfScan}
-                        disabled={isOcrScanning}
-                      />
-                      <label
-                        htmlFor="pdf-scan-input"
-                        className={`w-full py-4 px-4 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/80 rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center cursor-pointer transition-all shadow-sm active:scale-[0.99] ${
-                          isOcrScanning ? "opacity-60 pointer-events-none" : ""
-                        }`}
-                      >
-                        {isOcrScanning ? (
-                          <div className="flex items-center gap-2 text-sm font-semibold text-[#1D4ED8]">
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            <span>กำลังอ่านและสแกนข้อมูลจากเอกสาร PDF...</span>
+                      {!scannedFileName ? (
+                        <div>
+                          <input
+                            type="file"
+                            id="pdf-scan-input"
+                            accept="application/pdf,.pdf"
+                            className="hidden"
+                            onChange={handlePdfScan}
+                            disabled={isOcrScanning}
+                          />
+                          <label
+                            htmlFor="pdf-scan-input"
+                            className={`w-full py-4 px-4 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/80 rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center cursor-pointer transition-all shadow-sm active:scale-[0.99] ${
+                              isOcrScanning ? "opacity-60 pointer-events-none" : ""
+                            }`}
+                          >
+                            {isOcrScanning ? (
+                              <div className="flex items-center gap-2 text-sm font-semibold text-[#1D4ED8]">
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                <span>กำลังอ่านและสแกนข้อมูลจากเอกสาร PDF...</span>
+                              </div>
+                            ) : (
+                              <>
+                                <FileText className="w-7 h-7 text-[#1D4ED8] mb-1" />
+                                <span className="text-xs font-bold text-gray-800 dark:text-gray-200">
+                                  คลิกเพื่อเลือกไฟล์ PDF ใบงาน FM เพื่อสแกนกรอกฟอร์ม
+                                </span>
+                                <span className="text-[11px] text-gray-400 mt-0.5">
+                                  ระบบจะดึงข้อมูลลงช่องทั้งหมดทันที โดยไม่ต้องพิมพ์เอง
+                                </span>
+                              </>
+                            )}
+                          </label>
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-white dark:bg-gray-800 rounded-xl border border-emerald-200 dark:border-emerald-800 flex items-center justify-between gap-3 shadow-sm">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 flex items-center justify-center shrink-0">
+                              <CheckCircle2 className="w-5 h-5" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold text-gray-900 dark:text-white truncate">
+                                {scannedFileName}
+                              </p>
+                              <p className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-0.5">
+                                ✨ ดึงข้อมูลเข้าฟอร์มสำเร็จ ({scannedFieldCount} รายการ) • ปลอดภัย ไม่เก็บไฟล์
+                              </p>
+                            </div>
                           </div>
-                        ) : (
-                          <>
-                            <FileText className="w-7 h-7 text-[#1D4ED8] mb-1" />
-                            <span className="text-xs font-bold text-gray-800 dark:text-gray-200">
-                              คลิกเพื่อเลือกไฟล์ PDF ใบงาน FM เพื่อสแกนกรอกฟอร์ม
-                            </span>
-                            <span className="text-[11px] text-gray-400 mt-0.5">
-                              ระบบจะดึงข้อมูลลงช่องทั้งหมดทันที โดยไม่ต้องพิมพ์เอง
-                            </span>
-                          </>
-                        )}
-                      </label>
+
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="file"
+                              id="pdf-rescan-input"
+                              accept="application/pdf,.pdf"
+                              className="hidden"
+                              onChange={handlePdfScan}
+                              disabled={isOcrScanning}
+                            />
+                            <label
+                              htmlFor="pdf-rescan-input"
+                              className="text-xs px-2.5 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg font-medium cursor-pointer transition-colors"
+                            >
+                              สแกนไฟล์อื่น
+                            </label>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <div className="p-3 bg-white dark:bg-gray-800 rounded-xl border border-emerald-200 dark:border-emerald-800 flex items-center justify-between gap-3 shadow-sm">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 flex items-center justify-center shrink-0">
-                          <CheckCircle2 className="w-5 h-5" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-xs font-bold text-gray-900 dark:text-white truncate">
-                            {scannedFileName}
-                          </p>
-                          <p className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-0.5">
-                            ✨ ดึงข้อมูลเข้าฟอร์มสำเร็จ ({scannedFieldCount} รายการ) • ปลอดภัย ไม่เก็บไฟล์
-                          </p>
-                        </div>
+                  )}
+
+                  {/* Tab 2: Text Paste from OCR */}
+                  {ocrTab === "text" && (
+                    <div className="space-y-2 bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-300">
+                        <span className="font-semibold flex items-center gap-1">
+                          <ClipboardPaste className="w-3.5 h-3.5 text-[#1D4ED8]" />
+                          วางข้อความที่ได้จาก FreeThaiOCR
+                        </span>
+                        <a
+                          href="https://ocr.dr-kana.com"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[11px] text-[#1D4ED8] hover:underline flex items-center gap-1 font-semibold"
+                        >
+                          🌐 เปิดเว็บ ocr.dr-kana.com (ฟรี) <ExternalLink className="w-3 h-3" />
+                        </a>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="file"
-                          id="pdf-rescan-input"
-                          accept="application/pdf,.pdf"
-                          className="hidden"
-                          onChange={handlePdfScan}
-                          disabled={isOcrScanning}
-                        />
-                        <label
-                          htmlFor="pdf-rescan-input"
-                          className="text-xs px-2.5 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg font-medium cursor-pointer transition-colors"
+                      <textarea
+                        value={ocrTextInput}
+                        onChange={(e) => setOcrTextInput(e.target.value)}
+                        rows={3}
+                        placeholder="วางข้อความที่คัดลอกจาก FreeThaiOCR / LINE OCR ที่นี่ เช่น ใบแจ้งงานเลขที่ 6090..."
+                        className="w-full px-3 py-2 text-xs border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700/60 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 font-mono"
+                      />
+
+                      <div className="flex items-center justify-between gap-2 pt-1">
+                        <span className="text-[11px] text-gray-400">
+                          ระบบจะค้นหาเลขที่ใบงาน, วันที่, ชื่อผู้แจ้ง, รายละเอียด, ฯลฯ และกรอกลงฟอร์มอัตโนมัติ
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleApplyOcrText}
+                          className="px-3 py-1.5 bg-[#1D4ED8] hover:bg-blue-800 text-white text-xs font-semibold rounded-xl flex items-center gap-1 shadow-xs transition-colors shrink-0"
                         >
-                          สแกนไฟล์อื่น
-                        </label>
+                          <Sparkles className="w-3.5 h-3.5" /> ดึงข้อมูลลงฟอร์ม
+                        </button>
                       </div>
                     </div>
                   )}
