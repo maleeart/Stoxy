@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { MobileHeader } from "@/components/layout/MobileHeader";
@@ -10,7 +10,6 @@ import {
   Wrench, Plus, Search, Clock, CheckCircle2, AlertTriangle,
   ChevronRight, X, FileText, MapPin, User, Building, Calendar,
   Sparkles, UploadCloud, FileUp, Loader2, Trash2, ExternalLink, Users, Download, ClipboardPaste,
-  RotateCcw,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { parseFMPdf, parseFMOcrText } from "@/services/fm-ocr.service";
@@ -61,8 +60,6 @@ export default function FMWorkOrdersPage() {
   const [tab, setTab] = useState<"all" | FMWorkOrderStatus>("all");
   const [search, setSearch] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showClearModal, setShowClearModal] = useState(false);
-  const [clearOnlyUncompleted, setClearOnlyUncompleted] = useState(true);
 
   // Create Form State
   const [workOrderNumber, setWorkOrderNumber] = useState("");
@@ -252,16 +249,24 @@ export default function FMWorkOrdersPage() {
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาดในการสร้างใบงาน"),
   });
 
-  const clearPerformersMut = useMutation({
-    mutationFn: () => clearFMWorkOrdersPerformer(clearOnlyUncompleted),
-    onSuccess: (count) => {
-      qc.invalidateQueries({ queryKey: ["fm_workorders"] });
-      qc.invalidateQueries({ queryKey: ["fm_active_count"] });
-      toast.success(`ล้างข้อมูลผู้ดำเนินการและสังกัดเรียบร้อยแล้ว จำนวน ${count} ใบงาน`);
-      setShowClearModal(false);
-    },
-    onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาดในการล้างข้อมูล"),
-  });
+  // ponytail: One-time automatic cleanup to clear old performer & department from existing work orders
+  useEffect(() => {
+    const KEY = "fm_migration_performer_cleared_v1";
+    if (typeof window === "undefined" || localStorage.getItem(KEY)) return;
+    if (!stoxyUser) return;
+
+    clearFMWorkOrdersPerformer(false)
+      .then((count) => {
+        localStorage.setItem(KEY, "true");
+        if (count > 0) {
+          qc.invalidateQueries({ queryKey: ["fm_workorders"] });
+          qc.invalidateQueries({ queryKey: ["fm_active_count"] });
+        }
+      })
+      .catch((err) => {
+        console.error("Auto clear error:", err);
+      });
+  }, [stoxyUser, qc]);
 
   const pendingReviews = workOrders.filter((w) => w.status === "pending_review");
   const pendingStaffJobs = workOrders.filter(
@@ -354,25 +359,15 @@ export default function FMWorkOrdersPage() {
         </div>
 
         {isAdmin && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={() => setShowClearModal(true)}
-              className="flex items-center justify-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 rounded-xl text-xs font-semibold active:scale-95 transition-all shadow-xs"
-              title="ล้างข้อมูลผู้ดำเนินการและสังกัดในใบงานเดิมเพื่อเว้นว่างรอคนมาทำต่อ"
-            >
-              <RotateCcw className="w-3.5 h-3.5" /> ล้างผู้ดำเนินการใบงานเดิม
-            </button>
-            <button
-              onClick={() => {
-                resetForm();
-                setShowCreateModal(true);
-              }}
-              className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-xl text-sm font-semibold active:scale-95 transition-all shadow-md shadow-blue-500/20"
-            >
-              <Plus className="w-4 h-4" /> สร้างใบงาน FM ใหม่
-            </button>
-          </div>
+          <button
+            onClick={() => {
+              resetForm();
+              setShowCreateModal(true);
+            }}
+            className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-xl text-sm font-semibold active:scale-95 transition-all shadow-md shadow-blue-500/20"
+          >
+            <Plus className="w-4 h-4" /> สร้างใบงาน FM ใหม่
+          </button>
         )}
       </div>
 
@@ -962,100 +957,6 @@ export default function FMWorkOrdersPage() {
         )}
       </AnimatePresence>
 
-      {/* Clear Performers Modal */}
-      <AnimatePresence>
-        {showClearModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-              onClick={() => setShowClearModal(false)}
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700 p-6 z-10 space-y-4"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                  <RotateCcw className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-base text-gray-900 dark:text-white">
-                    ล้างค่าผู้ดำเนินการ & สังกัด
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    รีเซ็ตให้เว้นว่าง เพื่อรอให้ช่างเข้ามารับงานหรือทำรายการต่อ
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-2 pt-1 text-xs">
-                <p className="font-semibold text-gray-700 dark:text-gray-300">
-                  เลือกขอบเขตใบงานที่ต้องการล้างค่า:
-                </p>
-                <label className="flex items-start gap-2.5 p-3 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors">
-                  <input
-                    type="radio"
-                    name="clearScope"
-                    checked={clearOnlyUncompleted}
-                    onChange={() => setClearOnlyUncompleted(true)}
-                    className="mt-0.5 text-[#1D4ED8] focus:ring-blue-500"
-                  />
-                  <div>
-                    <span className="font-bold text-gray-900 dark:text-white">
-                      เฉพาะใบงานที่ยังไม่เสร็จสิ้น (แนะนำ)
-                    </span>
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
-                      ล้างเฉพาะสถานะ รอดำเนินการ, รอจัดซื้ออุปกรณ์, รอตรวจสอบ
-                    </p>
-                  </div>
-                </label>
-
-                <label className="flex items-start gap-2.5 p-3 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors">
-                  <input
-                    type="radio"
-                    name="clearScope"
-                    checked={!clearOnlyUncompleted}
-                    onChange={() => setClearOnlyUncompleted(false)}
-                    className="mt-0.5 text-[#1D4ED8] focus:ring-blue-500"
-                  />
-                  <div>
-                    <span className="font-bold text-gray-900 dark:text-white">
-                      ทุกใบงานทั้งหมดในระบบ (รวมที่เสร็จสิ้นแล้ว)
-                    </span>
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
-                      ล้างค่าผู้ดำเนินการและสังกัดออกทั้งหมดทุกใบงาน
-                    </p>
-                  </div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
-                <button
-                  type="button"
-                  onClick={() => setShowClearModal(false)}
-                  disabled={clearPerformersMut.isPending}
-                  className="px-4 py-2 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
-                >
-                  ยกเลิก
-                </button>
-                <button
-                  type="button"
-                  onClick={() => clearPerformersMut.mutate()}
-                  disabled={clearPerformersMut.isPending}
-                  className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-amber-500/20 disabled:opacity-50 flex items-center gap-1.5"
-                >
-                  {clearPerformersMut.isPending ? "กำลังล้างข้อมูล..." : "ยืนยันล้างข้อมูล"}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </AppShell>
   );
 }
