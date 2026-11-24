@@ -353,6 +353,62 @@ export interface AuditSummary {
   missingItems: number;
 }
 
+// ── FM Work Order (ใบแจ้งงานซ่อม) ──────────────────────────────
+export type FMWorkOrderStatus =
+  | "pending"
+  | "pending_review"
+  | "completed"
+  | "rejected"
+  | "cancelled";
+
+export interface FMWorkOrderItem {
+  itemId: string;
+  itemCode: string;
+  itemName: string;
+  quantity: number;
+  unit?: string;
+  notes?: string;
+}
+
+export interface FMWorkOrder {
+  id: string;
+  workOrderNumber: string;
+  workType?: string;
+  requestDate: Timestamp;
+  useDate?: Timestamp;
+  requesterName: string;
+  requesterDepartment: string;
+  requesterEmail?: string;
+  requesterPhone?: string;
+  coordinatorName?: string;
+  coordinatorPhone?: string;
+  title: string;
+  description?: string;
+  location: string;
+  attachmentUrl?: string;
+  attachmentName?: string;
+  assignedTechnicianId?: string;
+  assignedTechnicianName?: string;
+  assignedDepartment?: string;
+  assignedPhone?: string;
+  assignedEmail?: string;
+  assignorName?: string;
+  assignedDate?: Timestamp;
+  items?: FMWorkOrderItem[];
+  status: FMWorkOrderStatus;
+  submittedBy?: string;
+  submittedByName?: string;
+  submittedAt?: Timestamp;
+  approvedBy?: string;
+  approvedByName?: string;
+  approvedAt?: Timestamp;
+  rejectedReason?: string;
+  notes?: string;
+  createdBy: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
 // ── Notification ──────────────────────────────────────────────
 export type NotificationType =
   | "low_stock"

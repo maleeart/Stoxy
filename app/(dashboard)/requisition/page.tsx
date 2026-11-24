@@ -11,6 +11,7 @@ import {
   createRequisition, getRequisitions, getMyRequisitions,
   approveRequisition, rejectRequisition,
 } from "@/services/requisition.service";
+import { getFMWorkOrders } from "@/services/fm.service";
 import { formatDateTime, cn } from "@/lib/utils";
 import {
   PackageOpen, Search, X, CheckCircle, XCircle, Plus, Minus,
@@ -57,6 +58,12 @@ function StaffRequisitionPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [jobNo, setJobNo] = useState("");
   const [purposeDetails, setPurposeDetails] = useState("");
+  const [selectedFMId, setSelectedFMId] = useState("");
+
+  const { data: fmWorkOrders = [] } = useQuery({
+    queryKey: ["fm_workorders"],
+    queryFn: getFMWorkOrders,
+  });
 
   // Auto-add to cart when coming from QR scan
   useEffect(() => {
@@ -95,19 +102,22 @@ function StaffRequisitionPage() {
 
   const submitMut = useMutation({
     mutationFn: async () => {
+      const selectedFM = fmWorkOrders.find(f => f.id === selectedFMId);
       for (const c of cart) {
         await createRequisition({
           itemId: c.itemId, itemCode: c.itemCode, itemName: c.itemName,
           quantity: c.qty, purpose: `ใบงานเลขที่ ${jobNo}${purposeDetails ? ` ${purposeDetails}` : ""}`,
           requesterId: stoxyUser?.uid ?? "",
           requesterName: stoxyUser?.displayName ?? "ไม่ระบุ",
+          fmWorkOrderId: selectedFMId || undefined,
+          fmWorkOrderNumber: selectedFM?.workOrderNumber || jobNo || undefined,
         });
       }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["requisitions"] });
       toast.success(`ส่งคำขอเบิก ${cart.length} รายการสำเร็จ`);
-      setCart([]); setJobNo(""); setPurposeDetails(""); setShowConfirm(false);
+      setCart([]); setJobNo(""); setPurposeDetails(""); setSelectedFMId(""); setShowConfirm(false);
     },
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
   });
@@ -289,9 +299,37 @@ function StaffRequisitionPage() {
               {/* Purpose */}
               <div className="space-y-4 mb-4">
                 <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                    จับคู่กับใบงาน FM (ถ้ามี)
+                  </label>
+                  <select
+                    value={selectedFMId}
+                    onChange={(e) => {
+                      const fmId = e.target.value;
+                      setSelectedFMId(fmId);
+                      const found = fmWorkOrders.find((f) => f.id === fmId);
+                      if (found) {
+                        setJobNo(found.workOrderNumber);
+                        if (!purposeDetails) setPurposeDetails(found.title);
+                      }
+                    }}
+                    className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                  >
+                    <option value="">-- ไม่ระบุใบงาน FM (กรอกเลขที่เอง) --</option>
+                    {fmWorkOrders
+                      .filter((f) => f.status === "pending" || f.status === "pending_review")
+                      .map((f) => (
+                        <option key={f.id} value={f.id}>
+                          FM-{f.workOrderNumber}: {f.title.slice(0, 45)}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                <div>
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">ใบงานเลขที่ (ตัวเลข)</label>
-                  <input type="number" value={jobNo} onChange={e => setJobNo(e.target.value)}
-                    placeholder="กรอกตัวเลขใบงาน เช่น 1024"
+                  <input type="text" value={jobNo} onChange={e => setJobNo(e.target.value)}
+                    placeholder="กรอกตัวเลขใบงาน เช่น 1024 หรือเลือกจาก FM ด้านบน"
                     className="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-600 rounded-2xl bg-transparent dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
                   />
                 </div>
@@ -330,6 +368,7 @@ function AdminRequisitionPage() {
   const [showBrowseConfirm, setShowBrowseConfirm] = useState(false);
   const [browseJobNo, setBrowseJobNo] = useState("");
   const [browsePurposeDetails, setBrowsePurposeDetails] = useState("");
+  const [browseSelectedFMId, setBrowseSelectedFMId] = useState("");
   const [browseSearch, setBrowseSearch] = useState("");
   const [browseCategory, setBrowseCategory] = useState("all");
   const [tab, setTab] = useState<"all" | "mine">("all");
@@ -337,6 +376,10 @@ function AdminRequisitionPage() {
   const [rejectReason, setRejectReason] = useState("");
 
   const { data: items = [] } = useInventoryItems();
+  const { data: fmWorkOrders = [] } = useQuery({
+    queryKey: ["fm_workorders"],
+    queryFn: getFMWorkOrders,
+  });
 
   const { data: allReqs = [], isLoading } = useQuery({
     queryKey: ["requisitions", tab, stoxyUser?.uid],
@@ -359,19 +402,22 @@ function AdminRequisitionPage() {
 
   const cartMut = useMutation({
     mutationFn: async () => {
+      const selectedFM = fmWorkOrders.find(f => f.id === browseSelectedFMId);
       for (const c of browseCart) {
         await createRequisition({
           itemId: c.itemId, itemCode: c.itemCode, itemName: c.itemName,
           quantity: c.qty, purpose: `ใบงานเลขที่ ${browseJobNo}${browsePurposeDetails ? ` ${browsePurposeDetails}` : ""}`,
           requesterId: stoxyUser?.uid ?? "",
           requesterName: stoxyUser?.displayName ?? "ไม่ระบุ",
+          fmWorkOrderId: browseSelectedFMId || undefined,
+          fmWorkOrderNumber: selectedFM?.workOrderNumber || browseJobNo || undefined,
         });
       }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["requisitions"] });
       toast.success(`ส่งคำขอเบิก ${browseCart.length} รายการสำเร็จ`);
-      setBrowseCart([]); setBrowseJobNo(""); setBrowsePurposeDetails(""); setShowBrowseConfirm(false); setBrowseMode(false);
+      setBrowseCart([]); setBrowseJobNo(""); setBrowsePurposeDetails(""); setBrowseSelectedFMId(""); setShowBrowseConfirm(false); setBrowseMode(false);
     },
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
   });
@@ -514,9 +560,37 @@ function AdminRequisitionPage() {
                 </div>
                 <div className="space-y-4 mb-4">
                   <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                      จับคู่กับใบงาน FM (ถ้ามี)
+                    </label>
+                    <select
+                      value={browseSelectedFMId}
+                      onChange={(e) => {
+                        const fmId = e.target.value;
+                        setBrowseSelectedFMId(fmId);
+                        const found = fmWorkOrders.find((f) => f.id === fmId);
+                        if (found) {
+                          setBrowseJobNo(found.workOrderNumber);
+                          if (!browsePurposeDetails) setBrowsePurposeDetails(found.title);
+                        }
+                      }}
+                      className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-2xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                    >
+                      <option value="">-- ไม่ระบุใบงาน FM (กรอกเลขที่เอง) --</option>
+                      {fmWorkOrders
+                        .filter((f) => f.status === "pending" || f.status === "pending_review")
+                        .map((f) => (
+                          <option key={f.id} value={f.id}>
+                            FM-{f.workOrderNumber}: {f.title.slice(0, 45)}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+
+                  <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">ใบงานเลขที่ (ตัวเลข)</label>
-                    <input type="number" value={browseJobNo} onChange={e => setBrowseJobNo(e.target.value)}
-                      placeholder="กรอกตัวเลขใบงาน เช่น 1024"
+                    <input type="text" value={browseJobNo} onChange={e => setBrowseJobNo(e.target.value)}
+                      placeholder="กรอกตัวเลขใบงาน เช่น 1024 หรือเลือกจาก FM ด้านบน"
                       className="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-700 rounded-2xl bg-transparent dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
                     />
                   </div>
@@ -624,6 +698,11 @@ function AdminRequisitionPage() {
                     <span className="font-mono text-xs text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded">
                       {req.itemCode}
                     </span>
+                    {req.fmWorkOrderNumber && (
+                      <span className="text-[11px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
+                        FM-{req.fmWorkOrderNumber}
+                      </span>
+                    )}
                   </div>
                   <p className="font-medium text-gray-900 dark:text-white">{req.itemName}</p>
                   <p className="text-xs text-gray-500 mt-0.5">

@@ -3,6 +3,7 @@ import { getRequisitions } from "@/services/requisition.service";
 import { getBorrowRecords } from "@/services/borrow.service";
 import { getAuditSessions } from "@/services/audit.service";
 import { getPendingCount as getAccessRequestCount } from "@/services/accessRequest.service";
+import { getFMWorkOrders } from "@/services/fm.service";
 import { useInventoryItems } from "./useInventory";
 import { useMemo } from "react";
 import { isOverdue } from "@/lib/utils";
@@ -34,6 +35,12 @@ export function usePendingCount() {
     staleTime: 1000 * 60,
   });
 
+  const { data: fmWorkOrders = [] } = useQuery({
+    queryKey: ["fm_workorders"],
+    queryFn: getFMWorkOrders,
+    staleTime: 1000 * 60,
+  });
+
   return useMemo(() => {
     const pendingReqs = requisitions.filter((r) => r.status === "pending").length;
     const pendingBorrows = borrows.filter((b) => b.status === "pending_approval").length;
@@ -44,6 +51,7 @@ export function usePendingCount() {
       (i) => (i.minStockLevel ?? 0) > 0 && i.quantityAvailable <= i.minStockLevel
     ).length;
     const pendingAudits = auditSessions.filter((s) => s.status === "pending_approval").length;
+    const pendingFM = fmWorkOrders.filter((f) => f.status === "pending_review").length;
 
     return {
       pendingReqs,
@@ -52,7 +60,8 @@ export function usePendingCount() {
       lowStock,
       pendingAudits,
       pendingAccessRequests,
-      total: pendingReqs + pendingBorrows + overdue + lowStock + pendingAudits,
+      pendingFM,
+      total: pendingReqs + pendingBorrows + overdue + lowStock + pendingAudits + pendingFM,
     };
-  }, [requisitions, borrows, items, auditSessions, pendingAccessRequests]);
+  }, [requisitions, borrows, items, auditSessions, pendingAccessRequests, fmWorkOrders]);
 }

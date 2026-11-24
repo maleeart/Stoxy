@@ -22,6 +22,8 @@ export interface Requisition {
   status: RequisitionStatus;
   approvedBy?: string;
   rejectedReason?: string;
+  fmWorkOrderId?: string;
+  fmWorkOrderNumber?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -34,6 +36,8 @@ export async function createRequisition(data: {
   purpose: string;
   requesterId: string;
   requesterName: string;
+  fmWorkOrderId?: string;
+  fmWorkOrderNumber?: string;
 }): Promise<string> {
   const now = Timestamp.now();
   const ref = await addDoc(collection(db, COL), {

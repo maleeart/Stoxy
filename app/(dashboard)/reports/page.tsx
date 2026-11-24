@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useInventoryItems } from "@/hooks/useInventory";
 import { useQuery } from "@tanstack/react-query";
@@ -8,14 +8,16 @@ import { getBorrowRecords } from "@/services/borrow.service";
 import { getRecentMovements } from "@/services/inventory.service";
 import { getRequisitions } from "@/services/requisition.service";
 import { getAuditSessions } from "@/services/audit.service";
+import { getFMWorkOrders } from "@/services/fm.service";
 import {
   exportInventoryPDF, exportInventoryExcel,
   exportBorrowsPDF, exportBorrowsExcel,
   exportMovementsPDF, exportMovementsExcel,
   exportRequisitionsPDF, exportRequisitionsExcel,
   exportAuditPDF, exportAuditExcel,
+  exportFMReportPDF, exportFMReportExcel,
 } from "@/lib/export";
-import { FileText, FileSpreadsheet, Package, ArrowLeftRight, Activity, PackageOpen, ShieldCheck } from "lucide-react";
+import { FileText, FileSpreadsheet, Package, ArrowLeftRight, Activity, PackageOpen, ShieldCheck, Wrench } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function ReportsPage() {
@@ -36,11 +38,41 @@ export default function ReportsPage() {
     queryKey: ["audit_sessions_report"],
     queryFn: () => getAuditSessions(),
   });
+  const { data: fmWorkOrders = [] } = useQuery({
+    queryKey: ["fm_workorders_report"],
+    queryFn: () => getFMWorkOrders(),
+  });
 
   const [invSortBy, setInvSortBy] = useState<"code" | "name" | "quantity" | "status">("code");
   const [selectedAuditId, setSelectedAuditId] = useState<string>("");
+  const [selectedFMMonth, setSelectedFMMonth] = useState<string>("all");
 
   const activeAudit = auditSessions.find(s => s.id === selectedAuditId) || auditSessions[0];
+
+  const fmMonthOptions = useMemo(() => {
+    const map = new Map<string, { label: string; count: number }>();
+    for (const w of fmWorkOrders) {
+      const d = w.requestDate?.toDate ? w.requestDate.toDate() : null;
+      if (d) {
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        const label = d.toLocaleDateString("th-TH", { month: "long", year: "numeric" });
+        const ex = map.get(key);
+        if (ex) ex.count++;
+        else map.set(key, { label, count: 1 });
+      }
+    }
+    return Array.from(map.entries()).map(([key, val]) => ({ key, label: val.label, count: val.count }));
+  }, [fmWorkOrders]);
+
+  const filteredFMOrders = useMemo(() => {
+    if (selectedFMMonth === "all") return fmWorkOrders;
+    return fmWorkOrders.filter(w => {
+      const d = w.requestDate?.toDate ? w.requestDate.toDate() : null;
+      if (!d) return false;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      return key === selectedFMMonth;
+    });
+  }, [fmWorkOrders, selectedFMMonth]);
 
   const reports = [
     {
@@ -142,6 +174,45 @@ export default function ReportsPage() {
         </div>
       ) : (
         <div className="mb-4 text-xs text-gray-400">ยังไม่มีรอบการตรวจนับในระบบ</div>
+      ),
+    },
+    {
+      title: "รายงานสรุปใบงานและอุปกรณ์ที่ใช้ (FM)",
+      description: `${filteredFMOrders.length} ใบงาน (${filteredFMOrders.reduce((s, w) => s + (w.items?.length || 0), 0)} รายการอุปกรณ์ที่ใช้)`,
+      icon: <Wrench className="w-5 h-5 text-amber-700" />,
+      iconBg: "bg-amber-100",
+      accent: "border-l-4 border-amber-500",
+      btnClass: "border-amber-200 text-amber-700 hover:bg-amber-50",
+      actions: [
+        {
+          label: "PDF",
+          icon: <FileText className="w-4 h-4" />,
+          fn: () => exportFMReportPDF(filteredFMOrders, selectedFMMonth !== "all" ? selectedFMMonth : undefined),
+        },
+        {
+          label: "Excel",
+          icon: <FileSpreadsheet className="w-4 h-4" />,
+          fn: () => exportFMReportExcel(filteredFMOrders, selectedFMMonth !== "all" ? selectedFMMonth : undefined),
+        },
+      ],
+      extra: (
+        <div className="mb-4">
+          <label className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">
+            เลือกเดือน / ช่วงเวลาของใบงาน
+          </label>
+          <select
+            value={selectedFMMonth}
+            onChange={(e) => setSelectedFMMonth(e.target.value)}
+            className="w-full text-xs font-semibold px-2 py-1.5 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-100 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-amber-500/20"
+          >
+            <option value="all">📅 ข้อมูลทั้งหมด ({fmWorkOrders.length} ใบงาน)</option>
+            {fmMonthOptions.map((opt) => (
+              <option key={opt.key} value={opt.key}>
+                🗓️ {opt.label} ({opt.count} ใบงาน)
+              </option>
+            ))}
+          </select>
+        </div>
       ),
     },
   ];

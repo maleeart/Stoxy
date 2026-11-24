@@ -1,7 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
-import type { InventoryItem, BorrowRecord, StockMovement, AuditSession, AuditItem } from "@/types";
+import type { InventoryItem, BorrowRecord, StockMovement, AuditSession, AuditItem, FMWorkOrder } from "@/types";
 import type { Requisition } from "@/services/requisition.service";
 
 // Load & register Sarabun (Thai) font into a jsPDF instance
@@ -697,6 +697,196 @@ export function exportAuditExcel(session: AuditSession, inventoryItems: Inventor
   XLSX.utils.book_append_sheet(wb, ws, "AuditResult");
   const cleanName = session.name.replace(/[^a-zA-Z0-9ก-๙_-]/g, "_");
   saveExcel(wb, `stoxy-audit-${cleanName}-${dateStr()}.xlsx`);
+}
+
+export async function exportFMReportPDF(workOrders: FMWorkOrder[], monthYearStr?: string) {
+  const doc = await createDocWithThaiFont("landscape");
+
+  doc.setFontSize(16);
+  doc.setTextColor(29, 78, 216); // #1D4ED8
+  doc.text("รายงานสรุปใบแจ้งงานซ่อม (FM) และอุปกรณ์ที่ใช้", 14, 15);
+
+  doc.setFontSize(9);
+  doc.setTextColor(100, 116, 139);
+  const filterText = monthYearStr ? `รอบเดือน: ${monthYearStr} | ` : "";
+  doc.text(`${filterText}ข้อมูล ณ วันที่: ${new Date().toLocaleDateString("th-TH")} | ทั้งหมด ${workOrders.length} ใบงาน`, 14, 21);
+
+  const headers = [
+    "ลำดับ",
+    "เลขที่ใบงาน",
+    "วันที่แจ้ง",
+    "เรื่อง / สถานที่",
+    "ผู้แจ้งงาน / สังกัด",
+    "ผู้ดำเนินการ",
+    "สถานะ",
+    "อุปกรณ์ที่ใช้",
+  ];
+
+  const statusTh: Record<string, string> = {
+    pending: "รอดำเนินการ",
+    pending_review: "รอตรวจสอบ",
+    completed: "เสร็จสิ้น",
+    rejected: "ส่งกลับแก้ไข",
+    cancelled: "ยกเลิก",
+  };
+
+  const rows = workOrders.map((wo, index) => {
+    const itemsText = (wo.items || []).length > 0
+      ? (wo.items || []).map((it, i) => `${i + 1}. ${it.itemName} (${it.quantity} ${it.unit || "ชิ้น"})`).join("\n")
+      : "-";
+
+    const dateStrFormatted = wo.requestDate?.toDate ? wo.requestDate.toDate().toLocaleDateString("th-TH") : "-";
+
+    return [
+      (index + 1).toString(),
+      `FM-${wo.workOrderNumber}`,
+      dateStrFormatted,
+      `${wo.title}\nสถานที่: ${wo.location}`,
+      `${wo.requesterName}\n${wo.requesterDepartment}`,
+      wo.assignedTechnicianName || "-",
+      statusTh[wo.status] || wo.status,
+      itemsText,
+    ];
+  });
+
+  autoTable(doc, {
+    head: [headers],
+    body: rows,
+    startY: 25,
+    styles: { font: "Sarabun", fontSize: 8, cellPadding: 2.5 },
+    headStyles: { fillColor: [29, 78, 216], textColor: 255, fontStyle: "bold" },
+    columnStyles: {
+      0: { cellWidth: 12, halign: "center" },
+      1: { cellWidth: 24, fontStyle: "bold" },
+      2: { cellWidth: 22 },
+      3: { cellWidth: 70 },
+      4: { cellWidth: 45 },
+      5: { cellWidth: 35 },
+      6: { cellWidth: 24, halign: "center" },
+      7: { cellWidth: 45 },
+    },
+    alternateRowStyles: { fillColor: [248, 250, 252] },
+  });
+
+  const cleanMonth = (monthYearStr || "").replace(/[^a-zA-Z0-9ก-๙_-]/g, "_");
+  doc.save(`stoxy-fm-report-${cleanMonth || dateStr()}.pdf`);
+}
+
+export function exportFMReportExcel(workOrders: FMWorkOrder[], monthYearStr?: string) {
+  const statusTh: Record<string, string> = {
+    pending: "รอดำเนินการ",
+    pending_review: "รอตรวจสอบ",
+    completed: "เสร็จสิ้น",
+    rejected: "ส่งกลับแก้ไข",
+    cancelled: "ยกเลิก",
+  };
+
+  // Sheet 1: Summary of FM Work Orders
+  const sheet1Headers = [
+    "ลำดับ",
+    "เลขที่ใบงาน",
+    "ประเภทงาน",
+    "วันที่แจ้งงาน",
+    "วันที่ใช้งาน",
+    "เรื่อง",
+    "สถานที่",
+    "รายละเอียดงาน",
+    "ชื่อผู้แจ้งงาน",
+    "สังกัด",
+    "อีเมลผู้แจ้ง",
+    "โทรศัพท์ผู้แจ้ง",
+    "ผู้ประสานงาน",
+    "โทรศัพท์ผู้ประสานงาน",
+    "ผู้ดำเนินการ (ช่าง)",
+    "หน่วยงานช่าง",
+    "ผู้มอบหมายงาน",
+    "สถานะ",
+    "จำนวนรายการอุปกรณ์",
+    "จำนวนชิ้นรวม",
+    "อนุมัติโดย",
+    "วันที่อนุมัติ",
+  ];
+
+  const sheet1Rows = workOrders.map((wo, idx) => {
+    const itemCount = (wo.items || []).length;
+    const totalQty = (wo.items || []).reduce((s, i) => s + i.quantity, 0);
+    const reqDate = wo.requestDate?.toDate ? wo.requestDate.toDate().toLocaleDateString("th-TH") : "";
+    const uDate = wo.useDate?.toDate ? wo.useDate.toDate().toLocaleDateString("th-TH") : "";
+    const appDate = wo.approvedAt?.toDate ? wo.approvedAt.toDate().toLocaleDateString("th-TH") : "";
+
+    return [
+      idx + 1,
+      `FM-${wo.workOrderNumber}`,
+      wo.workType || "",
+      reqDate,
+      uDate,
+      wo.title,
+      wo.location,
+      wo.description || "",
+      wo.requesterName,
+      wo.requesterDepartment,
+      wo.requesterEmail || "",
+      wo.requesterPhone || "",
+      wo.coordinatorName || "",
+      wo.coordinatorPhone || "",
+      wo.assignedTechnicianName || "",
+      wo.assignedDepartment || "",
+      wo.assignorName || "",
+      statusTh[wo.status] || wo.status,
+      itemCount,
+      totalQty,
+      wo.approvedByName || "",
+      appDate,
+    ];
+  });
+
+  // Sheet 2: Items Used Line Breakdown
+  const sheet2Headers = [
+    "ลำดับ",
+    "เลขที่ใบงาน",
+    "เรื่อง",
+    "สถานที่",
+    "รหัสอุปกรณ์",
+    "ชื่ออุปกรณ์",
+    "จำนวนที่ใช้",
+    "หน่วย",
+    "หมายเหตุอุปกรณ์",
+    "ผู้ดำเนินการ (ช่าง)",
+    "สถานะใบงาน",
+    "วันที่แจ้งงาน",
+  ];
+
+  const sheet2Rows: any[][] = [];
+  let lineIdx = 1;
+  for (const wo of workOrders) {
+    const reqDate = wo.requestDate?.toDate ? wo.requestDate.toDate().toLocaleDateString("th-TH") : "";
+    for (const it of wo.items || []) {
+      sheet2Rows.push([
+        lineIdx++,
+        `FM-${wo.workOrderNumber}`,
+        wo.title,
+        wo.location,
+        it.itemCode,
+        it.itemName,
+        it.quantity,
+        it.unit || "ชิ้น",
+        it.notes || "",
+        wo.assignedTechnicianName || "",
+        statusTh[wo.status] || wo.status,
+        reqDate,
+      ]);
+    }
+  }
+
+  const wb = XLSX.utils.book_new();
+  const ws1 = XLSX.utils.aoa_to_sheet([sheet1Headers, ...sheet1Rows]);
+  XLSX.utils.book_append_sheet(wb, ws1, "สรุปใบงาน");
+
+  const ws2 = XLSX.utils.aoa_to_sheet([sheet2Headers, ...(sheet2Rows.length > 0 ? sheet2Rows : [["-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-"]])]);
+  XLSX.utils.book_append_sheet(wb, ws2, "รายการอุปกรณ์ที่ใช้");
+
+  const cleanMonth = (monthYearStr || "").replace(/[^a-zA-Z0-9ก-๙_-]/g, "_");
+  saveExcel(wb, `stoxy-fm-report-${cleanMonth || dateStr()}.xlsx`);
 }
 
 // ── Helpers ───────────────────────────────────────────────────

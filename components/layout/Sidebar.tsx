@@ -21,12 +21,14 @@ import {
   PackageOpen,
   Undo2,
   QrCode,
+  Wrench,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { logout } from "@/services/auth.service";
 import { usePendingCount } from "@/hooks/usePendingCount";
 import { useHasActiveAudit } from "@/hooks/useMyAuditSessions";
+import { useActiveFMCount } from "@/hooks/useFMWorkOrders";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -56,6 +58,7 @@ const navItems: NavItem[] = [
   { label: "จัดการคำขอ", href: "/operations",   icon: ClipboardCheck,  section: "ดำเนินการ", adminOnly: true },
   { label: "ต้องสั่งซื้อ",href: "/purchase",    icon: ShoppingCart,    section: "ดำเนินการ", adminOnly: true },
   { label: "เกินกำหนดคืน",href: "/return",     icon: Undo2,           section: "ดำเนินการ", adminOnly: true },
+  { label: "ใบงาน FM",     href: "/fm",           icon: Wrench,          section: "ดำเนินการ" },
   { label: "ประวัติ",     href: "/movements",    icon: History,         section: "ดำเนินการ" },
   { label: "ตรวจนับ",     href: "/audit",        icon: ShieldCheck,     section: "ดำเนินการ",               supervisorHidden: true },
   // System
@@ -76,10 +79,12 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
   const { stoxyUser } = useAuth();
   const router = useRouter();
-  const { total: pendingTotal, pendingAccessRequests } = usePendingCount();
+  const { total: pendingTotal, pendingAccessRequests, pendingFM } = usePendingCount();
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
   const isSupervisor = stoxyUser?.role === "supervisor";
   const { data: hasActiveAudit = false } = useHasActiveAudit(!isAdmin && !isSupervisor ? stoxyUser?.uid : undefined);
+  const { data: staffFMCount = 0 } = useActiveFMCount(!isAdmin && !isSupervisor ? stoxyUser?.uid : undefined, stoxyUser?.role);
+  const fmBadge = isAdmin ? pendingFM : staffFMCount;
 
   async function handleLogout() {
     try {
@@ -165,11 +170,19 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                         {pendingAccessRequests}
                       </span>
                     )}
+                    {!collapsed && item.href === "/fm" && fmBadge > 0 && (
+                      <span className="ml-auto bg-amber-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                        {fmBadge}
+                      </span>
+                    )}
                     {collapsed && item.href === "/notifications" && pendingTotal > 0 && (
                       <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full" />
                     )}
                     {collapsed && item.href === "/users" && pendingAccessRequests > 0 && (
                       <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full" />
+                    )}
+                    {collapsed && item.href === "/fm" && fmBadge > 0 && (
+                      <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-amber-500 rounded-full" />
                     )}
                     {collapsed && (
                       <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none z-50 transition-opacity">

@@ -3,7 +3,7 @@
 import {
   Package, CheckCircle, ArrowLeftRight, AlertTriangle,
   Clock, Activity, TrendingUp, PackageOpen, History,
-  Search, ChevronRight, ShieldCheck, ScanLine,
+  Search, ChevronRight, ShieldCheck, ScanLine, Wrench,
 } from "lucide-react";
 import { MobileHeader } from "@/components/layout/MobileHeader";
 import { useDashboardStats, useRecentMovements } from "@/hooks/useInventory";
@@ -14,6 +14,8 @@ import { AppShell } from "@/components/layout/AppShell";
 import { getBorrowRecords } from "@/services/borrow.service";
 import { getRequisitions, getMyRequisitions } from "@/services/requisition.service";
 import { getAuditSessions } from "@/services/audit.service";
+import { getFMWorkOrders } from "@/services/fm.service";
+import { useActiveFMCount } from "@/hooks/useFMWorkOrders";
 import { useRealtimeBorrows } from "@/hooks/useRealtimeBorrows";
 import { useInventoryItems } from "@/hooks/useInventory";
 import {
@@ -68,6 +70,7 @@ function StaffHome() {
   const role = stoxyUser?.role;
   const canRequisition = role !== "viewer" && role !== "supervisor";
   const { data: hasActiveAudit = false } = useHasActiveAudit(uid);
+  const { data: activeFMCount = 0 } = useActiveFMCount(uid, role);
   const { allRecords } = useRealtimeBorrows();
 
   const myBorrowed = allRecords.filter(b => b.status === "borrowed" && b.borrowerId === uid);
@@ -125,17 +128,30 @@ function StaffHome() {
             </h2>
             {stoxyUser?.department && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{stoxyUser.department}</p>}
           </div>
-          {hasActiveAudit && (
-            <button onClick={() => router.push("/audit")}
-              className="shrink-0 flex flex-col items-center justify-center gap-1.5 bg-red-500 text-white rounded-2xl px-4 py-2.5 active:scale-95 transition-all shadow-lg shadow-red-500/40 animate-pulse">
-              <div className="relative">
-                <ShieldCheck className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-400 rounded-full animate-ping" />
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-400 rounded-full" />
-              </div>
-              <span className="text-[10px] font-bold tracking-wide">ตรวจนับ</span>
-            </button>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            {activeFMCount > 0 && (
+              <button onClick={() => router.push("/fm")}
+                className="shrink-0 flex flex-col items-center justify-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl px-3.5 py-2.5 active:scale-95 transition-all shadow-lg shadow-amber-500/40 animate-pulse">
+                <div className="relative">
+                  <Wrench className="w-5 h-5" />
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-ping" />
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full" />
+                </div>
+                <span className="text-[10px] font-bold tracking-wide">ใบงาน FM {activeFMCount > 1 ? `(${activeFMCount})` : ""}</span>
+              </button>
+            )}
+            {hasActiveAudit && (
+              <button onClick={() => router.push("/audit")}
+                className="shrink-0 flex flex-col items-center justify-center gap-1.5 bg-red-500 text-white rounded-2xl px-4 py-2.5 active:scale-95 transition-all shadow-lg shadow-red-500/40 animate-pulse">
+                <div className="relative">
+                  <ShieldCheck className="w-5 h-5" />
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-400 rounded-full animate-ping" />
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-400 rounded-full" />
+                </div>
+                <span className="text-[10px] font-bold tracking-wide">ตรวจนับ</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {(myBorrowed.length > 0 || totalPendingMine > 0) && (
@@ -279,6 +295,11 @@ export default function DashboardPage() {
     queryFn: getAuditSessions,
     staleTime: 1000 * 60 * 2,
   });
+  const { data: fmWorkOrders = [] } = useQuery({
+    queryKey: ["fm_workorders", "dashboard"],
+    queryFn: getFMWorkOrders,
+    staleTime: 1000 * 60 * 2,
+  });
 
   const now = new Date();
 
@@ -290,6 +311,7 @@ export default function DashboardPage() {
     return d && d.getFullYear() === now.getFullYear();
   });
   const pendingAudits = auditSessions.filter((s) => s.status === "pending_approval");
+  const pendingFM = fmWorkOrders.filter((f) => f.status === "pending_review");
   const overdueBorrows = borrows.filter(
     (b) => b.status === "borrowed" && isOverdue(b.expectedReturnDate)
   );
@@ -297,8 +319,8 @@ export default function DashboardPage() {
     (i) => i.quantityAvailable <= (i.minStockLevel ?? 0) && (i.minStockLevel ?? 0) > 0
   );
 
-  const totalPending = pendingBorrows.length + pendingReqs.length + pendingAudits.length;
-  const totalUrgent = overdueBorrows.length + pendingAudits.length;
+  const totalPending = pendingBorrows.length + pendingReqs.length + pendingAudits.length + pendingFM.length;
+  const totalUrgent = overdueBorrows.length + pendingAudits.length + pendingFM.length;
 
   const weeklyData = buildChartData(movements, requisitions, chartDays);
 
@@ -354,6 +376,18 @@ export default function DashboardPage() {
                 bg="bg-red-500"
                 urgent
                 onClick={() => router.push("/audit")}
+              />
+            )}
+
+            {/* FM work orders pending review */}
+            {pendingFM.length > 0 && (
+              <ActionCard
+                icon={<Wrench className="w-5 h-5" />}
+                label="รออนุมัติใบงาน FM"
+                count={pendingFM.length}
+                bg="bg-amber-600"
+                urgent
+                onClick={() => router.push("/fm")}
               />
             )}
 
