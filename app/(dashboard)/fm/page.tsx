@@ -13,7 +13,7 @@ import {
   Sparkles, UploadCloud, FileUp, Loader2, Trash2, ExternalLink, Users, Download,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
-import { uploadFMFile, openAttachmentInNewTab, downloadAttachmentFile } from "@/services/fm-storage.service";
+import { parseFMPdf } from "@/services/fm-ocr.service";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -71,9 +71,9 @@ export default function FMWorkOrdersPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
-  const [attachmentUrl, setAttachmentUrl] = useState("");
-  const [attachmentName, setAttachmentName] = useState("");
-  const [isUploadingPdf, setIsUploadingPdf] = useState(false);
+  const [scannedFileName, setScannedFileName] = useState("");
+  const [scannedFieldCount, setScannedFieldCount] = useState(0);
+  const [isOcrScanning, setIsOcrScanning] = useState(false);
   const [assignedTechnicianId, setAssignedTechnicianId] = useState("");
   const [assignedTechnicianName, setAssignedTechnicianName] = useState("");
   const [assignedDepartment, setAssignedDepartment] = useState("");
@@ -108,16 +108,16 @@ export default function FMWorkOrdersPage() {
     setTitle("");
     setDescription("");
     setLocation("");
-    setAttachmentUrl("");
-    setAttachmentName("");
-    setIsUploadingPdf(false);
+    setScannedFileName("");
+    setScannedFieldCount(0);
+    setIsOcrScanning(false);
     setAssignedTechnicianId("");
     setAssignedTechnicianName("");
     setAssignedDepartment("");
     setAssignorName("");
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePdfScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -126,22 +126,38 @@ export default function FMWorkOrdersPage() {
       return;
     }
 
-    if (file.size > 25 * 1024 * 1024) {
-      toast.error("ขนาดไฟล์เกิน 25MB");
-      return;
-    }
-
     try {
-      setIsUploadingPdf(true);
-      const res = await uploadFMFile(file, "fm_documents");
-      setAttachmentUrl(res.url);
-      setAttachmentName(res.name);
-      toast.success("อัปโหลดไฟล์ PDF สำเร็จแล้ว");
+      setIsOcrScanning(true);
+      const parsed = await parseFMPdf(file);
+
+      if (parsed.workOrderNumber) setWorkOrderNumber(parsed.workOrderNumber);
+      if (parsed.workType) setWorkType(parsed.workType);
+      if (parsed.requestDateStr) setRequestDateStr(parsed.requestDateStr);
+      if (parsed.useDateStr) setUseDateStr(parsed.useDateStr);
+      if (parsed.requesterName) setRequesterName(parsed.requesterName);
+      if (parsed.requesterDepartment) setRequesterDepartment(parsed.requesterDepartment);
+      if (parsed.requesterEmail) setRequesterEmail(parsed.requesterEmail);
+      if (parsed.requesterPhone) setRequesterPhone(parsed.requesterPhone);
+      if (parsed.coordinatorName) setCoordinatorName(parsed.coordinatorName);
+      if (parsed.coordinatorPhone) setCoordinatorPhone(parsed.coordinatorPhone);
+      if (parsed.title) setTitle(parsed.title);
+      if (parsed.description) setDescription(parsed.description);
+      if (parsed.location) setLocation(parsed.location);
+      if (parsed.assignedTechnicianName) setAssignedTechnicianName(parsed.assignedTechnicianName);
+      if (parsed.assignedDepartment) setAssignedDepartment(parsed.assignedDepartment);
+      if (parsed.assignorName) setAssignorName(parsed.assignorName);
+
+      setScannedFileName(file.name);
+      setScannedFieldCount(parsed.fieldsDetectedCount);
+      toast.success(
+        `⚡ ดึงข้อมูลสำเร็จ (${parsed.fieldsDetectedCount} รายการ) กรอกลงฟอร์มเรียบร้อยแล้ว`
+      );
     } catch (err: any) {
-      console.error("PDF upload error:", err);
-      toast.error(err?.message || "อัปโหลดไฟล์ไม่สำเร็จ กรุณาลองใหม่");
+      console.error("PDF scan error:", err);
+      toast.error(err?.message || "สแกนไฟล์ PDF ไม่สำเร็จ กรุณาลองใหม่");
     } finally {
-      setIsUploadingPdf(false);
+      setIsOcrScanning(false);
+      e.target.value = "";
     }
   };
 
@@ -160,11 +176,11 @@ export default function FMWorkOrdersPage() {
     setTitle("RQ-2026-000136 ประกอบและติดตั้งพัดลมติดผนังขนาด 30 นิ้ว จำนวน 4 ตัว");
     setDescription("RQ-2026-000136 ประกอบและติดตั้งพัดลมติดผนังขนาด 30 นิ้ว จำนวน 4 ตัว / โรงอาหาร อหข. / งามพล จุมรี ติดต่อ 69605");
     setLocation("โรงอาหาร อหข.");
-    setAttachmentUrl("/(ตัวอย่าง) ใบงาน FM 6090.pdf");
-    setAttachmentName("(ตัวอย่าง) ใบงาน FM 6090.pdf");
     setAssignedTechnicianName("นายตวงเพชร ชัยยานนท์");
     setAssignedDepartment("รวธ. ชธธ. กบห-ธ. หบท-ธ.");
     setAssignorName("นายตวงเพชร ชัยยานนท์");
+    setScannedFileName("(ตัวอย่าง) ใบงาน FM 6090.pdf");
+    setScannedFieldCount(15);
     toast.info("โหลดข้อมูลตัวอย่าง FM 6090 เรียบร้อยแล้ว");
   };
 
@@ -198,8 +214,6 @@ export default function FMWorkOrdersPage() {
         title: title.trim(),
         description: description.trim() || undefined,
         location: location.trim(),
-        attachmentUrl: attachmentUrl.trim() || undefined,
-        attachmentName: attachmentName.trim() || (attachmentUrl ? "เอกสารแนบใบงาน" : undefined),
         assignedTechnicianId: assignedTechnicianId || undefined,
         assignedTechnicianName: assignedTechnicianName.trim() || undefined,
         assignedDepartment: assignedDepartment.trim() || undefined,
@@ -506,110 +520,93 @@ export default function FMWorkOrdersPage() {
 
               {/* Modal Body */}
               <div className="px-6 py-4 overflow-y-auto space-y-4 flex-1">
-                {/* ── Top Section: แนบไฟล์เอกสารใบงาน PDF ── */}
-                <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-2xl border-2 border-dashed border-blue-200 dark:border-blue-800">
-                  <div className="flex items-center justify-between mb-2">
+                {/* ── Top Section: สแกนข้อมูลจากไฟล์เอกสารใบงาน PDF (OCR Auto-Fill) ── */}
+                <div className="p-4 bg-gradient-to-r from-blue-50/90 via-indigo-50/70 to-purple-50/60 dark:from-blue-950/40 dark:via-indigo-950/30 dark:to-purple-950/20 rounded-2xl border-2 border-dashed border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center justify-between gap-2 mb-2">
                     <div className="flex items-center gap-2">
-                      <FileUp className="w-5 h-5 text-[#1D4ED8]" />
-                      <span className="text-sm font-bold text-gray-900 dark:text-white">
-                        แนบไฟล์เอกสารใบงาน (PDF)
-                      </span>
+                      <div className="w-7 h-7 rounded-lg bg-[#1D4ED8] text-white flex items-center justify-center text-xs font-bold shadow-xs">
+                        <Sparkles className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <span className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+                          สแกนข้อมูลจาก PDF เข้าฟอร์มอัตโนมัติ (OCR)
+                        </span>
+                      </div>
                     </div>
-                    {attachmentUrl && (
-                      <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> แนบไฟล์แล้ว
-                      </span>
-                    )}
+                    <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">
+                      🛡️ ไม่เปลือง Storage (Free Plan Safe)
+                    </span>
                   </div>
 
-                  {!attachmentUrl ? (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                    เลือกหรือลากไฟล์ PDF ใบแจ้งงาน FM มาวาง ระบบจะอ่านและกรอกข้อมูลลงแบบฟอร์มด้านล่างทันที โดย<strong>ไม่บันทึกไฟล์ลงเซิร์ฟเวอร์</strong>
+                  </p>
+
+                  {!scannedFileName ? (
                     <div>
                       <input
                         type="file"
-                        id="pdf-upload-input"
+                        id="pdf-scan-input"
                         accept="application/pdf,.pdf"
                         className="hidden"
-                        onChange={handleFileUpload}
-                        disabled={isUploadingPdf}
+                        onChange={handlePdfScan}
+                        disabled={isOcrScanning}
                       />
                       <label
-                        htmlFor="pdf-upload-input"
+                        htmlFor="pdf-scan-input"
                         className={`w-full py-4 px-4 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/80 rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center cursor-pointer transition-all shadow-sm active:scale-[0.99] ${
-                          isUploadingPdf ? "opacity-60 pointer-events-none" : ""
+                          isOcrScanning ? "opacity-60 pointer-events-none" : ""
                         }`}
                       >
-                        {isUploadingPdf ? (
+                        {isOcrScanning ? (
                           <div className="flex items-center gap-2 text-sm font-semibold text-[#1D4ED8]">
                             <Loader2 className="w-5 h-5 animate-spin" />
-                            <span>กำลังอัปโหลดไฟล์ PDF ขึ้นระบบ...</span>
+                            <span>กำลังอ่านและสแกนข้อมูลจากเอกสาร PDF...</span>
                           </div>
                         ) : (
                           <>
-                            <UploadCloud className="w-8 h-8 text-[#1D4ED8] mb-1" />
+                            <FileText className="w-7 h-7 text-[#1D4ED8] mb-1" />
                             <span className="text-xs font-bold text-gray-800 dark:text-gray-200">
-                              คลิกเพื่อเลือกไฟล์ PDF แนบกับใบงาน
+                              คลิกเพื่อเลือกไฟล์ PDF ใบงาน FM เพื่อสแกนกรอกฟอร์ม
                             </span>
                             <span className="text-[11px] text-gray-400 mt-0.5">
-                              รองรับไฟล์เอกสาร .pdf เช่น ใบแจ้งงานซ่อม FM ต้นฉบับ
+                              ระบบจะดึงข้อมูลลงช่องทั้งหมดทันที โดยไม่ต้องพิมพ์เอง
                             </span>
                           </>
                         )}
                       </label>
                     </div>
                   ) : (
-                    <div className="p-3 bg-white dark:bg-gray-800 rounded-xl border border-blue-200 dark:border-blue-700 flex items-center justify-between gap-3 shadow-sm">
+                    <div className="p-3 bg-white dark:bg-gray-800 rounded-xl border border-emerald-200 dark:border-emerald-800 flex items-center justify-between gap-3 shadow-sm">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-9 h-9 rounded-lg bg-red-50 text-red-600 dark:bg-red-950/40 flex items-center justify-center shrink-0">
-                          <FileText className="w-5 h-5" />
+                        <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 flex items-center justify-center shrink-0">
+                          <CheckCircle2 className="w-5 h-5" />
                         </div>
                         <div className="min-w-0">
                           <p className="text-xs font-bold text-gray-900 dark:text-white truncate">
-                            {attachmentName || "เอกสารแนบใบงาน.pdf"}
+                            {scannedFileName}
                           </p>
-                          <div className="flex items-center gap-3 mt-0.5">
-                            <button
-                              type="button"
-                              onClick={() => openAttachmentInNewTab(attachmentUrl, attachmentName)}
-                              className="text-[11px] font-semibold text-[#1D4ED8] hover:underline flex items-center gap-1"
-                            >
-                              เปิดดูเอกสาร <ExternalLink className="w-3 h-3" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => downloadAttachmentFile(attachmentUrl, attachmentName)}
-                              className="text-[11px] text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:underline flex items-center gap-1"
-                            >
-                              ดาวน์โหลด <Download className="w-3 h-3" />
-                            </button>
-                          </div>
+                          <p className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-0.5">
+                            ✨ ดึงข้อมูลเข้าฟอร์มสำเร็จ ({scannedFieldCount} รายการ) • ปลอดภัย ไม่เก็บไฟล์
+                          </p>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2">
                         <input
                           type="file"
-                          id="pdf-reupload-input"
+                          id="pdf-rescan-input"
                           accept="application/pdf,.pdf"
                           className="hidden"
-                          onChange={handleFileUpload}
+                          onChange={handlePdfScan}
+                          disabled={isOcrScanning}
                         />
                         <label
-                          htmlFor="pdf-reupload-input"
+                          htmlFor="pdf-rescan-input"
                           className="text-xs px-2.5 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg font-medium cursor-pointer transition-colors"
                         >
-                          เปลี่ยนไฟล์
+                          สแกนไฟล์อื่น
                         </label>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setAttachmentUrl("");
-                            setAttachmentName("");
-                          }}
-                          className="p-1 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-lg transition-colors"
-                          title="ลบไฟล์แนบ"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
                       </div>
                     </div>
                   )}
