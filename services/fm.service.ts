@@ -60,6 +60,7 @@ export async function createFMWorkOrder(data: {
   location: string;
   attachmentUrl?: string;
   attachmentName?: string;
+  images?: string[];
   assignedTechnicianId?: string;
   assignedTechnicianName?: string;
   assignedDepartment?: string;

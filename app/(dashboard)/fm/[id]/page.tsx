@@ -26,7 +26,7 @@ import {
   Wrench, ArrowLeft, Calendar, MapPin, User, Building, Phone,
   Mail, FileText, CheckCircle2, AlertTriangle, Clock, Plus,
   Trash2, X, Search, Check, Ban, ExternalLink, Printer, Download, Save,
-  PackageSearch, Edit3, PenTool, RotateCcw,
+  PackageSearch, Edit3, PenTool, RotateCcw, Image as ImageIcon, Camera, ZoomIn,
 } from "lucide-react";
 import { formatDate, formatDateTime } from "@/lib/utils";
 import { openAttachmentInNewTab, downloadAttachmentFile } from "@/services/fm-storage.service";
@@ -403,6 +403,17 @@ export default function FMWorkOrderDetailPage() {
     });
   };
 
+  const [selectedPreviewImage, setSelectedPreviewImage] = useState<string | null>(null);
+
+  const handlePrint = () => {
+    const originalTitle = document.title;
+    document.title = `SFM-${workOrder?.workOrderNumber || id}`;
+    window.print();
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1500);
+  };
+
   if (isLoading) {
     return (
       <AppShell title="ใบแจ้งงานซ่อม (FM)">
@@ -493,10 +504,11 @@ export default function FMWorkOrderDetailPage() {
 
   return (
     <AppShell title={`FM-${workOrder.workOrderNumber}`}>
-      <MobileHeader title={`ใบงาน FM-${workOrder.workOrderNumber}`} back />
+      <div className="print:hidden">
+        <MobileHeader title={`ใบงาน FM-${workOrder.workOrderNumber}`} back />
 
-      {/* Top action bar */}
-      <div className="flex items-center justify-between gap-3 mb-4">
+        {/* Top action bar */}
+        <div className="flex items-center justify-between gap-3 mb-4">
         <button
           onClick={() => router.push("/fm")}
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
@@ -525,7 +537,7 @@ export default function FMWorkOrderDetailPage() {
             </div>
           )}
           <button
-            onClick={() => window.print()}
+            onClick={handlePrint}
             className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 transition-colors"
           >
             <Printer className="w-3.5 h-3.5" /> พิมพ์
@@ -807,6 +819,39 @@ export default function FMWorkOrderDetailPage() {
               </div>
             </div>
           )}
+          {/* Attached Images Section */}
+          {workOrder.images && workOrder.images.length > 0 && (
+            <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-700/30 border border-gray-100 dark:border-gray-700/60 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
+                  <Camera className="w-4 h-4 text-[#1D4ED8]" />
+                  <span>รูปภาพประกอบ ({workOrder.images.length} รูป)</span>
+                </p>
+                <span className="text-[11px] text-gray-400">คลิกที่รูปเพื่อดูภาพขนาดใหญ่</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {workOrder.images.map((imgUrl, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => setSelectedPreviewImage(imgUrl)}
+                    className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 dark:border-gray-600 bg-black/5 dark:bg-gray-800 cursor-pointer group hover:ring-2 hover:ring-[#1D4ED8] transition-all"
+                  >
+                    <img
+                      src={imgUrl}
+                      alt={`รูปภาพประกอบที่ ${idx + 1}`}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                    />
+                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                      <ZoomIn className="w-5 h-5 drop-shadow" />
+                    </div>
+                    <span className="absolute bottom-1.5 left-1.5 text-[10px] font-bold text-white bg-black/60 px-1.5 py-0.5 rounded backdrop-blur-xs">
+                      รูปที่ {idx + 1}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 2-Columns Grid: Requester & Technician */}
@@ -944,7 +989,7 @@ export default function FMWorkOrderDetailPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    setSignerName(workOrder.requesterSignedName || workOrder.requesterName || "");
+                    setSignerName(workOrder.requesterSignedName || "");
                     setSignerEmployeeId(workOrder.requesterEmployeeId || "");
                     setShowSignModal(true);
                   }}
@@ -1341,6 +1386,273 @@ export default function FMWorkOrderDetailPage() {
           </div>
         )}
       </div>
+      </div>
+
+      {/* ── DEDICATED CLEAN PRINT DOCUMENT (Visible ONLY when printing) ── */}
+      <div
+        id="fm-print-document"
+        className="hidden print:block text-black bg-white p-6 font-sans"
+      >
+        {/* Header */}
+        <div className="border-b-2 border-black pb-3 mb-4 flex items-start justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-black tracking-tight">
+              ใบแจ้งงานซ่อม / บริการ (FM)
+            </h1>
+            <p className="text-xs text-gray-700 mt-0.5">
+              ระบบบริหารจัดการพัสดุและงานซ่อมบำรุง Stoxy
+            </p>
+          </div>
+          <div className="text-right">
+            <span className="text-base font-extrabold font-mono border-2 border-black px-2.5 py-1 inline-block">
+              SFM-{workOrder.workOrderNumber}
+            </span>
+            <p className="text-[11px] text-gray-600 mt-1">
+              สถานะ: {statusConfig[workOrder.status]?.label || workOrder.status}
+            </p>
+          </div>
+        </div>
+
+        {/* General Info Grid */}
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs mb-4 border border-gray-400 p-3 rounded">
+          <div>
+            <span className="font-bold">วันที่แจ้งงาน:</span> {formatDate(workOrder.requestDate)}
+          </div>
+          <div>
+            <span className="font-bold">วันที่ต้องการใช้งาน:</span> {formatDate(workOrder.useDate)}
+          </div>
+          <div>
+            <span className="font-bold">ประเภทงาน:</span> {workOrder.workType || "-"}
+          </div>
+          <div>
+            <span className="font-bold">สถานที่ดำเนินการ:</span> {workOrder.location}
+          </div>
+          <div className="col-span-2 pt-1 border-t border-gray-300">
+            <span className="font-bold">เรื่อง / หัวข้องาน:</span> {workOrder.title}
+          </div>
+          {workOrder.description && (
+            <div className="col-span-2">
+              <span className="font-bold">รายละเอียด:</span> {workOrder.description}
+            </div>
+          )}
+        </div>
+
+        {/* Requester & Technician Info Grid */}
+        <div className="grid grid-cols-2 gap-4 text-xs mb-4">
+          <div className="border border-gray-400 p-3 rounded">
+            <p className="font-bold border-b border-gray-300 pb-1 mb-1.5">ข้อมูลผู้แจ้งงาน</p>
+            <p>
+              <span className="text-gray-600">ชื่อผู้แจ้ง:</span> {workOrder.requesterName}
+            </p>
+            <p>
+              <span className="text-gray-600">สังกัด / แผนก:</span> {workOrder.requesterDepartment}
+            </p>
+            {workOrder.requesterPhone && (
+              <p>
+                <span className="text-gray-600">โทรศัพท์:</span> {workOrder.requesterPhone}
+              </p>
+            )}
+            {workOrder.coordinatorName && (
+              <p className="mt-1 pt-1 border-t border-dashed border-gray-300">
+                <span className="text-gray-600">ผู้ประสานงาน:</span> {workOrder.coordinatorName}{" "}
+                {workOrder.coordinatorPhone ? `(${workOrder.coordinatorPhone})` : ""}
+              </p>
+            )}
+          </div>
+
+          <div className="border border-gray-400 p-3 rounded">
+            <p className="font-bold border-b border-gray-300 pb-1 mb-1.5">ข้อมูลผู้ดำเนินการ & ผู้มอบหมาย</p>
+            <p>
+              <span className="text-gray-600">ผู้ดำเนินการ:</span>{" "}
+              {workOrder.assignedTechnicianName || "-"}
+            </p>
+            <p>
+              <span className="text-gray-600">สังกัด / แผนกช่าง:</span>{" "}
+              {workOrder.assignedDepartment || "-"}
+            </p>
+            <p className="mt-1 pt-1 border-t border-dashed border-gray-300">
+              <span className="text-gray-600">ผู้มอบหมายงาน:</span> {workOrder.assignorName || "-"}
+            </p>
+            {workOrder.assignedDate && (
+              <p>
+                <span className="text-gray-600">วันที่มอบหมาย:</span>{" "}
+                {formatDate(workOrder.assignedDate)}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Items Table */}
+        <div className="mb-4">
+          <p className="text-xs font-bold mb-1.5">รายการอุปกรณ์ที่ใช้สำหรับใบงานนี้</p>
+          <table className="w-full text-xs border-collapse border border-black">
+            <thead>
+              <tr className="bg-gray-100 border-b border-black text-center">
+                <th className="border border-black px-2 py-1.5 w-10">ลำดับ</th>
+                <th className="border border-black px-2 py-1.5 w-24">รหัสอุปกรณ์</th>
+                <th className="border border-black px-2 py-1.5 text-left">ชื่ออุปกรณ์ / รายการ</th>
+                <th className="border border-black px-2 py-1.5 text-left">จุดติดตั้ง / หมายเหตุ</th>
+                <th className="border border-black px-2 py-1.5 w-16 text-right">จำนวน</th>
+                <th className="border border-black px-2 py-1.5 w-16 text-center">หน่วยนับ</th>
+              </tr>
+            </thead>
+            <tbody>
+              {!workOrder.items || workOrder.items.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="border border-black px-3 py-3 text-center text-gray-600 italic"
+                  >
+                    {workOrder.completedWithoutItems
+                      ? "ดำเนินการโดยไม่เบิกใช้อุปกรณ์จากคลัง"
+                      : "ไม่มีการเบิกอุปกรณ์จากคลัง"}
+                  </td>
+                </tr>
+              ) : (
+                workOrder.items.map((item, idx) => (
+                  <tr key={idx} className="border-b border-gray-300">
+                    <td className="border border-black px-2 py-1 text-center">{idx + 1}</td>
+                    <td className="border border-black px-2 py-1 font-mono text-center">
+                      {item.itemCode}
+                    </td>
+                    <td className="border border-black px-2 py-1 font-medium">{item.itemName}</td>
+                    <td className="border border-black px-2 py-1 text-gray-700">
+                      {item.notes || "-"}
+                    </td>
+                    <td className="border border-black px-2 py-1 text-right font-bold">
+                      {item.quantity}
+                    </td>
+                    <td className="border border-black px-2 py-1 text-center">
+                      {item.unit || "ชิ้น"}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Attached Photos (If any) */}
+        {workOrder.images && workOrder.images.length > 0 && (
+          <div className="mb-4">
+            <p className="text-xs font-bold mb-1.5">
+              รูปภาพประกอบ ({workOrder.images.length} รูป)
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {workOrder.images.map((imgUrl, idx) => (
+                <div
+                  key={idx}
+                  className="border border-gray-400 p-1 rounded aspect-video flex items-center justify-center overflow-hidden"
+                >
+                  <img
+                    src={imgUrl}
+                    alt={`รูปที่ ${idx + 1}`}
+                    className="max-h-24 w-auto object-contain mx-auto"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 3-Column Signatures Block */}
+        <div className="grid grid-cols-3 gap-3 text-xs pt-4 border-t-2 border-black">
+          {/* Signer / Requester */}
+          <div className="border border-black p-2.5 rounded text-center flex flex-col justify-between min-h-[140px]">
+            <p className="font-bold border-b border-gray-300 pb-1">ผู้แจ้งงาน / ผู้รับทราบ</p>
+            <div className="my-2 flex-1 flex flex-col items-center justify-center">
+              {workOrder.requesterSignatureUrl ? (
+                <img
+                  src={workOrder.requesterSignatureUrl}
+                  alt="ลายเซ็น"
+                  className="max-h-12 w-auto object-contain mb-1"
+                />
+              ) : (
+                <div className="h-10" />
+              )}
+              <p className="font-semibold text-center">
+                ( {workOrder.requesterSignedName || ".................................................."} )
+              </p>
+              {workOrder.requesterEmployeeId && (
+                <p className="text-[10px] text-gray-600">รหัส: {workOrder.requesterEmployeeId}</p>
+              )}
+            </div>
+            <p className="text-[11px] text-gray-700 border-t border-dashed border-gray-300 pt-1">
+              วันที่:{" "}
+              {workOrder.requesterSignedAt
+                ? formatDate(workOrder.requesterSignedAt)
+                : "......./......./.........."}
+            </p>
+          </div>
+
+          {/* Technician */}
+          <div className="border border-black p-2.5 rounded text-center flex flex-col justify-between min-h-[140px]">
+            <p className="font-bold border-b border-gray-300 pb-1">ผู้ดำเนินการ (ช่าง)</p>
+            <div className="my-2 flex-1 flex flex-col items-center justify-center">
+              <div className="h-10" />
+              <p className="font-semibold text-center">
+                ( {workOrder.assignedTechnicianName || ".................................................."} )
+              </p>
+              {workOrder.assignedDepartment && (
+                <p className="text-[10px] text-gray-600">{workOrder.assignedDepartment}</p>
+              )}
+            </div>
+            <p className="text-[11px] text-gray-700 border-t border-dashed border-gray-300 pt-1">
+              วันที่:{" "}
+              {workOrder.assignedDate
+                ? formatDate(workOrder.assignedDate)
+                : "......./......./.........."}
+            </p>
+          </div>
+
+          {/* Approver / Admin */}
+          <div className="border border-black p-2.5 rounded text-center flex flex-col justify-between min-h-[140px]">
+            <p className="font-bold border-b border-gray-300 pb-1">ผู้ตรวจสอบ / อนุมัติ</p>
+            <div className="my-2 flex-1 flex flex-col items-center justify-center">
+              <div className="h-10" />
+              <p className="font-semibold text-center">
+                ( {workOrder.approvedByName || ".................................................."} )
+              </p>
+              <p className="text-[10px] text-gray-600">ผู้ดูแลระบบ</p>
+            </div>
+            <p className="text-[11px] text-gray-700 border-t border-dashed border-gray-300 pt-1">
+              วันที่:{" "}
+              {workOrder.approvedAt
+                ? formatDate(workOrder.approvedAt)
+                : "......./......./.........."}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        @media print {
+          @page {
+            size: A4 portrait;
+            margin: 10mm 12mm;
+          }
+          /* Hide all screen elements: AppShell sidebar, top header, etc. */
+          body * {
+            visibility: hidden !important;
+          }
+          #fm-print-document, #fm-print-document * {
+            visibility: visible !important;
+          }
+          #fm-print-document {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            display: block !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+            box-shadow: none !important;
+            border: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+        }
+      `}</style>
 
       {/* Item Picker Modal */}
       <AnimatePresence>
@@ -1723,13 +2035,13 @@ export default function FMWorkOrderDetailPage() {
                   {/* Signer Name */}
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                      ชื่อผู้ลงนาม (ผู้แจ้งงาน) <span className="text-rose-500">*</span>
+                      ชื่อผู้ลงนาม <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="text"
                       value={signerName}
                       onChange={(e) => setSignerName(e.target.value)}
-                      placeholder="ระบุชื่อผู้ลงนาม"
+                      placeholder="กรอกชื่อ-นามสกุล ผู้ลงนาม (อาจเป็นท่านอื่นได้)"
                       className="w-full px-3.5 py-2 text-xs bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
                     />
                   </div>
@@ -1822,6 +2134,58 @@ export default function FMWorkOrderDetailPage() {
                   <Save className="w-4 h-4" />
                   {saveSignatureMut.isPending ? "กำลังบันทึก..." : "บันทึกการลงนาม"}
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Image Preview Modal */}
+      <AnimatePresence>
+        {selectedPreviewImage && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/80 backdrop-blur-xs"
+              onClick={() => setSelectedPreviewImage(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative max-w-4xl max-h-[90vh] bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-2xl z-10 flex flex-col"
+            >
+              <div className="px-4 py-3 bg-gray-100 dark:bg-gray-700/80 flex items-center justify-between border-b border-gray-200 dark:border-gray-600">
+                <p className="text-xs font-bold text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
+                  <Camera className="w-4 h-4 text-[#1D4ED8]" />
+                  <span>รูปภาพประกอบใบงาน FM-{workOrder.workOrderNumber}</span>
+                </p>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={selectedPreviewImage}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-[#1D4ED8] hover:underline flex items-center gap-1 font-semibold mr-2"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" /> เปิดรูปเต็ม
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPreviewImage(null)}
+                    className="p-1 rounded-lg text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+              <div className="p-3 overflow-auto max-h-[80vh] flex items-center justify-center bg-black/10 dark:bg-black/40">
+                <img
+                  src={selectedPreviewImage}
+                  alt="รูปภาพขนาดใหญ่"
+                  className="max-h-[75vh] w-auto object-contain rounded-xl"
+                />
               </div>
             </motion.div>
           </div>
