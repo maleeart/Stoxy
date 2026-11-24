@@ -511,7 +511,77 @@ export async function clearFMWorkOrderRequesterSignature(id: string): Promise<vo
   });
 }
 
+export async function adminUpdateFMWorkOrderDetails(
+  id: string,
+  data: {
+    workOrderNumber?: string;
+    workType?: string;
+    requestDate?: Timestamp;
+    useDate?: Timestamp | null;
+    title?: string;
+    description?: string;
+    location?: string;
+    images?: string[];
+    requesterName?: string;
+    requesterDepartment?: string;
+    requesterPhone?: string;
+    requesterEmail?: string;
+    coordinatorName?: string;
+    coordinatorPhone?: string;
+    assignorName?: string;
+    assignedTechnicianName?: string;
+    assignedDepartment?: string;
+    notes?: string;
+  },
+  adminName: string
+): Promise<void> {
+  const ref = doc(db, COL, id);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error("ไม่พบใบแจ้งงาน FM");
+  const wo = snap.data() as FMWorkOrder;
+
+  const now = Timestamp.now();
+  const updateData: Record<string, any> = {
+    updatedAt: now,
+  };
+
+  if (data.workOrderNumber !== undefined) updateData.workOrderNumber = data.workOrderNumber.trim();
+  if (data.workType !== undefined) updateData.workType = data.workType.trim() || deleteField();
+  if (data.requestDate !== undefined) updateData.requestDate = data.requestDate;
+  if (data.useDate !== undefined) updateData.useDate = data.useDate ?? deleteField();
+  if (data.title !== undefined) updateData.title = data.title.trim();
+  if (data.description !== undefined) updateData.description = data.description.trim() || deleteField();
+  if (data.location !== undefined) updateData.location = data.location.trim();
+  if (data.images !== undefined) updateData.images = data.images;
+  if (data.requesterName !== undefined) updateData.requesterName = data.requesterName.trim();
+  if (data.requesterDepartment !== undefined) updateData.requesterDepartment = data.requesterDepartment.trim();
+  if (data.requesterPhone !== undefined) updateData.requesterPhone = data.requesterPhone.trim() || deleteField();
+  if (data.requesterEmail !== undefined) updateData.requesterEmail = data.requesterEmail.trim() || deleteField();
+  if (data.coordinatorName !== undefined) updateData.coordinatorName = data.coordinatorName.trim() || deleteField();
+  if (data.coordinatorPhone !== undefined) updateData.coordinatorPhone = data.coordinatorPhone.trim() || deleteField();
+  if (data.assignorName !== undefined) updateData.assignorName = data.assignorName.trim() || deleteField();
+  if (data.assignedTechnicianName !== undefined) {
+    if (data.assignedTechnicianName.trim()) {
+      updateData.assignedTechnicianName = data.assignedTechnicianName.trim();
+    } else {
+      updateData.assignedTechnicianName = deleteField();
+      updateData.assignedTechnicianId = deleteField();
+    }
+  }
+  if (data.assignedDepartment !== undefined) {
+    updateData.assignedDepartment = data.assignedDepartment.trim() || deleteField();
+  }
+  if (data.notes !== undefined) updateData.notes = data.notes.trim() || deleteField();
+
+  await updateDoc(ref, updateData);
+
+  notifyLine(
+    `✏️ แก้ไขข้อมูลใบงาน FM-${wo.workOrderNumber}\nเรื่อง: ${data.title || wo.title}\nแก้ไขโดย: ${adminName}`
+  );
+}
+
 export async function deleteFMWorkOrder(id: string): Promise<void> {
   await deleteDoc(doc(db, COL, id));
 }
+
 

@@ -19,6 +19,7 @@ import {
   adminUpdateFMWorkOrderStatus,
   saveFMWorkOrderRequesterSignature,
   clearFMWorkOrderRequesterSignature,
+  adminUpdateFMWorkOrderDetails,
 } from "@/services/fm.service";
 import { useInventoryItems } from "@/hooks/useInventory";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,8 +29,10 @@ import {
   Trash2, X, Search, Check, Ban, ExternalLink, Printer, Download, Save,
   PackageSearch, Edit3, PenTool, RotateCcw, Image as ImageIcon, Camera, ZoomIn,
 } from "lucide-react";
-import { formatDate, formatDateTime } from "@/lib/utils";
+import { formatDate, formatDateTime, toDate } from "@/lib/utils";
 import { openAttachmentInNewTab, downloadAttachmentFile } from "@/services/fm-storage.service";
+import { compressImages } from "@/lib/compress";
+import { Timestamp } from "firebase/firestore";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import type { FMWorkOrderItem, FMWorkOrderStatus, InventoryItem } from "@/types";
@@ -414,6 +417,166 @@ export default function FMWorkOrderDetailPage() {
     }, 1500);
   };
 
+  // Admin Edit Work Order Modal State
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editWorkOrderNumber, setEditWorkOrderNumber] = useState("");
+  const [editWorkType, setEditWorkType] = useState("");
+  const [editRequestDateStr, setEditRequestDateStr] = useState("");
+  const [editUseDateStr, setEditUseDateStr] = useState("");
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editLocation, setEditLocation] = useState("");
+  const [editRequesterName, setEditRequesterName] = useState("");
+  const [editRequesterDepartment, setEditRequesterDepartment] = useState("");
+  const [editRequesterPhone, setEditRequesterPhone] = useState("");
+  const [editRequesterEmail, setEditRequesterEmail] = useState("");
+  const [editCoordinatorName, setEditCoordinatorName] = useState("");
+  const [editCoordinatorPhone, setEditCoordinatorPhone] = useState("");
+  const [editAssignorName, setEditAssignorName] = useState("");
+  const [editAssignedTechnicianName, setEditAssignedTechnicianName] = useState("");
+  const [editAssignedDepartment, setEditAssignedDepartment] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+
+  const [editExistingImages, setEditExistingImages] = useState<string[]>([]);
+  const [editNewImageFiles, setEditNewImageFiles] = useState<File[]>([]);
+  const [editNewImagePreviews, setEditNewImagePreviews] = useState<string[]>([]);
+  const [isCompressingEditImages, setIsCompressingEditImages] = useState(false);
+
+  const openEditModal = () => {
+    if (!workOrder) return;
+    setEditWorkOrderNumber(workOrder.workOrderNumber || "");
+    setEditWorkType(workOrder.workType || "ระบบไฟฟ้า");
+    const rDate = workOrder.requestDate ? toDate(workOrder.requestDate) : new Date();
+    setEditRequestDateStr(rDate ? rDate.toISOString().slice(0, 10) : "");
+    const uDate = workOrder.useDate ? toDate(workOrder.useDate) : null;
+    setEditUseDateStr(uDate ? uDate.toISOString().slice(0, 10) : "");
+    setEditTitle(workOrder.title || "");
+    setEditDescription(workOrder.description || "");
+    setEditLocation(workOrder.location || "");
+    setEditRequesterName(workOrder.requesterName || "");
+    setEditRequesterDepartment(workOrder.requesterDepartment || "");
+    setEditRequesterPhone(workOrder.requesterPhone || "");
+    setEditRequesterEmail(workOrder.requesterEmail || "");
+    setEditCoordinatorName(workOrder.coordinatorName || "");
+    setEditCoordinatorPhone(workOrder.coordinatorPhone || "");
+    setEditAssignorName(workOrder.assignorName || "");
+    setEditAssignedTechnicianName(workOrder.assignedTechnicianName || "");
+    setEditAssignedDepartment(workOrder.assignedDepartment || "");
+    setEditNotes(workOrder.notes || "");
+
+    setEditExistingImages(workOrder.images || []);
+    editNewImagePreviews.forEach((url) => {
+      try {
+        URL.revokeObjectURL(url);
+      } catch {}
+    });
+    setEditNewImageFiles([]);
+    setEditNewImagePreviews([]);
+    setIsCompressingEditImages(false);
+    setShowEditModal(true);
+  };
+
+  const handleEditImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const currentTotal = editExistingImages.length + editNewImageFiles.length;
+    const availableSlots = 3 - currentTotal;
+    if (availableSlots <= 0) {
+      toast.error("แนบรูปประกอบรวมทั้งหมดได้ไม่เกิน 3 รูป");
+      e.target.value = "";
+      return;
+    }
+
+    const filesToAdd = files.slice(0, availableSlots);
+    if (files.length > availableSlots) {
+      toast.info(`เลือกได้สูงสุด 3 รูป (เพิ่ม ${filesToAdd.length} รูป)`);
+    }
+
+    const newPreviews = filesToAdd.map((f) => URL.createObjectURL(f));
+    setEditNewImageFiles((prev) => [...prev, ...filesToAdd]);
+    setEditNewImagePreviews((prev) => [...prev, ...newPreviews]);
+    e.target.value = "";
+  };
+
+  const handleRemoveExistingImage = (index: number) => {
+    setEditExistingImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleRemoveNewImage = (index: number) => {
+    setEditNewImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setEditNewImagePreviews((prev) => {
+      const toRemove = prev[index];
+      if (toRemove) {
+        try {
+          URL.revokeObjectURL(toRemove);
+        } catch {}
+      }
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
+  const adminUpdateDetailsMut = useMutation({
+    mutationFn: async () => {
+      if (!editWorkOrderNumber.trim()) throw new Error("กรุณากรอกเลขที่ใบงาน");
+      if (!editRequesterName.trim()) throw new Error("กรุณากรอกชื่อผู้แจ้งงาน");
+      if (!editTitle.trim()) throw new Error("กรุณากรอกเรื่อง/หัวข้องาน");
+      if (!editLocation.trim()) throw new Error("กรุณากรอกสถานที่");
+
+      let finalImages = [...editExistingImages];
+      if (editNewImageFiles.length > 0) {
+        setIsCompressingEditImages(true);
+        try {
+          const compressed = await compressImages(editNewImageFiles);
+          finalImages = [...finalImages, ...compressed];
+        } finally {
+          setIsCompressingEditImages(false);
+        }
+      }
+
+      const reqDate = editRequestDateStr ? new Date(editRequestDateStr) : new Date();
+      let uDate: Timestamp | null = null;
+      if (editUseDateStr && editUseDateStr.trim()) {
+        const parsed = new Date(editUseDateStr);
+        if (!isNaN(parsed.getTime())) {
+          uDate = Timestamp.fromDate(parsed);
+        }
+      }
+
+      await adminUpdateFMWorkOrderDetails(
+        id,
+        {
+          workOrderNumber: editWorkOrderNumber.trim(),
+          workType: editWorkType.trim(),
+          requestDate: Timestamp.fromDate(reqDate),
+          useDate: uDate,
+          title: editTitle.trim(),
+          description: editDescription.trim(),
+          location: editLocation.trim(),
+          images: finalImages,
+          requesterName: editRequesterName.trim(),
+          requesterDepartment: editRequesterDepartment.trim(),
+          requesterPhone: editRequesterPhone.trim(),
+          requesterEmail: editRequesterEmail.trim(),
+          coordinatorName: editCoordinatorName.trim(),
+          coordinatorPhone: editCoordinatorPhone.trim(),
+          assignorName: editAssignorName.trim(),
+          assignedTechnicianName: editAssignedTechnicianName.trim(),
+          assignedDepartment: editAssignedDepartment.trim(),
+          notes: editNotes.trim(),
+        },
+        stoxyUser?.displayName || stoxyUser?.nickname || "ผู้ดูแลระบบ"
+      );
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["fm_workorder", id] });
+      qc.invalidateQueries({ queryKey: ["fm_workorders"] });
+      toast.success("บันทึกการแก้ไขข้อมูลใบงานเรียบร้อยแล้ว");
+      setShowEditModal(false);
+    },
+    onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาดในการแก้ไขใบงาน"),
+  });
+
   if (isLoading) {
     return (
       <AppShell title="ใบแจ้งงานซ่อม (FM)">
@@ -535,6 +698,15 @@ export default function FMWorkOrderDetailPage() {
                 <Download className="w-3.5 h-3.5" />
               </button>
             </div>
+          )}
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={openEditModal}
+              className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/40 dark:hover:bg-blue-900/60 text-[#1D4ED8] dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-xl transition-all shadow-xs"
+            >
+              <Edit3 className="w-3.5 h-3.5" /> แก้ไขใบงาน
+            </button>
           )}
           <button
             onClick={handlePrint}
@@ -2180,6 +2352,422 @@ export default function FMWorkOrderDetailPage() {
                   alt="รูปภาพขนาดใหญ่"
                   className="max-h-[75vh] w-auto object-contain rounded-xl"
                 />
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Admin Edit Work Order Details Modal */}
+      <AnimatePresence>
+        {showEditModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-xs"
+              onClick={() => setShowEditModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="relative w-full max-w-2xl bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700 max-h-[92vh] flex flex-col z-10 overflow-hidden"
+            >
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between bg-gradient-to-r from-blue-50/50 to-indigo-50/30 dark:from-gray-700/50 dark:to-gray-800/50">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-100 dark:bg-blue-900/50 text-[#1D4ED8] dark:text-blue-300 flex items-center justify-center shrink-0">
+                    <Edit3 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base text-gray-900 dark:text-white">
+                      แก้ไขข้อมูลใบงาน FM-{workOrder.workOrderNumber}
+                    </h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      สิทธิ์ผู้ดูแลระบบ (Admin) แก้ไขข้อความ รายละเอียด และจัดการรูปภาพประกอบ
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-xl"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Form Content */}
+              <div className="p-6 overflow-y-auto space-y-4 flex-1 text-xs">
+                {/* Section: ข้อมูลทั่วไป */}
+                <div className="p-4 bg-gray-50 dark:bg-gray-700/40 rounded-2xl border border-gray-100 dark:border-gray-700/60 space-y-3">
+                  <p className="font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wider flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-[#1D4ED8]" /> ข้อมูลทั่วไปของใบงาน
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
+                        เลขที่ใบงาน <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={editWorkOrderNumber}
+                        onChange={(e) => setEditWorkOrderNumber(e.target.value)}
+                        placeholder="เช่น 6090"
+                        className="w-full px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
+                        ประเภทงาน
+                      </label>
+                      <select
+                        value={editWorkType}
+                        onChange={(e) => setEditWorkType(e.target.value)}
+                        className="w-full px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                      >
+                        <option value="ระบบไฟฟ้า">ระบบไฟฟ้า</option>
+                        <option value="ระบบประปาและสุขาภิบาล">ระบบประปาและสุขาภิบาล</option>
+                        <option value="ระบบปรับอากาศ">ระบบปรับอากาศ</option>
+                        <option value="งานโยธาและโครงสร้าง">งานโยธาและโครงสร้าง</option>
+                        <option value="งานครุภัณฑ์และเฟอร์นิเจอร์">งานครุภัณฑ์และเฟอร์นิเจอร์</option>
+                        <option value="งานบริการทั่วไป">งานบริการทั่วไป</option>
+                        <option value="อื่นๆ">อื่นๆ</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
+                        วันที่แจ้งงาน
+                      </label>
+                      <input
+                        type="date"
+                        value={editRequestDateStr}
+                        onChange={(e) => setEditRequestDateStr(e.target.value)}
+                        className="w-full px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
+                        วันที่ต้องการใช้งาน
+                      </label>
+                      <input
+                        type="date"
+                        value={editUseDateStr}
+                        onChange={(e) => setEditUseDateStr(e.target.value)}
+                        className="w-full px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
+                      เรื่อง / หัวข้องาน <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      placeholder="ระบุเรื่องหรือหัวข้องาน..."
+                      className="w-full px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
+                      สถานที่ดำเนินการ <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={editLocation}
+                      onChange={(e) => setEditLocation(e.target.value)}
+                      placeholder="ระบุสถานที่..."
+                      className="w-full px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
+                      รายละเอียดงาน
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                      placeholder="รายละเอียดงานเพิ่มเติม..."
+                      className="w-full px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 resize-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Section: จัดการรูปภาพประกอบ (สูงสุด 3 รูป) */}
+                <div className="p-4 bg-gray-50 dark:bg-gray-700/40 rounded-2xl border border-gray-100 dark:border-gray-700/60 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wider flex items-center gap-1.5">
+                      <Camera className="w-3.5 h-3.5 text-[#1D4ED8]" /> รูปภาพประกอบใบงาน
+                      <span className="text-gray-400 font-normal">
+                        ({editExistingImages.length + editNewImageFiles.length}/3 รูป)
+                      </span>
+                    </p>
+                    {editExistingImages.length + editNewImageFiles.length < 3 && (
+                      <label className="cursor-pointer text-[11px] font-bold text-[#1D4ED8] hover:text-blue-700 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800">
+                        <Plus className="w-3 h-3" /> เพิ่มรูปภาพ
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={handleEditImageSelect}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
+                  </div>
+
+                  {editExistingImages.length + editNewImagePreviews.length > 0 ? (
+                    <div className="grid grid-cols-3 gap-2.5">
+                      {/* Existing Images */}
+                      {editExistingImages.map((imgUrl, idx) => (
+                        <div
+                          key={`exist-${idx}`}
+                          className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 dark:border-gray-600 bg-gray-100 group"
+                        >
+                          <img
+                            src={imgUrl}
+                            alt={`รูปเดิมที่ ${idx + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveExistingImage(idx)}
+                            className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white hover:bg-rose-600 transition-colors"
+                            title="ลบรูปนี้"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                          <span className="absolute bottom-1 left-1.5 text-[9px] font-bold text-white bg-black/50 px-1.5 py-0.5 rounded">
+                            รูปปัจจุบัน #{idx + 1}
+                          </span>
+                        </div>
+                      ))}
+
+                      {/* New Images */}
+                      {editNewImagePreviews.map((previewUrl, idx) => (
+                        <div
+                          key={`new-${idx}`}
+                          className="relative aspect-video rounded-xl overflow-hidden border-2 border-emerald-400 bg-emerald-50/30 group"
+                        >
+                          <img
+                            src={previewUrl}
+                            alt={`รูปใหม่ที่ ${idx + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveNewImage(idx)}
+                            className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white hover:bg-rose-600 transition-colors"
+                            title="ลบรูปใหม่นี้"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                          <span className="absolute bottom-1 left-1.5 text-[9px] font-bold text-white bg-emerald-600 px-1.5 py-0.5 rounded">
+                            + เพิ่มใหม่
+                          </span>
+                        </div>
+                      ))}
+
+                      {editExistingImages.length + editNewImageFiles.length < 3 && (
+                        <label className="aspect-video rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-[#1D4ED8] flex flex-col items-center justify-center cursor-pointer bg-white dark:bg-gray-700/30 transition-colors">
+                          <Plus className="w-4 h-4 text-gray-400 mb-0.5" />
+                          <span className="text-[10px] text-gray-500">เพิ่มรูป</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={handleEditImageSelect}
+                            className="hidden"
+                          />
+                        </label>
+                      )}
+                    </div>
+                  ) : (
+                    <label className="w-full py-4 border-2 border-dashed border-gray-200 dark:border-gray-600 hover:border-[#1D4ED8] rounded-xl flex items-center justify-center gap-2 cursor-pointer bg-white dark:bg-gray-700/20 text-gray-500 hover:text-[#1D4ED8] transition-colors">
+                      <ImageIcon className="w-4 h-4 text-gray-400" />
+                      <span className="text-xs">
+                        ยังไม่มีรูปภาพ · คลิกเพื่อแนบรูปประกอบ (สูงสุด 3 รูป)
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleEditImageSelect}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+
+                {/* Section: รายละเอียดผู้แจ้งงาน & ผู้ประสานงาน */}
+                <div className="p-4 bg-gray-50 dark:bg-gray-700/40 rounded-2xl border border-gray-100 dark:border-gray-700/60 space-y-3">
+                  <p className="font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wider flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5 text-[#1D4ED8]" /> ข้อมูลผู้แจ้งงาน & ผู้ประสานงาน
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
+                        ชื่อผู้แจ้งงาน <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={editRequesterName}
+                        onChange={(e) => setEditRequesterName(e.target.value)}
+                        placeholder="ชื่อผู้แจ้งงาน"
+                        className="w-full px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
+                        สังกัด / แผนกผู้แจ้ง <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={editRequesterDepartment}
+                        onChange={(e) => setEditRequesterDepartment(e.target.value)}
+                        placeholder="สังกัดผู้แจ้ง"
+                        className="w-full px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
+                        เบอร์โทรศัพท์ผู้แจ้ง
+                      </label>
+                      <input
+                        type="text"
+                        value={editRequesterPhone}
+                        onChange={(e) => setEditRequesterPhone(e.target.value)}
+                        placeholder="เบอร์โทรผู้แจ้ง"
+                        className="w-full px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
+                        อีเมลผู้แจ้ง
+                      </label>
+                      <input
+                        type="text"
+                        value={editRequesterEmail}
+                        onChange={(e) => setEditRequesterEmail(e.target.value)}
+                        placeholder="อีเมลผู้แจ้ง"
+                        className="w-full px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
+                        ชื่อผู้ประสานงาน
+                      </label>
+                      <input
+                        type="text"
+                        value={editCoordinatorName}
+                        onChange={(e) => setEditCoordinatorName(e.target.value)}
+                        placeholder="ชื่อผู้ประสานงาน"
+                        className="w-full px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
+                        เบอร์โทรผู้ประสานงาน
+                      </label>
+                      <input
+                        type="text"
+                        value={editCoordinatorPhone}
+                        onChange={(e) => setEditCoordinatorPhone(e.target.value)}
+                        placeholder="เบอร์โทรผู้ประสานงาน"
+                        className="w-full px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section: ผู้มอบหมาย & ผู้ดำเนินการ */}
+                <div className="p-4 bg-gray-50 dark:bg-gray-700/40 rounded-2xl border border-gray-100 dark:border-gray-700/60 space-y-3">
+                  <p className="font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wider flex items-center gap-1.5">
+                    <Wrench className="w-3.5 h-3.5 text-[#1D4ED8]" /> ข้อมูลผู้มอบหมาย & ช่างผู้ดำเนินการ
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="sm:col-span-2">
+                      <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
+                        ผู้มอบหมายงาน
+                      </label>
+                      <input
+                        type="text"
+                        value={editAssignorName}
+                        onChange={(e) => setEditAssignorName(e.target.value)}
+                        placeholder="ชื่อผู้มอบหมายงาน"
+                        className="w-full px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
+                        ผู้ดำเนินการ (ช่าง)
+                      </label>
+                      <input
+                        type="text"
+                        value={editAssignedTechnicianName}
+                        onChange={(e) => setEditAssignedTechnicianName(e.target.value)}
+                        placeholder="ระบุชื่อช่างผู้ดำเนินการ (หรือเว้นว่างได้)"
+                        className="w-full px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
+                        สังกัด / หน่วยงานช่าง
+                      </label>
+                      <input
+                        type="text"
+                        value={editAssignedDepartment}
+                        onChange={(e) => setEditAssignedDepartment(e.target.value)}
+                        placeholder="สังกัดหรือหน่วยงานช่าง"
+                        className="w-full px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section: หมายเหตุ */}
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                    หมายเหตุเพิ่มเติม
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={editNotes}
+                    onChange={(e) => setEditNotes(e.target.value)}
+                    placeholder="บันทึกหมายเหตุเพิ่มเติม..."
+                    className="w-full px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 resize-none"
+                  />
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-6 py-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-colors"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="button"
+                  onClick={() => adminUpdateDetailsMut.mutate()}
+                  disabled={adminUpdateDetailsMut.isPending || isCompressingEditImages}
+                  className="px-5 py-2.5 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-blue-500/20 active:scale-95 disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  <Save className="w-4 h-4" />
+                  {adminUpdateDetailsMut.isPending || isCompressingEditImages
+                    ? "กำลังบันทึก..."
+                    : "บันทึกการแก้ไข"}
+                </button>
               </div>
             </motion.div>
           </div>
