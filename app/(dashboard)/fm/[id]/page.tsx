@@ -20,6 +20,7 @@ import {
   adminUpdateFMWorkOrderStatus,
   saveFMWorkOrderRequesterSignature,
   clearFMWorkOrderRequesterSignature,
+  saveFMWorkOrderCompletion,
   adminUpdateFMWorkOrderDetails,
 } from "@/services/fm.service";
 import { useInventoryItems } from "@/hooks/useInventory";
@@ -119,14 +120,28 @@ export default function FMWorkOrderDetailPage() {
 
   // Mutations
   const submitItemsMut = useMutation({
-    mutationFn: () =>
-      submitFMWorkOrderItems(
+    mutationFn: async () => {
+      if (completionDetails.trim() || completionNewImageFiles.length > 0) {
+        let finalImages = [...completionExistingImages];
+        if (completionNewImageFiles.length > 0) {
+          const compressed = await compressImages(completionNewImageFiles);
+          finalImages = [...finalImages, ...compressed];
+        }
+        await saveFMWorkOrderCompletion(id, {
+          completionDetails: completionDetails.trim(),
+          completionImages: finalImages,
+          completedBy: stoxyUser?.uid,
+          completedByName: stoxyUser?.displayName || stoxyUser?.nickname || "ช่างผู้ดำเนินการ",
+        });
+      }
+      await submitFMWorkOrderItems(
         id,
         workingItems,
         stoxyUser?.uid ?? "",
         stoxyUser?.displayName || stoxyUser?.nickname || "ช่างผู้ดำเนินการ",
         stoxyUser?.department
-      ),
+      );
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["fm_workorder", id] });
       qc.invalidateQueries({ queryKey: ["fm_workorders"] });
@@ -247,14 +262,28 @@ export default function FMWorkOrderDetailPage() {
   });
 
   const completeWithoutItemsMut = useMutation({
-    mutationFn: () =>
-      completeFMWorkOrderWithoutItems(
+    mutationFn: async () => {
+      if (completionDetails.trim() || completionNewImageFiles.length > 0) {
+        let finalImages = [...completionExistingImages];
+        if (completionNewImageFiles.length > 0) {
+          const compressed = await compressImages(completionNewImageFiles);
+          finalImages = [...finalImages, ...compressed];
+        }
+        await saveFMWorkOrderCompletion(id, {
+          completionDetails: completionDetails.trim(),
+          completionImages: finalImages,
+          completedBy: stoxyUser?.uid,
+          completedByName: stoxyUser?.displayName || stoxyUser?.nickname || "ผู้ดำเนินการ",
+        });
+      }
+      await completeFMWorkOrderWithoutItems(
         id,
         stoxyUser?.uid ?? "",
         stoxyUser?.displayName || stoxyUser?.nickname || "ผู้ดำเนินการ",
         undefined,
         stoxyUser?.department
-      ),
+      );
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["fm_workorder", id] });
       qc.invalidateQueries({ queryKey: ["fm_workorders"] });
@@ -612,6 +641,100 @@ export default function FMWorkOrderDetailPage() {
       setShowEditModal(false);
     },
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาดในการแก้ไขใบงาน"),
+  });
+
+  // ── Completion Details & Photos State (ผลการดำเนินงาน) ──
+  const [completionDetails, setCompletionDetails] = useState("");
+  const [completionExistingImages, setCompletionExistingImages] = useState<string[]>([]);
+  const [completionNewImageFiles, setCompletionNewImageFiles] = useState<File[]>([]);
+  const [completionNewImagePreviews, setCompletionNewImagePreviews] = useState<string[]>([]);
+  const [isCompressingCompletionImages, setIsCompressingCompletionImages] = useState(false);
+  const [isEditingCompletion, setIsEditingCompletion] = useState(false);
+
+  useEffect(() => {
+    if (workOrder) {
+      setCompletionDetails(workOrder.completionDetails || "");
+      setCompletionExistingImages(workOrder.completionImages || []);
+    }
+  }, [workOrder?.id, workOrder?.completionDetails, JSON.stringify(workOrder?.completionImages || [])]);
+
+  const handleCompletionImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const currentTotal = completionExistingImages.length + completionNewImageFiles.length;
+    const availableSlots = 3 - currentTotal;
+    if (availableSlots <= 0) {
+      toast.error("แนบรูปผลการดำเนินงานได้สูงสุด 3 รูปเท่านั้น");
+      return;
+    }
+
+    const filesToAdd = files.slice(0, availableSlots);
+    if (files.length > availableSlots) {
+      toast.info(`เลือกได้สูงสุด 3 รูป (เพิ่ม ${filesToAdd.length} รูป)`);
+    }
+
+    const newPreviews = filesToAdd.map((f) => URL.createObjectURL(f));
+    setCompletionNewImageFiles((prev) => [...prev, ...filesToAdd]);
+    setCompletionNewImagePreviews((prev) => [...prev, ...newPreviews]);
+    e.target.value = "";
+  };
+
+  const handleRemoveCompletionExistingImage = (index: number) => {
+    setCompletionExistingImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleRemoveCompletionNewImage = (index: number) => {
+    setCompletionNewImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setCompletionNewImagePreviews((prev) => {
+      const toRemove = prev[index];
+      if (toRemove) {
+        try {
+          URL.revokeObjectURL(toRemove);
+        } catch {}
+      }
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
+  const saveCompletionMut = useMutation({
+    mutationFn: async () => {
+      let finalImages = [...completionExistingImages];
+      if (completionNewImageFiles.length > 0) {
+        setIsCompressingCompletionImages(true);
+        try {
+          const compressed = await compressImages(completionNewImageFiles);
+          finalImages = [...finalImages, ...compressed];
+        } finally {
+          setIsCompressingCompletionImages(false);
+        }
+      }
+
+      await saveFMWorkOrderCompletion(id, {
+        completionDetails: completionDetails.trim(),
+        completionImages: finalImages,
+        completedBy: stoxyUser?.uid,
+        completedByName: stoxyUser?.displayName || stoxyUser?.nickname || "ผู้ดำเนินการ",
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["fm_workorder", id] });
+      qc.invalidateQueries({ queryKey: ["fm_workorders"] });
+      qc.invalidateQueries({ queryKey: ["fm_workorders_report"] });
+      completionNewImagePreviews.forEach((url) => {
+        try {
+          URL.revokeObjectURL(url);
+        } catch {}
+      });
+      setCompletionNewImageFiles([]);
+      setCompletionNewImagePreviews([]);
+      setIsEditingCompletion(false);
+      toast.success("บันทึกผลการดำเนินงานเรียบร้อยแล้ว");
+    },
+    onError: (e: any) => {
+      setIsCompressingCompletionImages(false);
+      toast.error(e.message ?? "เกิดข้อผิดพลาดในการบันทึกผลการดำเนินงาน");
+    },
   });
 
   if (isLoading) {
@@ -1206,100 +1329,10 @@ export default function FMWorkOrderDetailPage() {
             )}
           </div>
         </div>
-
-        {/* Requester Acknowledgment Signature Section */}
-        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-gray-50 to-blue-50/30 dark:from-gray-700/30 dark:to-blue-950/20 border border-gray-100 dark:border-gray-700/60">
-            <div className={`flex flex-wrap items-center justify-between gap-2.5 ${workOrder.requesterSignatureUrl ? "pb-3 border-b border-gray-200/60 dark:border-gray-700" : ""}`}>
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-900/50 text-[#1D4ED8] dark:text-blue-300 flex items-center justify-center shrink-0">
-                  <PenTool className="w-4 h-4" />
-                </div>
-                <h4 className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white flex items-center gap-2 flex-wrap">
-                  <span className="whitespace-nowrap">ผู้แจ้งงานลงนาม</span>
-                  {workOrder.requesterSignatureUrl ? (
-                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 flex items-center gap-1 whitespace-nowrap">
-                      <CheckCircle2 className="w-3 h-3" /> ลงนามแล้ว
-                    </span>
-                  ) : (
-                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 whitespace-nowrap">
-                      รอลงนาม
-                    </span>
-                  )}
-                </h4>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setSignerName(workOrder.requesterSignedName || "");
-                  setSignerEmployeeId(workOrder.requesterEmployeeId || "");
-                  setShowSignModal(true);
-                }}
-                className="px-3.5 py-2 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 whitespace-nowrap shrink-0"
-              >
-                <PenTool className="w-3.5 h-3.5" />
-                <span>
-                  {workOrder.requesterSignatureUrl ? "ลงนามใหม่" : "✍️ ลงนาม"}
-                </span>
-              </button>
-            </div>
-
-            {/* Signature Content */}
-            {workOrder.requesterSignatureUrl && (
-              <div className="pt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                  <div className="p-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 shadow-xs max-w-[220px]">
-                    <img
-                      src={workOrder.requesterSignatureUrl}
-                      alt="ลายเซ็นผู้แจ้งงาน"
-                      className="max-h-20 w-auto object-contain mx-auto"
-                    />
-                  </div>
-                  <div className="space-y-1 text-xs text-gray-600 dark:text-gray-300">
-                    <p>
-                      <span className="text-gray-400">ผู้ลงนาม:</span>{" "}
-                      <strong className="text-gray-900 dark:text-white">
-                        {workOrder.requesterSignedName || workOrder.requesterName}
-                      </strong>
-                    </p>
-                    <p>
-                      <span className="text-gray-400">รหัสพนักงาน:</span>{" "}
-                      <span className="font-mono text-gray-800 dark:text-gray-200">
-                        {workOrder.requesterEmployeeId || "-"}
-                      </span>
-                    </p>
-                    <p>
-                      <span className="text-gray-400">วันเวลาที่ลงนาม:</span>{" "}
-                      <span className="text-gray-800 dark:text-gray-200 font-medium">
-                        {formatDateTime(workOrder.requesterSignedAt)}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-
-                {(isAdmin || workOrder.status === "pending") && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (confirm("ต้องการลบลายเซ็นนี้หรือไม่?")) {
-                        clearSignatureMut.mutate();
-                      }
-                    }}
-                    disabled={clearSignatureMut.isPending}
-                    className="text-[11px] text-gray-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors flex items-center gap-1"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" /> ลบลายเซ็น
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
       </div>
 
       {/* ── Section: รายการอุปกรณ์ที่ใช้ ── */}
-      <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm space-y-4 mb-20">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm space-y-4 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="font-bold text-base text-gray-900 dark:text-white flex items-center gap-2">
@@ -1659,6 +1692,348 @@ export default function FMWorkOrderDetailPage() {
           </div>
         )}
       </div>
+
+      {/* ── Section: ผลการดำเนินงานและภาพถ่ายผลงาน (Execution Details & Result Photos) ── */}
+      <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm space-y-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="font-bold text-base text-gray-900 dark:text-white flex items-center gap-2 flex-wrap">
+                <span>ผลการดำเนินงาน</span>
+                {workOrder.completionDetails || (workOrder.completionImages && workOrder.completionImages.length > 0) ? (
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 flex items-center gap-1 whitespace-nowrap">
+                    <CheckCircle2 className="w-3 h-3" /> บันทึกผลแล้ว
+                  </span>
+                ) : (
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 whitespace-nowrap">
+                    รอดำเนินการ
+                  </span>
+                )}
+              </h3>
+              <p className="text-xs text-gray-400 mt-0.5">
+                รายละเอียดการปฏิบัติงานและรูปถ่ายผลการซ่อม/ดำเนินการ (สูงสุด 3 รูป)
+              </p>
+            </div>
+          </div>
+
+          {canEditItems && !isEditingCompletion && (workOrder.completionDetails || (workOrder.completionImages && workOrder.completionImages.length > 0)) && (
+            <button
+              type="button"
+              onClick={() => setIsEditingCompletion(true)}
+              className="w-full sm:w-auto px-3.5 py-2 bg-gray-50 hover:bg-gray-100 dark:bg-gray-700/50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 active:scale-95"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>แก้ไขผลการดำเนินงาน</span>
+            </button>
+          )}
+        </div>
+
+        {/* View Mode */}
+        {!isEditingCompletion && (workOrder.completionDetails || (workOrder.completionImages && workOrder.completionImages.length > 0)) ? (
+          <div className="space-y-4 pt-1">
+            {workOrder.completionDetails ? (
+              <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-700/30 border border-gray-100 dark:border-gray-700/60">
+                <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                  รายละเอียดการปฏิบัติงาน:
+                </p>
+                <p className="text-xs sm:text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line leading-relaxed">
+                  {workOrder.completionDetails}
+                </p>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400 italic">ไม่มีการระบุข้อความรายละเอียดการดำเนินการ</p>
+            )}
+
+            {workOrder.completionImages && workOrder.completionImages.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                    <Camera className="w-4 h-4 text-emerald-600" />
+                    <span>รูปถ่ายผลการดำเนินงาน ({workOrder.completionImages.length} รูป)</span>
+                  </p>
+                  <span className="text-[11px] text-gray-400">คลิกที่รูปเพื่อดูภาพขนาดใหญ่</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {workOrder.completionImages.map((imgUrl, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => setSelectedPreviewImage(imgUrl)}
+                      className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 dark:border-gray-600 bg-black/5 dark:bg-gray-800 cursor-pointer group hover:ring-2 hover:ring-emerald-500 transition-all shadow-xs"
+                    >
+                      <img
+                        src={imgUrl}
+                        alt={`รูปผลงานที่ ${idx + 1}`}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                      />
+                      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                        <ZoomIn className="w-5 h-5 drop-shadow" />
+                      </div>
+                      <span className="absolute bottom-1.5 left-1.5 text-[10px] font-bold text-white bg-black/60 px-1.5 py-0.5 rounded backdrop-blur-xs">
+                        รูปที่ {idx + 1}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {(workOrder.completedByName || workOrder.completedAt) && (
+              <div className="text-xs text-gray-400 flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-gray-700/60">
+                {workOrder.completedByName && (
+                  <span>
+                    ผู้บันทึก: <strong className="text-gray-700 dark:text-gray-300">{workOrder.completedByName}</strong>
+                  </span>
+                )}
+                {workOrder.completedAt && (
+                  <span>({formatDateTime(workOrder.completedAt)})</span>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Edit / Input Mode */
+          <div className="space-y-4 pt-1">
+            <div>
+              <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">
+                รายละเอียดการดำเนินการ
+              </label>
+              <textarea
+                value={completionDetails}
+                onChange={(e) => setCompletionDetails(e.target.value)}
+                disabled={!canEditItems}
+                placeholder="พิมพ์รายละเอียดการดำเนินงาน เช่น ตรวจสอบระบบแล้วพบสาเหตุ... ได้ทำการเปลี่ยนอุปกรณ์... ทดสอบการใช้งานแล้วเรียบร้อย"
+                rows={3}
+                className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-700/40 border border-gray-200 dark:border-gray-600 rounded-2xl text-xs sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-60"
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                  <Camera className="w-4 h-4 text-emerald-600" />
+                  <span>แนบรูปภาพผลการดำเนินงาน (สูงสุด 3 รูป)</span>
+                  <span className="text-gray-400 font-normal">
+                    ({completionExistingImages.length + completionNewImageFiles.length}/3)
+                  </span>
+                </label>
+                {canEditItems && completionExistingImages.length + completionNewImageFiles.length < 3 && (
+                  <label className="cursor-pointer text-xs font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                    <Plus className="w-3.5 h-3.5" /> เพิ่มรูปภาพ
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={handleCompletionImageSelect}
+                    />
+                  </label>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {/* Existing Images */}
+                {completionExistingImages.map((imgUrl, idx) => (
+                  <div
+                    key={`exist-${idx}`}
+                    className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 group shadow-xs"
+                  >
+                    <img
+                      src={imgUrl}
+                      alt={`ผลงานเดิม ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    {canEditItems && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveCompletionExistingImage(idx)}
+                        className="absolute top-1.5 right-1.5 w-6 h-6 bg-rose-600 text-white rounded-full flex items-center justify-center shadow-md hover:bg-rose-700 transition-colors"
+                        title="ลบรูปภาพ"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                    <span className="absolute bottom-1.5 left-1.5 text-[10px] font-bold text-white bg-black/60 px-1.5 py-0.5 rounded backdrop-blur-xs">
+                      รูปที่ {idx + 1}
+                    </span>
+                  </div>
+                ))}
+
+                {/* New Image Previews */}
+                {completionNewImagePreviews.map((previewUrl, idx) => (
+                  <div
+                    key={`new-${idx}`}
+                    className="relative aspect-video rounded-xl overflow-hidden border border-emerald-300 dark:border-emerald-700 bg-gray-100 dark:bg-gray-800 group shadow-xs"
+                  >
+                    <img
+                      src={previewUrl}
+                      alt={`ผลงานใหม่ ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveCompletionNewImage(idx)}
+                      className="absolute top-1.5 right-1.5 w-6 h-6 bg-rose-600 text-white rounded-full flex items-center justify-center shadow-md hover:bg-rose-700 transition-colors"
+                      title="ลบรูปภาพ"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="absolute bottom-1.5 left-1.5 text-[10px] font-bold text-white bg-emerald-600/90 px-1.5 py-0.5 rounded backdrop-blur-xs">
+                      รูปใหม่
+                    </span>
+                  </div>
+                ))}
+
+                {/* Add Photo tile */}
+                {canEditItems && completionExistingImages.length + completionNewImageFiles.length < 3 && (
+                  <label className="cursor-pointer border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-emerald-400 dark:hover:border-emerald-500 rounded-xl aspect-video flex flex-col items-center justify-center gap-1.5 text-gray-400 hover:text-emerald-600 bg-gray-50/50 dark:bg-gray-800/40 transition-colors">
+                    <Camera className="w-5 h-5 text-gray-400" />
+                    <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+                      แตะเพื่อถ่ายรูป / แนบรูป
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={handleCompletionImageSelect}
+                    />
+                  </label>
+                )}
+              </div>
+            </div>
+
+            {canEditItems && (
+              <div className="flex flex-col sm:flex-row items-center justify-end gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                {(workOrder.completionDetails || (workOrder.completionImages && workOrder.completionImages.length > 0)) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCompletionDetails(workOrder.completionDetails || "");
+                      setCompletionExistingImages(workOrder.completionImages || []);
+                      completionNewImagePreviews.forEach((url) => {
+                        try { URL.revokeObjectURL(url); } catch {}
+                      });
+                      setCompletionNewImageFiles([]);
+                      setCompletionNewImagePreviews([]);
+                      setIsEditingCompletion(false);
+                    }}
+                    className="w-full sm:w-auto px-4 py-2.5 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded-xl text-xs font-semibold hover:bg-gray-100 dark:hover:bg-gray-700 transition-all text-center"
+                  >
+                    ยกเลิก
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => saveCompletionMut.mutate()}
+                  disabled={saveCompletionMut.isPending || isCompressingCompletionImages}
+                  className="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs sm:text-sm font-bold shadow-md shadow-emerald-600/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4 shrink-0" />
+                  <span>
+                    {saveCompletionMut.isPending || isCompressingCompletionImages
+                      ? "กำลังบันทึก..."
+                      : "บันทึกผลการดำเนินงาน"}
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── Section: ผู้แจ้งงานลงนาม (Requester Signature) ── */}
+      <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm space-y-4 mb-20">
+        <div className="p-4 rounded-2xl bg-gradient-to-br from-gray-50 to-teal-50/30 dark:from-gray-700/30 dark:to-teal-950/20 border border-gray-100 dark:border-gray-700/60">
+          <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${workOrder.requesterSignatureUrl ? "pb-3 border-b border-gray-200/60 dark:border-gray-700" : ""}`}>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 flex items-center justify-center shrink-0">
+                <PenTool className="w-4 h-4" />
+              </div>
+              <h4 className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white flex items-center gap-2 flex-wrap">
+                <span className="whitespace-nowrap">ผู้แจ้งงานลงนาม</span>
+                {workOrder.requesterSignatureUrl ? (
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 flex items-center gap-1 whitespace-nowrap">
+                    <CheckCircle2 className="w-3 h-3" /> ลงนามแล้ว
+                  </span>
+                ) : (
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 whitespace-nowrap">
+                    รอลงนาม
+                  </span>
+                )}
+              </h4>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSignerName(workOrder.requesterSignedName || "");
+                setSignerEmployeeId(workOrder.requesterEmployeeId || "");
+                setShowSignModal(true);
+              }}
+              className="w-full sm:w-auto px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold shadow-sm shadow-teal-600/20 transition-all flex items-center justify-center gap-1.5 active:scale-95 whitespace-nowrap shrink-0"
+            >
+              <PenTool className="w-3.5 h-3.5" />
+              <span>
+                {workOrder.requesterSignatureUrl ? "ลงนามใหม่" : "✍️ ลงนาม"}
+              </span>
+            </button>
+          </div>
+
+          {/* Signature Content */}
+          {workOrder.requesterSignatureUrl && (
+            <div className="pt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="p-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 shadow-xs max-w-[220px]">
+                  <img
+                    src={workOrder.requesterSignatureUrl}
+                    alt="ลายเซ็นผู้แจ้งงาน"
+                    className="max-h-20 w-auto object-contain mx-auto"
+                  />
+                </div>
+                <div className="space-y-1 text-xs text-gray-600 dark:text-gray-300">
+                  <p>
+                    <span className="text-gray-400">ผู้ลงนาม:</span>{" "}
+                    <strong className="text-gray-900 dark:text-white">
+                      {workOrder.requesterSignedName || workOrder.requesterName}
+                    </strong>
+                  </p>
+                  <p>
+                    <span className="text-gray-400">รหัสพนักงาน:</span>{" "}
+                    <span className="font-mono text-gray-800 dark:text-gray-200">
+                      {workOrder.requesterEmployeeId || "-"}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="text-gray-400">วันเวลาที่ลงนาม:</span>{" "}
+                    <span className="text-gray-800 dark:text-gray-200 font-medium">
+                      {formatDateTime(workOrder.requesterSignedAt)}
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              {(isAdmin || workOrder.status === "pending") && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (confirm("ต้องการลบลายเซ็นนี้หรือไม่?")) {
+                      clearSignatureMut.mutate();
+                    }
+                  }}
+                  disabled={clearSignatureMut.isPending}
+                  className="text-[11px] text-gray-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors flex items-center gap-1"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> ลบลายเซ็น
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
       </div>
 
       {/* ── DEDICATED CLEAN PRINT DOCUMENT (Visible ONLY when printing) ── */}
@@ -1841,6 +2216,42 @@ export default function FMWorkOrderDetailPage() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Completion Details & Result Photos (Print) */}
+        {(workOrder.completionDetails || (workOrder.completionImages && workOrder.completionImages.length > 0)) && (
+          <div className="mb-4 border border-gray-400 p-3 rounded">
+            <p className="font-bold border-b border-gray-300 pb-1 mb-1.5 text-xs">
+              ผลการดำเนินงาน / ภาพถ่ายผลงาน
+            </p>
+            {workOrder.completionDetails && (
+              <p className="text-xs mb-2">
+                <span className="font-bold text-gray-700">รายละเอียดผลการดำเนินงาน:</span>{" "}
+                <span className="whitespace-pre-line">{workOrder.completionDetails}</span>
+              </p>
+            )}
+            {workOrder.completionImages && workOrder.completionImages.length > 0 && (
+              <div>
+                <p className="text-[11px] font-bold text-gray-700 mb-1">
+                  ภาพถ่ายผลการดำเนินงาน ({workOrder.completionImages.length} รูป):
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {workOrder.completionImages.map((imgUrl, idx) => (
+                    <div
+                      key={idx}
+                      className="border border-gray-400 p-1 rounded aspect-video flex items-center justify-center overflow-hidden"
+                    >
+                      <img
+                        src={imgUrl}
+                        alt={`ผลการดำเนินงานรูปที่ ${idx + 1}`}
+                        className="max-h-24 w-auto object-contain mx-auto"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

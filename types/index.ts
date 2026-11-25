@@ -415,6 +415,11 @@ export interface FMWorkOrder {
   approvedByName?: string;
   approvedAt?: Timestamp;
   rejectedReason?: string;
+  completionDetails?: string;
+  completionImages?: string[];
+  completedAt?: Timestamp;
+  completedBy?: string;
+  completedByName?: string;
   requesterSignatureUrl?: string;
   requesterSignedName?: string;
   requesterEmployeeId?: string;

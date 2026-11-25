@@ -747,6 +747,25 @@ export async function exportFMReportPDF(workOrders: FMWorkOrder[], monthYearStr?
   const filterText = monthYearStr ? `รอบเดือน: ${monthYearStr} | ` : "";
   doc.text(`${filterText}ข้อมูล ณ วันที่: ${new Date().toLocaleDateString("th-TH")} | ทั้งหมด ${workOrders.length} ใบงาน`, 14, 21);
 
+  // Preload any non-base64 images to base64 map before calling autoTable
+  const imageMap = new Map<string, string>();
+  for (const wo of workOrders) {
+    if (wo.completionImages && wo.completionImages.length > 0) {
+      for (const img of wo.completionImages) {
+        if (img.startsWith("data:image")) {
+          imageMap.set(img, img);
+        } else {
+          try {
+            const b64 = await fetchImageAsBase64(img);
+            if (b64) imageMap.set(img, b64);
+          } catch {
+            // skip failed preload
+          }
+        }
+      }
+    }
+  }
+
   const headers = [
     "ลำดับ",
     "เลขที่ใบงาน",
@@ -756,6 +775,8 @@ export async function exportFMReportPDF(workOrders: FMWorkOrder[], monthYearStr?
     "ผู้ดำเนินการ",
     "สถานะ",
     "อุปกรณ์ที่ใช้",
+    "ผลการดำเนินงาน",
+    "รูปผลงาน",
   ];
 
   const rows = workOrders.map((wo, index) => {
@@ -764,6 +785,10 @@ export async function exportFMReportPDF(workOrders: FMWorkOrder[], monthYearStr?
       : "-";
 
     const dateStrFormatted = wo.requestDate?.toDate ? wo.requestDate.toDate().toLocaleDateString("th-TH") : "-";
+
+    const compDetails = wo.completionDetails?.trim() || "-";
+    const imgCount = (wo.completionImages || []).length;
+    const imgText = imgCount > 0 ? `(${imgCount} รูป)` : "-";
 
     return [
       (index + 1).toString(),
@@ -774,6 +799,8 @@ export async function exportFMReportPDF(workOrders: FMWorkOrder[], monthYearStr?
       wo.assignedTechnicianName || "-",
       getFMReportStatus(wo),
       itemsText,
+      compDetails,
+      imgText,
     ];
   });
 
@@ -781,38 +808,163 @@ export async function exportFMReportPDF(workOrders: FMWorkOrder[], monthYearStr?
     head: [headers],
     body: rows,
     startY: 25,
-    styles: { font: "Sarabun", fontSize: 8, cellPadding: 2.5 },
+    margin: { left: 10, right: 10 },
+    styles: { font: "Sarabun", fontSize: 7.5, cellPadding: 2 },
     headStyles: { fillColor: [29, 78, 216], textColor: 255, font: "Sarabun", fontStyle: "normal" },
     columnStyles: {
-      0: { cellWidth: 10, halign: "center" },
-      1: { cellWidth: 24, font: "Sarabun", fontStyle: "normal" },
-      2: { cellWidth: 20 },
-      3: { cellWidth: 65 },
-      4: { cellWidth: 42 },
-      5: { cellWidth: 32 },
-      6: { cellWidth: 35, halign: "center" },
-      7: { cellWidth: 42 },
+      0: { cellWidth: 8, halign: "center" },
+      1: { cellWidth: 18, font: "Sarabun", fontStyle: "normal" },
+      2: { cellWidth: 16 },
+      3: { cellWidth: 46 },
+      4: { cellWidth: 28 },
+      5: { cellWidth: 24 },
+      6: { cellWidth: 22, halign: "center" },
+      7: { cellWidth: 32 },
+      8: { cellWidth: 45 },
+      9: { cellWidth: 38, halign: "center" },
     },
     alternateRowStyles: { fillColor: [248, 250, 252] },
     didParseCell: (data) => {
-      if (data.section === "body" && data.column.index === 6) {
+      if (data.section === "body") {
         const wo = workOrders[data.row.index];
         if (!wo) return;
-        const statusTextColors: Record<string, [number, number, number]> = {
-          pending: [180, 83, 9],        // Amber
-          waiting_parts: [234, 88, 12], // Orange
-          pending_review: [126, 34, 206], // Purple
-          completed: [5, 150, 105],     // Emerald
-          rejected: [225, 29, 72],      // Rose
-          cancelled: [107, 114, 128],   // Gray
-        };
-        const textColor = statusTextColors[wo.status];
-        if (textColor) {
-          data.cell.styles.textColor = textColor;
+
+        // Custom status color
+        if (data.column.index === 6) {
+          const statusTextColors: Record<string, [number, number, number]> = {
+            pending: [180, 83, 9],        // Amber
+            waiting_parts: [234, 88, 12], // Orange
+            pending_review: [126, 34, 206], // Purple
+            completed: [5, 150, 105],     // Emerald
+            rejected: [225, 29, 72],      // Rose
+            cancelled: [107, 114, 128],   // Gray
+          };
+          const textColor = statusTextColors[wo.status];
+          if (textColor) {
+            data.cell.styles.textColor = textColor;
+          }
+        }
+
+        // Allocate height for image thumbnails
+        if (data.column.index === 9 && wo.completionImages && wo.completionImages.length > 0) {
+          data.cell.styles.minCellHeight = 16;
+          data.cell.text = []; // Clear text so image displays cleanly
         }
       }
     },
+    didDrawCell: (data) => {
+      if (data.section === "body" && data.column.index === 9) {
+        const wo = workOrders[data.row.index];
+        if (!wo || !wo.completionImages || wo.completionImages.length === 0) return;
+
+        const images = wo.completionImages.slice(0, 3);
+        const cell = data.cell;
+        const pad = 1.5;
+        const availW = cell.width - pad * 2;
+        const availH = cell.height - pad * 2;
+        const gap = 1;
+        const thumbW = Math.min((availW - gap * (images.length - 1)) / images.length, availH * 1.25);
+        const thumbH = Math.min(availH, thumbW * 0.85);
+
+        images.forEach((imgSrc, i) => {
+          const b64 = imageMap.get(imgSrc);
+          if (b64) {
+            try {
+              const x = cell.x + pad + i * (thumbW + gap);
+              const y = cell.y + (cell.height - thumbH) / 2;
+              const fmt = b64.startsWith("data:image/png") ? "PNG" : "JPEG";
+              doc.setFillColor(255, 255, 255);
+              doc.rect(x, y, thumbW, thumbH, "F");
+              doc.addImage(b64, fmt, x, y, thumbW, thumbH);
+              doc.setDrawColor(203, 213, 225);
+              doc.rect(x, y, thumbW, thumbH, "D");
+            } catch {
+              // ignore single image draw failure
+            }
+          }
+        });
+      }
+    },
   });
+
+  // Appendix: Detailed Work Completion Gallery
+  const completedWithPhotosOrNotes = workOrders.filter(
+    (wo) => (wo.completionImages && wo.completionImages.length > 0) || (wo.completionDetails && wo.completionDetails.trim())
+  );
+
+  if (completedWithPhotosOrNotes.length > 0) {
+    doc.addPage();
+    doc.setFontSize(14);
+    doc.setTextColor(29, 78, 216);
+    doc.text("ภาคผนวก: รายละเอียดและภาพถ่ายผลการดำเนินงาน", 14, 15);
+    doc.setFontSize(8.5);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`ภาพถ่ายและรายละเอียดผลการซ่อม/ดำเนินงานจากช่างผู้รับผิดชอบ (${completedWithPhotosOrNotes.length} ใบงาน)`, 14, 21);
+
+    let curY = 26;
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    for (const wo of completedWithPhotosOrNotes) {
+      const cardHeight = 48;
+      if (curY + cardHeight > pageHeight - 15) {
+        doc.addPage();
+        curY = 20;
+      }
+
+      // Card Background
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(226, 232, 240);
+      doc.roundedRect(12, curY, pageWidth - 24, cardHeight, 2.5, 2.5, "FD");
+
+      // WO Number & Title
+      doc.setFontSize(9.5);
+      doc.setTextColor(15, 23, 42);
+      doc.text(`FM-${wo.workOrderNumber}: ${wo.title}`, 16, curY + 6.5);
+
+      // Meta info
+      doc.setFontSize(7.5);
+      doc.setTextColor(100, 116, 139);
+      const tech = wo.assignedTechnicianName || "-";
+      const dt = wo.requestDate?.toDate ? wo.requestDate.toDate().toLocaleDateString("th-TH") : "-";
+      doc.text(`สถานที่: ${wo.location}  |  ผู้ดำเนินการ: ${tech}  |  วันที่: ${dt}  |  สถานะ: ${getFMReportStatus(wo)}`, 16, curY + 11.5);
+
+      // Completion details text box
+      doc.setFontSize(8);
+      doc.setTextColor(51, 65, 85);
+      const details = wo.completionDetails ? `รายละเอียด: ${wo.completionDetails}` : "รายละเอียด: (ไม่ได้ระบุข้อความ)";
+      const splitDetails = doc.splitTextToSize(details, 130);
+      doc.text(splitDetails, 16, curY + 17);
+
+      // Photos on right side
+      if (wo.completionImages && wo.completionImages.length > 0) {
+        const photos = wo.completionImages.slice(0, 3);
+        const photoBoxW = 40;
+        const photoBoxH = 32;
+        const startX = pageWidth - 16 - (photos.length * (photoBoxW + 3));
+        const photoY = curY + 9;
+
+        photos.forEach((pSrc, pIdx) => {
+          const b64 = imageMap.get(pSrc);
+          if (b64) {
+            try {
+              const pX = startX + pIdx * (photoBoxW + 3);
+              const fmt = b64.startsWith("data:image/png") ? "PNG" : "JPEG";
+              doc.setFillColor(255, 255, 255);
+              doc.rect(pX, photoY, photoBoxW, photoBoxH, "F");
+              doc.addImage(b64, fmt, pX, photoY, photoBoxW, photoBoxH);
+              doc.setDrawColor(203, 213, 225);
+              doc.rect(pX, photoY, photoBoxW, photoBoxH, "D");
+            } catch {
+              // ignore single photo failure
+            }
+          }
+        });
+      }
+
+      curY += cardHeight + 3.5;
+    }
+  }
 
   const cleanMonth = (monthYearStr || "").replace(/[^a-zA-Z0-9ก-๙_-]/g, "_");
   doc.save(`stoxy-fm-report-${cleanMonth || dateStr()}.pdf`);
@@ -843,6 +995,8 @@ export function exportFMReportExcel(workOrders: FMWorkOrder[], monthYearStr?: st
     "จำนวนชิ้นรวม",
     "อนุมัติโดย",
     "วันที่อนุมัติ",
+    "รายละเอียดผลการดำเนินงาน",
+    "จำนวนรูปผลการดำเนินงาน",
   ];
 
   const sheet1Rows = workOrders.map((wo, idx) => {
@@ -875,6 +1029,8 @@ export function exportFMReportExcel(workOrders: FMWorkOrder[], monthYearStr?: st
       totalQty,
       wo.approvedByName || "",
       appDate,
+      wo.completionDetails || "",
+      (wo.completionImages || []).length,
     ];
   });
 
@@ -892,6 +1048,7 @@ export function exportFMReportExcel(workOrders: FMWorkOrder[], monthYearStr?: st
     "ผู้ดำเนินการ (ช่าง)",
     "สถานะใบงาน",
     "วันที่แจ้งงาน",
+    "รายละเอียดผลการดำเนินงาน",
   ];
 
   const sheet2Rows: any[][] = [];
@@ -912,16 +1069,47 @@ export function exportFMReportExcel(workOrders: FMWorkOrder[], monthYearStr?: st
         wo.assignedTechnicianName || "",
         getFMReportStatus(wo),
         reqDate,
+        wo.completionDetails || "",
       ]);
     }
   }
 
+  // Sheet 3: Execution Details Summary
+  const sheet3Headers = [
+    "ลำดับ",
+    "เลขที่ใบงาน",
+    "เรื่อง",
+    "สถานที่",
+    "ผู้ดำเนินการ (ช่าง)",
+    "สถานะใบงาน",
+    "วันที่แจ้งงาน",
+    "รายละเอียดผลการดำเนินงาน",
+    "จำนวนรูปภาพผลงาน",
+  ];
+
+  const sheet3Rows = workOrders.map((wo, idx) => {
+    const reqDate = wo.requestDate?.toDate ? wo.requestDate.toDate().toLocaleDateString("th-TH") : "";
+    return [
+      idx + 1,
+      `FM-${wo.workOrderNumber}`,
+      wo.title,
+      wo.location,
+      wo.assignedTechnicianName || "",
+      getFMReportStatus(wo),
+      reqDate,
+      wo.completionDetails || "-",
+      (wo.completionImages || []).length,
+    ];
+  });
+
   const wb = XLSX.utils.book_new();
   const ws1 = XLSX.utils.aoa_to_sheet([sheet1Headers, ...sheet1Rows]);
-  XLSX.utils.book_append_sheet(wb, ws1, "สรุปใบงาน");
+  const ws2 = XLSX.utils.aoa_to_sheet([sheet2Headers, ...sheet2Rows]);
+  const ws3 = XLSX.utils.aoa_to_sheet([sheet3Headers, ...sheet3Rows]);
 
-  const ws2 = XLSX.utils.aoa_to_sheet([sheet2Headers, ...(sheet2Rows.length > 0 ? sheet2Rows : [["-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-"]])]);
+  XLSX.utils.book_append_sheet(wb, ws1, "สรุปใบงาน FM");
   XLSX.utils.book_append_sheet(wb, ws2, "รายการอุปกรณ์ที่ใช้");
+  XLSX.utils.book_append_sheet(wb, ws3, "ผลการดำเนินงาน");
 
   const cleanMonth = (monthYearStr || "").replace(/[^a-zA-Z0-9ก-๙_-]/g, "_");
   saveExcel(wb, `stoxy-fm-report-${cleanMonth || dateStr()}.xlsx`);

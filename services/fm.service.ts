@@ -702,6 +702,45 @@ export async function clearFMWorkOrderRequesterSignature(id: string): Promise<vo
   });
 }
 
+export async function saveFMWorkOrderCompletion(
+  id: string,
+  data: {
+    completionDetails?: string;
+    completionImages?: string[];
+    completedBy?: string;
+    completedByName?: string;
+  }
+): Promise<void> {
+  const ref = doc(db, COL, id);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error("ไม่พบใบแจ้งงาน FM");
+  const wo = snap.data() as FMWorkOrder;
+
+  const now = Timestamp.now();
+  const updateData: Record<string, any> = {
+    updatedAt: now,
+  };
+
+  if (data.completionDetails !== undefined) {
+    updateData.completionDetails = data.completionDetails.trim();
+  }
+  if (data.completionImages !== undefined) {
+    updateData.completionImages = data.completionImages;
+  }
+  if (data.completedBy) {
+    updateData.completedBy = data.completedBy;
+    updateData.completedByName = data.completedByName || data.completedBy;
+    updateData.completedAt = now;
+  }
+
+  await updateDoc(ref, updateData);
+
+  notifyLine(
+    `📝 บันทึกผลการดำเนินงานใบงาน FM-${wo.workOrderNumber}\nเรื่อง: ${wo.title}\nผู้บันทึก: ${data.completedByName || data.completedBy || "ช่างผู้รับผิดชอบ"}${data.completionDetails ? `\nรายละเอียด: ${data.completionDetails}` : ""}${data.completionImages && data.completionImages.length > 0 ? `\nแนบรูปผลงาน: ${data.completionImages.length} รูป` : ""}`
+  );
+}
+
+
 export async function adminUpdateFMWorkOrderDetails(
   id: string,
   data: {
