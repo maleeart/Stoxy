@@ -32,7 +32,7 @@
     page-break-after: always;
     page-break-inside: avoid;
     overflow: hidden;
-    padding: 15mm 18mm;
+    padding: 14mm 18mm;
     background: #f8fafc;
     display: flex;
     flex-direction: column;
@@ -48,7 +48,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 6mm;
+    margin-bottom: 5mm;
     position: relative;
   }
 
@@ -95,20 +95,43 @@
     color: #94a3b8;
   }
 
-  /* Content Containers */
+  /* Layout grids */
   .content-area {
     flex: 1;
     display: flex;
+    flex-direction: column;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6mm;
+    height: 100%;
+  }
+
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 5mm;
+    height: 100%;
+  }
+
+  .grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5mm;
+    height: 100%;
   }
 
   /* Cards */
   .card {
     background: #ffffff;
+    border-radius: 12px;
     border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    padding: 4.5mm 5.5mm;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    padding: 5mm 6mm;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    display: flex;
+    flex-direction: column;
   }
 
   .card.dark {
@@ -120,52 +143,48 @@
   .card-title {
     font-size: 14.5px;
     font-weight: 700;
-    margin-bottom: 2.5mm;
+    margin-bottom: 2mm;
     display: flex;
     align-items: center;
     gap: 8px;
   }
 
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 3px 10px;
-    border-radius: 9999px;
-    font-size: 11px;
-    font-weight: 700;
+  .card-subtitle {
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2.5mm;
   }
-  .badge-blue { background: #eff6ff; color: #1d4ed8; }
-  .badge-green { background: #ecfdf5; color: #047857; }
-  .badge-amber { background: #fffbeb; color: #b45309; }
 
-  /* Timeline */
+  /* Timeline styling */
   .timeline-container {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     gap: 3.5mm;
-    width: 100%;
     height: 100%;
+    align-items: stretch;
   }
 
   .timeline-step {
     background: #ffffff;
-    border: 1px solid #e2e8f0;
     border-radius: 12px;
-    padding: 3.5mm;
+    border: 1px solid #e2e8f0;
+    border-top: 5px solid #1d4ed8;
+    padding: 4mm 3.5mm;
     display: flex;
     flex-direction: column;
-    position: relative;
-    border-top: 4px solid #1d4ed8;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
   }
 
-  .timeline-step .step-badge {
+  .step-badge {
+    align-self: flex-start;
     font-size: 10px;
-    font-weight: 800;
-    padding: 2.5px 6px;
+    font-weight: 700;
+    color: #ffffff;
+    padding: 2.5px 8px;
     border-radius: 6px;
     margin-bottom: 2.5mm;
-    text-align: center;
-    color: #ffffff;
   }
 
   .timeline-step h4 {
@@ -173,6 +192,7 @@
     font-weight: 700;
     color: #0f172a;
     margin-bottom: 2mm;
+    line-height: 1.3;
   }
 
   .timeline-step p {
@@ -181,78 +201,61 @@
     line-height: 1.45;
   }
 
-  /* Grids */
-  .grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 5mm;
-    width: 100%;
+  /* Badges */
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 10.5px;
+    font-weight: 600;
+    margin-top: auto;
   }
+  .badge-blue { background: #eff6ff; color: #1d4ed8; }
+  .badge-green { background: #ecfdf5; color: #047857; }
+  .badge-amber { background: #fffbeb; color: #b45309; }
 
-  .grid-3 {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 4.5mm;
-    width: 100%;
-  }
-
-  .grid-4 {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 4.5mm;
-    width: 100%;
-  }
-
+  /* Lists */
   ul.check-list {
     list-style: none;
+    margin-top: 2mm;
   }
-
   ul.check-list li {
-    font-size: 11px;
-    color: #334155;
+    font-size: 10.5px;
+    color: #1e293b;
+    line-height: 1.5;
     margin-bottom: 2mm;
-    line-height: 1.45;
     position: relative;
-    padding-left: 18px;
+    padding-left: 16px;
   }
-
-  .slide.dark ul.check-list li {
-    color: #cbd5e1;
-  }
-
   ul.check-list li::before {
-    content: "✓";
+    content: "•";
+    color: #1d4ed8;
+    font-size: 15px;
+    font-weight: bold;
     position: absolute;
     left: 0;
-    top: 0;
-    color: #1d4ed8;
-    font-weight: 800;
-  }
-  .slide.dark ul.check-list li::before {
-    color: #60a5fa;
+    top: -2px;
   }
 
+  /* Scenario Box */
   .scenario-box {
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
     border-radius: 12px;
     padding: 4mm 5mm;
   }
-
-  .scenario-box.green {
-    background: #f0fdf4;
-    border-color: #bbf7d0;
-  }
-
   .scenario-box.amber {
     background: #fffbeb;
     border-color: #fde68a;
+  }
+  .scenario-box.blue {
+    background: #eff6ff;
+    border-color: #bfdbfe;
   }
 
   .scenario-title {
     font-size: 12.5px;
     font-weight: 700;
-    color: #1d4ed8;
     margin-bottom: 2mm;
     display: flex;
     align-items: center;
@@ -260,9 +263,10 @@
   }
   .scenario-box.green .scenario-title { color: #15803d; }
   .scenario-box.amber .scenario-title { color: #b45309; }
+  .scenario-box.blue .scenario-title { color: #1d4ed8; }
 
   .scenario-text {
-    font-size: 10.5px;
+    font-size: 10px;
     color: #1e293b;
     line-height: 1.45;
   }
@@ -314,21 +318,21 @@
     คู่มือการใช้งานระบบใบแจ้งงานซ่อม (FM)<br>และขั้นตอนการปฏิบัติงานหน้างานจริง
   </h1>
   <p style="font-size: 15px; color: #94a3b8; margin-bottom: 8mm; font-weight: 400;">
-    ผู้ควบคุมงาน (Admin) สร้างและอนุมัติ • ช่างปฏิบัติงานหน้างานและยื่นมือถือให้ลงนาม • เจ้าของบริเวณตรวจรับงาน
+    นำเข้าไฟล์ FM เดิม (ถือเป็นการรับงานทันที) • ช่างปฏิบัติงานและยื่นมือถือให้ลงนาม • ผู้ควบคุมงานอนุมัติตัดสต็อก
   </p>
 
   <div style="display: flex; gap: 5mm; width: 252mm;">
     <div style="flex: 1; background: #1e293b; border-left: 4px solid #1d4ed8; border-radius: 10px; padding: 4mm 4.5mm;">
       <h3 style="font-size: 13.5px; font-weight: 700; color: #60a5fa; margin-bottom: 1.5mm;">1. ผู้ควบคุมงาน (Admin / Supervisor)</h3>
-      <p style="font-size: 10.5px; color: #cbd5e1; line-height: 1.45;">เป็นผู้สร้างใบงาน, มอบหมายงานให้ช่างในภาพรวม, ตรวจสอบรายการอุปกรณ์ และอนุมัติตัดสต็อกปิดงาน</p>
+      <p style="font-size: 10px; color: #cbd5e1; line-height: 1.45;">นำเข้าไฟล์ FM เดิมที่รับงานแล้วเข้าสู่แอพ (ถือเป็นรับงานทันที), ตรวจสอบรายการอุปกรณ์ และอนุมัติตัดสต็อก</p>
     </div>
     <div style="flex: 1; background: #1e293b; border-left: 4px solid #f59e0b; border-radius: 10px; padding: 4mm 4.5mm;">
       <h3 style="font-size: 13.5px; font-weight: 700; color: #fbbf24; margin-bottom: 1.5mm;">2. ช่างผู้ปฏิบัติงาน (Technician)</h3>
-      <p style="font-size: 10.5px; color: #cbd5e1; line-height: 1.45;">รับมอบหมายงาน, ไปซ่อมหน้างาน, เบิกพัสดุในระบบ, ยื่นมือถือตนเองให้ผู้แจ้งเซ็นรับทราบผลงาน</p>
+      <p style="font-size: 10px; color: #cbd5e1; line-height: 1.45;">รับผิดชอบงานหน้างาน, จัดการพัสดุตาม 3 กรณี, ยื่นมือถือให้เจ้าของบริเวณเซ็นรับทราบผลงาน</p>
     </div>
     <div style="flex: 1; background: #1e293b; border-left: 4px solid #10b981; border-radius: 10px; padding: 4mm 4.5mm;">
       <h3 style="font-size: 13.5px; font-weight: 700; color: #34d399; margin-bottom: 1.5mm;">3. เจ้าของบริเวณ (Requester / Owner)</h3>
-      <p style="font-size: 10.5px; color: #cbd5e1; line-height: 1.45;">ผู้แจ้งปัญหา, ตรวจดูงานที่ช่างทำเสร็จ และลงนามรับทราบผลงานผ่านมือถือของช่างที่หน้างาน</p>
+      <p style="font-size: 10px; color: #cbd5e1; line-height: 1.45;">ผู้แจ้งปัญหา, ตรวจดูงานที่ช่างทำเสร็จ และลงนามรับทราบผลงานผ่านมือถือของช่างที่หน้างาน</p>
     </div>
   </div>
 </div>
@@ -345,30 +349,30 @@
   <div class="content-area">
     <div class="grid-2">
       <div class="card" style="border-left: 5px solid #1d4ed8;">
-        <h3 class="card-title" style="color: #1d4ed8;">1. ผู้ควบคุมงาน (Admin) เป็นผู้เปิดใบงาน</h3>
+        <h3 class="card-title" style="color: #1d4ed8;">1. สร้างใบ FM = ถือเป็นการรับงานทันที</h3>
         <p style="font-size: 11px; color: #475569; line-height: 1.5; margin-bottom: 2mm;">
-          แอดมินหรือผู้ควบคุมงานทำหน้าที่รับแจ้งเหตุและสร้างใบงาน FM ในระบบ พร้อมแนบรูปและระบุผู้มอบหมายงาน เพื่อให้เกิดการควบคุมงานที่เป็นศูนย์กลางและเป็นระบบ
+          ผู้ควบคุมงานนำเข้าข้อมูลหรืออัปโหลดไฟล์ FM จากระบบเดิม ซึ่งในระบบเดิมได้รับการรับงาน/อนุมัติมาเรียบร้อยแล้ว ดังนั้นการสร้างใบงานในแอพนี้จึงถือเป็นการรับงานเข้าสู่ทีมซ่อมบำรุงในภาพรวมทันที
         </p>
-        <div class="badge badge-blue">ผู้ควบคุมงานเป็นผู้สร้างใบงาน • ตรวจสอบได้ชัดเจน</div>
+        <div class="badge badge-blue">นำเข้าไฟล์ FM เดิม • ถือว่ารับงานทันที</div>
       </div>
       <div class="card" style="border-left: 5px solid #0f172a;">
-        <h3 class="card-title" style="color: #0f172a;">2. มอบหมาย & ถือว่ารับงานทันทีในภาพรวม</h3>
+        <h3 class="card-title" style="color: #0f172a;">2. ช่างรับดำเนินการ & ระบุตัวผู้รับผิดชอบ</h3>
         <p style="font-size: 11px; color: #475569; line-height: 1.5; margin-bottom: 2mm;">
-          เมื่อผู้ควบคุมงานสร้างใบงานเสร็จ จะถือว่าช่างได้รับมอบหมายงานในภาพรวมแล้ว ช่างสามารถเข้าดูรายละเอียดและกดปุ่ม 'รับดำเนินการ' เพื่อผูกชื่อตนเองและสังกัดลงในใบงานอัตโนมัติ
+          ใบงานจะขึ้นในแท็บ 'รอดำเนินการ' ช่างผู้จะลงมือซ่อมกดปุ่ม 'รับดำเนินการ' เพื่อผูกชื่อและสังกัดตนเองลงในใบงานอัตโนมัติ ทำให้ทราบชัดเจนว่าช่างท่านใดเป็นผู้ดูแลเคสนี้
         </p>
         <div class="badge" style="background: #f1f5f9; color: #0f172a;">Auto-claim • ช่างรับงานสะดวกใน 1 คลิก</div>
       </div>
       <div class="card" style="border-left: 5px solid #f59e0b;">
-        <h3 class="card-title" style="color: #b45309;">3. ช่างลงพื้นที่ปฏิบัติงาน & จัดการอุปกรณ์</h3>
+        <h3 class="card-title" style="color: #b45309;">3. ช่างลงพื้นที่ปฏิบัติงาน (แยก 3 กรณี)</h3>
         <p style="font-size: 11px; color: #475569; line-height: 1.5; margin-bottom: 2mm;">
-          ช่างลงพื้นที่จริง ดำเนินการซ่อม หากต้องใช้อะไหล่ให้เลือกเบิกจากสต็อกคลัง หากไม่ใช้ให้กดจบงานไม่เบิกของ หรือหากของหมดให้แจ้ง 'รอจัดซื้อ/หา' ระบุชื่อของ
+          ช่างเข้าแก้ปัญหาหน้างานจริงตาม 3 รูปแบบ: มีอะไหล่พร้อมเปลี่ยน / จบงานไม่เบิกของ / หรืออะไหล่หมดให้ระบุ 'รอจัดซื้อ/หา' เพื่อให้ทีมจัดซื้อทราบ
         </p>
-        <div class="badge badge-amber">ครอบคลุมทุกกรณี: เบิกของ • ไม่เบิก • รอจัดซื้อ</div>
+        <div class="badge badge-amber">ครอบคลุมทุกกรณี: ปกติ • เซ็นล่วงหน้า • รอจัดซื้อ</div>
       </div>
       <div class="card" style="border-left: 5px solid #10b981;">
-        <h3 class="card-title" style="color: #047857;">4. ยื่นมือถือหน้างานให้เจ้าของพื้นที่ลงนาม</h3>
+        <h3 class="card-title" style="color: #047857;">4. ยื่นมือถือให้เจ้าของบริเวณลงนามหน้างาน</h3>
         <p style="font-size: 11px; color: #475569; line-height: 1.5; margin-bottom: 2mm;">
-          เมื่อซ่อมเสร็จ ช่างจะเปิดหน้าใบงานบนมือถือตนเอง แล้วยื่นให้เจ้าของบริเวณหรือผู้ทำการแทนเซ็นลายมือชื่อตรวจรับงานเสร็จสิ้นหน้างานทันที ก่อนส่งให้ผู้ควบคุมงานอนุมัติตัดสต็อก
+          เมื่อซ่อมเสร็จ ช่างจะเปิดหน้าใบงานบนมือถือตนเอง แล้วยื่นให้เจ้าของบริเวณหรือผู้ทำการแทนเซ็นลายมือชื่อตรวจรับงานเสร็จสิ้นหน้างาน (สามารถเซ็นรับทราบไว้ก่อนได้แม้ยังรอดำเนินการ)
         </p>
         <div class="badge badge-green">หลักฐานตรวจรับหน้างานจริง • ดิจิทัล 100%</div>
       </div>
@@ -389,23 +393,23 @@
     <div class="timeline-container">
       <div class="timeline-step" style="border-top-color: #1d4ed8;">
         <div class="step-badge" style="background: #1d4ed8;">ขั้นตอนที่ 1</div>
-        <h4>ผู้ควบคุมงานสร้างใบงาน</h4>
-        <p>• ผู้ควบคุมงาน (Admin) เปิดใบงาน FM<br>• แนบรูปถ่ายจุดชำรุด (ไม่เกิน 3 รูป)<br>• ระบุผู้มอบหมายงาน<br>• สถานะ: <strong>รอดำเนินการ</strong></p>
+        <h4>สร้าง FM (รับงานทันที)</h4>
+        <p>• ผู้ควบคุมงานนำเข้าไฟล์ FM เดิม<br>• ถือว่ารับงานทันทีในภาพรวม<br>• แนบรูปถ่ายจุดชำรุด (1-3 รูป)<br>• สถานะ: <strong>รอดำเนินการ</strong></p>
       </div>
       <div class="timeline-step" style="border-top-color: #2563eb;">
         <div class="step-badge" style="background: #2563eb;">ขั้นตอนที่ 2</div>
-        <h4>มอบหมาย & รับงาน</h4>
-        <p>• ถือว่ารับงานแล้วในภาพรวม<br>• ช่างกด 'รับดำเนินการ'<br>• ดึงชื่อ-สังกัดช่างเข้าใบงานอัตโนมัติ</p>
+        <h4>ช่างรับดำเนินการ</h4>
+        <p>• ช่างดูงานในแท็บรอดำเนินการ<br>• กดปุ่ม 'รับดำเนินการ'<br>• ดึงชื่อ-สังกัดช่างเข้าใบงานอัตโนมัติ</p>
       </div>
       <div class="timeline-step" style="border-top-color: #f59e0b;">
         <div class="step-badge" style="background: #f59e0b;">ขั้นตอนที่ 3</div>
-        <h4>ปฏิบัติงาน & จัดการพัสดุ</h4>
-        <p>• ช่างไปหน้างาน<br>• เบิกพัสดุจากคลัง หรือ<br>• กด 'จบงาน (ไม่เบิกของ)' หรือ<br>• กด 'รอจัดซื้อ/หา (ชื่อของ)'</p>
+        <h4>ปฏิบัติงาน & พัสดุ</h4>
+        <p>• ไปหน้างานซ่อมแซมจริง<br>• เบิกของ / จบงานไม่เบิกของ<br>• หรือระบุ 'รอจัดซื้อ/หา: (...)'</p>
       </div>
       <div class="timeline-step" style="border-top-color: #10b981;">
         <div class="step-badge" style="background: #10b981;">ขั้นตอนที่ 4</div>
         <h4>ผู้แจ้งลงนามบนมือถือช่าง</h4>
-        <p>• ช่างทำงานเสร็จที่หน้างาน<br>• ยื่นมือถือให้เจ้าของบริเวณเซ็น<br>• ผู้แจ้งวาดลายเซ็น + ใส่รหัสพนักงาน<br>• ยืดหยุ่น: เซ็นก่อน/หลังได้</p>
+        <p>• ยื่นมือถือให้เจ้าของบริเวณเซ็น<br>• เซ็นชื่อ + รหัสพนักงาน<br>• <strong>ยืดหยุ่น:</strong> เซ็นจบงาน หรือเซ็นล่วงหน้าขณะรอดำเนินการ</p>
       </div>
       <div class="timeline-step" style="border-top-color: #059669;">
         <div class="step-badge" style="background: #059669;">ขั้นตอนที่ 5</div>
@@ -425,126 +429,139 @@
 <div class="slide">
   <div class="slide-header">
     <div class="header-left">
-      <div class="category-tag">STEP 1 & 2: CREATION & ASSIGNMENT</div>
-      <div class="slide-title">ขั้นตอนที่ 1 & 2: ผู้ควบคุมงานสร้างใบงาน และการรับมอบหมายงาน</div>
+      <div class="category-tag">STEP 1 & 2: LEGACY IMPORT & ASSIGNMENT</div>
+      <div class="slide-title">ขั้นตอนที่ 1 & 2: นำเข้าไฟล์ FM เดิม (รับงานทันที) และช่างรับดำเนินการ</div>
     </div>
     <div class="slide-page-num">04 / 12</div>
   </div>
   <div class="content-area">
     <div class="grid-2">
       <div class="card">
-        <h3 class="card-title" style="color: #1d4ed8;">1. ผู้ควบคุมงาน (Admin) เป็นผู้สร้างใบงาน</h3>
+        <h3 class="card-title" style="color: #1d4ed8;">1. สร้างใบ FM นำเข้าจากระบบเดิม (ถือเป็นรับงานทันที)</h3>
         <p style="font-size: 11px; color: #475569; line-height: 1.45; margin-bottom: 2mm;">
-          เพื่อความเป็นระเบียบและควบคุมงบประมาณ ผู้ควบคุมงานทำหน้าที่เป็นผู้เปิดใบงานในระบบ:
+          ที่มาและเหตุผลในการออกแบบขั้นตอน:
         </p>
         <ul class="check-list">
-          <li>เข้าเมนู FM กด <strong>'+ สร้างใบงาน FM ใหม่'</strong></li>
-          <li>กรอกข้อมูลสถานที่ แผนก ผู้แจ้ง เรื่อง และรายละเอียดอาการชำรุด</li>
+          <li><strong>รับงานมาจากระบบเดิมแล้ว:</strong> ใบงาน FM ได้รับการอนุมัติและรับงานมาจากระบบเดิมเรียบร้อยแล้ว</li>
+          <li>ผู้ควบคุมงานทำการอัปโหลดไฟล์ FM เดิม หรือกรอกข้อมูลเข้าสู่แอพ Stoxy</li>
+          <li><strong>ถือว่ารับงานเข้าสู่ทีมทันที:</strong> ทันทีที่บันทึก ระบบจะตั้งสถานะเป็น <strong>'รอดำเนินการ'</strong> โดยไม่ต้องมีขั้นตอนรอเปิด-รออนุมัติรับงานซ้ำซ้อน</li>
           <li>ระบุชื่อ <strong>'ผู้มอบหมายงาน'</strong> (Admin/Supervisor ผู้ควบคุม)</li>
-          <li><strong>แนบรูปถ่ายสภาพหน้างาน (สูงสุด 3 รูป):</strong> มีระบบบีบอัดภาพอัตโนมัติ ช่วยให้ช่างเห็นหน้างานล่วงหน้าและเตรียมอุปกรณ์ได้ตรงจุด</li>
+          <li><strong>แนบรูปถ่ายสภาพหน้างาน (สูงสุด 3 รูป):</strong> มีระบบบีบอัดภาพอัตโนมัติ ช่วยให้ช่างเห็นอาการและจัดเตรียมเครื่องมือได้ตรงจุด</li>
           <li>รองรับการสแกน OCR จากเอกสารกระดาษเดิมได้ทันที</li>
         </ul>
       </div>
 
       <div class="card">
-        <h3 class="card-title" style="color: #0f172a;">2. การมอบหมาย & รับงานในภาพรวม</h3>
+        <h3 class="card-title" style="color: #0f172a;">2. ช่างรับดำเนินการ (ระบุตัวช่างผู้รับผิดชอบ)</h3>
         <p style="font-size: 11px; color: #475569; line-height: 1.45; margin-bottom: 2mm;">
           กลไกการรับงานที่สอดคล้องกับการทำงานจริงของทีมช่าง:
         </p>
         <ul class="check-list">
-          <li><strong>ถือว่ารับงานไปแล้วในภาพรวม:</strong> ทันทีที่ผู้ควบคุมงานสร้างใบงานเสร็จ งานจะเข้าสู่คิวงานของทีมซ่อมบำรุงทันที</li>
-          <li>ช่างเปิดดูรายการงานในแท็บ <strong>'รอดำเนินการ'</strong> หรือกดปุ่ม <strong>'งานของฉัน'</strong></li>
-          <li>ช่างผู้เข้าปฏิบัติงานกดปุ่ม <strong>'รับดำเนินการใบงานนี้'</strong></li>
-          <li>ระบบจะดึงชื่อ-นามสกุล และสังกัดของช่างจากบัญชีที่ Login มาบันทึกลงใบงานอัตโนมัติ (ไม่ต้องพิมพ์เอง)</li>
-          <li>ใบงานเดิมที่ยังไม่มีช่าง จะแสดงเครื่องหมายขีด (-) สะอาดตา รอช่างเข้ามารับงานตามจริง</li>
+          <li>ช่างทีมซ่อมบำรุงเข้าดูงานใหม่ในแท็บ <strong>'รอดำเนินการ'</strong> หรือกดปุ่มลัด <strong>'งานของฉัน'</strong></li>
+          <li>ช่างผู้จะลงมือซ่อมเปิดใบงานแล้วกดปุ่ม <strong>'รับดำเนินการใบงานนี้'</strong></li>
+          <li>ระบบจะดึงชื่อ-นามสกุล และสังกัดของช่างจากบัญชีที่ Login มาบันทึกลงใบงานอัตโนมัติ (ช่างไม่ต้องพิมพ์เอง)</li>
+          <li>ช่วยให้ผู้ควบคุมงานและผู้แจ้งงานทราบชัดเจนว่าช่างท่านใดเป็นผู้รับผิดชอบเคสนี้</li>
+          <li>ใบงานเดิมที่ยังไม่มีช่าง จะแสดงเครื่องหมายขีด (-) สะอาดตา รอช่างเข้ามารับงานตามจริง (ไม่แสดงข้อความค้างในวงเล็บ)</li>
         </ul>
       </div>
     </div>
   </div>
 </div>
 
-<!-- SLIDE 5: Step 3 - Technician Field Work -->
+<!-- SLIDE 5: Step 3 & 4 Workflows -->
 <div class="slide">
   <div class="slide-header">
     <div class="header-left">
-      <div class="category-tag">STEP 3: FIELD EXECUTION</div>
-      <div class="slide-title">ขั้นตอนที่ 3: ช่างลงพื้นที่ปฏิบัติงาน & การจัดการพัสดุอุปกรณ์</div>
+      <div class="category-tag">STEP 3 & 4: FIELD WORKFLOWS</div>
+      <div class="slide-title">ขั้นตอนที่ 3 & 4: ลำดับการทำงานแยกตาม 3 กรณีหน้างานจริง (Cases A, B, C)</div>
     </div>
     <div class="slide-page-num">05 / 12</div>
   </div>
   <div class="content-area">
     <div class="grid-3">
       <div class="card" style="border-top: 4px solid #1d4ed8;">
-        <h3 class="card-title" style="color: #1d4ed8; font-size: 13.5px;">3ก. เบิกพัสดุจากคลัง</h3>
-        <p style="font-size: 10.5px; color: #475569; line-height: 1.45;">
-          • ช่างตรวจสอบพบว่าต้องใช้อะไหล่<br>
-          • ดูตารางสต็อกอุปกรณ์คงเหลือ Real-time ในหน้าใบงาน<br>
-          • กดปุ่ม '+' เพื่อเพิ่มอุปกรณ์ ระบุจำนวนที่ต้องใช้จริง<br>
-          • กดปุ่ม <strong>'ส่งรายการอุปกรณ์รอตรวจสอบ'</strong><br>
-          • ใบงานจะเปลี่ยนสถานะเป็น 'รอตรวจสอบ' เพื่อรอแอดมินอนุมัติตัดสต็อก
+        <h3 class="card-title" style="color: #1d4ed8; font-size: 13.5px;">กรณี A: ซ่อมเสร็จปกติ</h3>
+        <div class="card-subtitle" style="color: #1d4ed8;">มีอะไหล่พร้อม หรือ ไม่เบิกของ</div>
+        <p style="font-size: 10.5px; color: #334155; line-height: 1.45;">
+          <strong>1.</strong> ช่างลงพื้นที่ตรวจสอบและซ่อมแซมหน้างานจนเสร็จเรียบร้อย<br><br>
+          <strong>2.</strong> บันทึกรายการอะไหล่ในแอพ (หรือกดปุ่ม <em>'ดำเนินการแล้ว ไม่เบิกของ'</em>)<br><br>
+          <strong>3.</strong> ช่างยื่นมือถือให้เจ้าของบริเวณตรวจดูผลงาน และลงนามรับทราบ + รหัสพนักงาน<br><br>
+          <strong>4.</strong> ช่างกด <strong>'ส่งรายการรอตรวจสอบ'</strong> เพื่อให้ผู้ควบคุมงานอนุมัติตัดสต็อก<br><br>
+          <span style="color: #1d4ed8; font-weight: bold;">📌 เหมาะกับ:</span> งานซ่อมทั่วไปที่มีอะไหล่ในคลัง หรือไม่ต้องใช้อะไหล่
         </p>
       </div>
 
       <div class="card" style="border-top: 4px solid #10b981;">
-        <h3 class="card-title" style="color: #047857; font-size: 13.5px;">3ข. จบงานไม่เบิกของ</h3>
-        <p style="font-size: 10.5px; color: #475569; line-height: 1.45;">
-          • สำหรับงานบริการ ตรวจเช็ค ทำความสะอาด ขันน็อต ปรับตั้งค่า<br>
-          • ไม่มีการเบิกพัสดุหรือใช้วัสดุสิ้นเปลืองใดๆ<br>
-          • ไม่ต้องเลือกอุปกรณ์ในรายการ<br>
-          • กดปุ่ม <strong>'ดำเนินการแล้ว (ไม่เบิกของ)'</strong><br>
-          • ใบงานส่งไปรอผู้ควบคุมงานอนุมัติปิดงานได้ทันที รวดเร็ว ไม่สร้างภาระคลัง
+        <h3 class="card-title" style="color: #047857; font-size: 13.5px;">กรณี B: เซ็นรับทราบล่วงหน้า</h3>
+        <div class="card-subtitle" style="color: #047857;">Pre-Signing ขณะ 'รอดำเนินการ'</div>
+        <p style="font-size: 10.5px; color: #334155; line-height: 1.45;">
+          <strong>1.</strong> ช่างซ่อมเสร็จ แต่เจ้าของบริเวณต้องรีบไปธุระ/หมดกะ หรือช่างยังไม่ได้เช็กรหัสอะไหล่<br><br>
+          <strong>2.</strong> ช่างยื่นมือถือให้เจ้าของบริเวณกด <strong>'✍️ ลงนามรับทราบ'</strong> ไว้ก่อนได้ทันที โดยใบงานยังอยู่สถานะ <em>'รอดำเนินการ'</em><br><br>
+          <strong>3.</strong> เจ้าของบริเวณเซ็นชื่อ + รหัสพนักงาน แล้วแยกย้ายได้ทันที<br><br>
+          <strong>4.</strong> ช่างกลับมาห้อง คีย์รายการอะไหล่ที่ใช้จริงทีหลัง แล้วกดส่งตรวจ (ลายเซ็นยังอยู่ครบ)<br><br>
+          <span style="color: #047857; font-weight: bold;">📌 เหมาะกับ:</span> งานเร่งด่วน หรือหน้างานไม่มีสัญญาณเน็ต/รีบตรวจรับ
         </p>
       </div>
 
       <div class="card" style="border-top: 4px solid #f59e0b;">
-        <h3 class="card-title" style="color: #b45309; font-size: 13.5px;">3ค. อะไหล่หมด / รอจัดซื้อ</h3>
-        <p style="font-size: 10.5px; color: #475569; line-height: 1.45;">
-          • ตรวจหน้างานแล้วพบว่าไม่มีอะไหล่ในสต็อกคลัง<br>
-          • กดปุ่มสีส้ม <strong>'รอของ (จัดซื้อ/หาอุปกรณ์)'</strong><br>
-          • พิมพ์ระบุของที่ต้องสั่ง เช่น 'ลูกลอยชักโครก 1/2 นิ้ว'<br>
-          • สถานะย่อเป็น: <strong>รอจัดซื้อ/หา (ลูกลอยชักโครก 1/2 นิ้ว)</strong><br>
-          • เมื่อของมาส่ง กด 'เปลี่ยนกลับเป็นรอดำเนินการ' เข้าทำต่อ
+        <h3 class="card-title" style="color: #b45309; font-size: 13.5px;">กรณี C: รอจัดซื้อ / หาของ</h3>
+        <div class="card-subtitle" style="color: #b45309;">ไม่มีอะไหล่ในสต็อกคลัง</div>
+        <p style="font-size: 10.5px; color: #334155; line-height: 1.45;">
+          <strong>1.</strong> ช่างตรวจสอบพบว่าอะไหล่เสียหายและไม่มีในสต็อกคลัง<br><br>
+          <strong>2.</strong> กดปุ่มสีส้ม <strong>'รอของ (จัดซื้อ/หาอุปกรณ์)'</strong> พิมพ์ระบุชื่ออะไหล่ที่ต้องหา เช่น 'ลูกลอย 1/2 นิ้ว'<br><br>
+          <strong>3.</strong> สถานะเปลี่ยนเป็น <em>'รอจัดซื้อ/หา: (...)'</em> (เจ้าของบริเวณยังไม่ต้องลงนาม)<br><br>
+          <strong>4.</strong> เมื่อของมาถึง ช่างกด <em>'เปลี่ยนกลับเป็นรอดำเนินการ'</em> -> ติดตั้งจนเสร็จ -> ยื่นมือถือให้เซ็นชื่อ -> ส่งตรวจ<br><br>
+          <span style="color: #b45309; font-weight: bold;">📌 เหมาะกับ:</span> อะไหล่เฉพาะทางที่ต้องสั่งซื้อภายนอก
         </p>
       </div>
     </div>
   </div>
 </div>
 
-<!-- SLIDE 6: Step 4 - On-Site Signature -->
+<!-- SLIDE 6: Real-world Examples -->
 <div class="slide">
   <div class="slide-header">
     <div class="header-left">
-      <div class="category-tag">STEP 4: ON-SITE SIGNATURE</div>
-      <div class="slide-title">ขั้นตอนที่ 4: การลงนามตรวจรับหน้างาน (ยื่นมือถือให้ผู้แจ้งเซ็น)</div>
+      <div class="category-tag">STEP 3 & 4: REAL-WORLD EXAMPLES</div>
+      <div class="slide-title">ตัวอย่างประกอบจริง: การปฏิบัติงานและลงนามในขั้นตอนที่ 3 & 4</div>
     </div>
     <div class="slide-page-num">06 / 12</div>
   </div>
   <div class="content-area">
-    <div class="grid-2">
-      <div class="card" style="border-left: 5px solid #10b981;">
-        <h3 class="card-title" style="color: #047857;">ขั้นตอนการลงนามรับทราบผลงานที่หน้างานจริง</h3>
-        <ul class="check-list">
-          <li><strong>ช่างปฏิบัติงานให้แล้วเสร็จที่หน้างาน:</strong> ตรวจสอบความเรียบร้อยของอุปกรณ์และการทำงาน</li>
-          <li><strong>ช่างเปิดหน้าใบงานบนมือถือตนเอง:</strong> เปิดหน้าเว็บ Stoxy เมนูใบงาน FM แล้วกดปุ่ม <strong>'✍️ ลงนามรับทราบ'</strong></li>
-          <li><strong>ยื่นมือถือให้เจ้าของบริเวณ (ผู้แจ้งงาน):</strong> ส่งมือถือให้ผู้แจ้งงาน หรือผู้ทำการแทน ตรวจดูผลงาน</li>
-          <li><strong>ผู้แจ้งลงลายมือชื่อบนหน้าจอช่าง:</strong> ใช้นิ้วมือวาดลายเซ็น ระบุชื่อ-นามสกุล และรหัสพนักงาน (ถ้ามี) แล้วกดบันทึก</li>
-          <li><strong>ความยืดหยุ่นของระบบ:</strong> สามารถลงนามไว้ก่อนตั้งแต่สถานะ 'รอดำเนินการ' ได้ (เช่น กรณีผู้แจ้งจะไม่อยู่ช่วงบ่าย) หรือลงนามทันทีเมื่อซ่อมเสร็จ</li>
-        </ul>
+    <div class="grid-3">
+      <div class="card" style="border-top: 4px solid #1d4ed8;">
+        <h3 class="card-title" style="color: #1d4ed8; font-size: 12.5px;">ตัวอย่างกรณี A: ซ่อมเสร็จ & เซ็นรับทันที</h3>
+        <div class="card-subtitle" style="color: #64748b; font-size: 9.5px;">FM-6090: ก๊อกน้ำอ่างล้างมือรั่ว (แผนกบัญชี)</div>
+        <p style="font-size: 10px; color: #334155; line-height: 1.45;">
+          <strong>1.</strong> ช่างสมชายไปหน้างาน ตรวจพบก๊อกน้ำรั่ว ดำเนินการเปลี่ยนก๊อกน้ำใหม่จนเสร็จเรียบร้อย<br><br>
+          <strong>2.</strong> ช่างเปิดใบงานบนมือถือตนเอง กดเลือกอะไหล่ <em>'ก๊อกน้ำอ่าง 1/2 นิ้ว x 1 อัน'</em> จากสต็อก<br><br>
+          <strong>3.</strong> ช่างกดปุ่ม <strong>'✍️ ลงนามรับทราบ'</strong> แล้วยื่นมือถือให้คุณกนกวรรณ (ผู้แจ้ง) ตรวจดูน้ำไหลปกติ<br><br>
+          <strong>4.</strong> คุณกนกวรรณเซ็นชื่อด้วยนิ้วมือบนมือถือช่าง พิมพ์ชื่อ <em>'กนกวรรณ มีสุข'</em> และรหัส <em>'EMP-084'</em><br><br>
+          <strong>5.</strong> ช่างกดส่งตรวจ -> แอดมินอนุมัติตัดสต็อกและปิดงาน
+        </p>
       </div>
 
-      <div class="scenario-box green">
-        <div class="scenario-title">📌 ตัวอย่างสถานการณ์จริง: การลงนามหน้างาน</div>
-        <div class="scenario-text">
-          <strong>ใบงาน:</strong> FM-6090 แอร์น้ำหยด แผนกบัญชี ชั้น 3<br>
-          <strong>ช่างผู้ปฏิบัติงาน:</strong> ช่างสมชาย<br>
-          <strong>เจ้าของบริเวณ/ผู้แจ้ง:</strong> คุณกนกวรรณ<br><br>
-          <strong>ขั้นตอนที่ปฏิบัติจริง:</strong><br>
-          1. ช่างสมชายซ่อมท่อน้ำทิ้งแอร์และเป่าฝุ่นจนแอร์ทำงานปกติ น้ำหยุดหยดเรียบร้อย<br>
-          2. ช่างสมชายหยิบมือถือตนเอง เปิดใบงาน FM-6090 กดปุ่ม <strong>'✍️ ลงนามรับทราบ'</strong><br>
-          3. ยื่นมือถือให้คุณกนกวรรณตรวจลมเย็นและความเรียบร้อยที่โต๊ะทำงาน<br>
-          4. คุณกนกวรรณเซ็นชื่อด้วยนิ้วมือบนจอมือถือของช่าง พิมพ์ชื่อ <em>'กนกวรรณ มีสุข'</em> และรหัส <em>'EMP-084'</em><br>
-          5. กดบันทึก ลายเซ็นดิจิทัลพร้อม Timestamp จะถูกบันทึกเข้าสู่ระบบทันที
-        </div>
+      <div class="card" style="border-top: 4px solid #10b981;">
+        <h3 class="card-title" style="color: #047857; font-size: 12.5px;">ตัวอย่างกรณี B: เซ็นล่วงหน้า แล้วมาคีย์ของทีหลัง</h3>
+        <div class="card-subtitle" style="color: #64748b; font-size: 9.5px;">FM-6092: ซ่อมไฟส่องสว่างคลังสินค้า (16.50 น.)</div>
+        <p style="font-size: 10px; color: #334155; line-height: 1.45;">
+          <strong>1.</strong> ช่างเปลี่ยนหลอดไฟและบัลลาสต์เสร็จสิ้น แต่เป็นเวลาใกล้เลิกงาน เจ้าของคลังต้องรีบล็อคคลังกลับบ้าน<br><br>
+          <strong>2.</strong> ช่างยังไม่ได้ค้นรหัสอะไหล่ในแอพ จึงยื่นมือถือให้ผู้จัดการคลังกด <strong>'✍️ ลงนามรับทราบ'</strong> ไว้ก่อนทันทีขณะสถานะ <em>'รอดำเนินการ'</em><br><br>
+          <strong>3.</strong> ผู้จัดการคลังเซ็นชื่อดิจิทัลรับทราบผลงานที่หน้างาน แล้วแยกย้ายกลับบ้านได้เลย<br><br>
+          <strong>4.</strong> เช้าวันถัดมาช่างมาเปิดใบงาน คีย์รายการ <em>'หลอด LED T8 x 4 หลอด'</em> แล้วกดส่งตรวจ (ลายเซ็นเดิมยังอยู่ครบถ้วน)
+        </p>
+      </div>
+
+      <div class="card" style="border-top: 4px solid #f59e0b;">
+        <h3 class="card-title" style="color: #b45309; font-size: 12.5px;">ตัวอย่างกรณี C: รอจัดซื้อ แล้วมาติดตั้ง/เซ็นตอนจบ</h3>
+        <div class="card-subtitle" style="color: #64748b; font-size: 9.5px;">FM-6095: มอเตอร์ประตูม้วนไฟฟ้าเสีย (โรงอาหาร)</div>
+        <p style="font-size: 10px; color: #334155; line-height: 1.45;">
+          <strong>1.</strong> ช่างลงตรวจพบมอเตอร์ไหม้ และในคลังไม่มีมอเตอร์สำรอง<br><br>
+          <strong>2.</strong> ช่างกดปุ่ม <strong>'รอของ (จัดซื้อ/หาอุปกรณ์)'</strong> พิมพ์ระบุ <em>'มอเตอร์ประตูม้วน 1 HP'</em> (ยังไม่ต้องให้ผู้แจ้งเซ็น)<br><br>
+          <strong>3.</strong> ระบบแสดงสถานะย่อ <strong>'รอจัดซื้อ/หา: มอเตอร์ประตูม้วน 1 HP'</strong> เพื่อให้ฝ่ายจัดซื้อสั่งของ<br><br>
+          <strong>4.</strong> 3 วันต่อมาของมาส่ง ช่างกดปุ่ม <em>'เปลี่ยนกลับเป็นรอดำเนินการ'</em> นำมอเตอร์ไปติดตั้งจนประตูทำงานปกติ<br><br>
+          <strong>5.</strong> ช่างยื่นมือถือให้ผู้จัดการโรงอาหารเซ็นชื่อตรวจรับมอบงาน แล้วส่งผู้ควบคุมงานอนุมัติ
+        </p>
       </div>
     </div>
   </div>
@@ -601,78 +618,82 @@
       <div class="card">
         <h3 class="card-title" style="color: #1d4ed8;">✏️ ปุ่ม 'แก้ไขใบงาน' (Admin Edit Details)</h3>
         <p style="font-size: 11px; color: #475569; line-height: 1.45; margin-bottom: 2mm;">
-          สำหรับแก้ไขข้อผิดพลาดของข้อมูลใบงานที่สร้างไว้แล้ว:
+          ช่วยให้ผู้ดูแลระบบสามารถปรับปรุงข้อมูลใบงานที่สร้างไปแล้วได้ทุกเมื่อ:
         </p>
         <ul class="check-list">
-          <li>แก้ไขเลขที่ใบงาน, ประเภทงาน, วันที่แจ้ง, วันที่ต้องการใช้งาน</li>
-          <li>แก้ไขเรื่อง/หัวข้องาน, สถานที่, รายละเอียดงาน</li>
-          <li>แก้ไขชื่อผู้แจ้ง, แผนก/ฝ่าย, เบอร์โทรศัพท์, อีเมล</li>
-          <li>แก้ไขชื่อช่างผู้ดำเนินการ และสังกัดช่าง (หรือเว้นว่างเพื่อล้างค่า)</li>
-          <li><strong>จัดการรูปภาพประกอบ:</strong> ลบรูปเก่าออก หรืออัปโหลดรูปใหม่เพิ่มเติม (รวมสูงสุดไม่เกิน 3 รูป พร้อมบีบอัดภาพอัตโนมัติ)</li>
+          <li>แก้ไขเลขที่ใบงาน, ประเภทงาน, วันที่แจ้ง, วันที่ใช้งาน</li>
+          <li>แก้ไขเรื่อง/หัวข้อ, สถานที่, และรายละเอียดงาน</li>
+          <li>แก้ไขชื่อผู้แจ้งงาน, แผนก, เบอร์โทร และอีเมล</li>
+          <li>แก้ไขชื่อช่างผู้ดำเนินการ และหน่วยงานช่าง (หรือเว้นว่างเพื่อล้างค่า)</li>
+          <li><strong>จัดการรูปภาพประกอบ:</strong> ลบรูปเดิมออก หรืออัปโหลดรูปใหม่เพิ่มเติม (รวมสูงสุดไม่เกิน 3 รูป พร้อมระบบบีบอัดภาพอัตโนมัติ)</li>
+          <li>บันทึกประวัติการแก้ไขและส่งแจ้งเตือนผ่าน LINE อัตโนมัติ</li>
         </ul>
       </div>
 
       <div class="card">
         <h3 class="card-title" style="color: #b45309;">⚙️ ปุ่ม 'แก้ไขสถานะ' (Admin Status Override)</h3>
         <p style="font-size: 11px; color: #475569; line-height: 1.45; margin-bottom: 2mm;">
-          สิทธิ์เด็ดขาดสำหรับแอดมินในการปรับเปลี่ยนสถานะใบงาน:
+          ฟังก์ชันสำหรับจัดการกรณีพิเศษหรือการแก้ไขข้อผิดพลาด:
         </p>
         <ul class="check-list">
-          <li>ผู้ดูแลระบบมีสิทธิ์แก้ไขสถานะใบงานได้ <strong>ทุกสถานะ</strong></li>
-          <li><strong>รวมถึงใบงานที่ 'เสร็จสิ้นแล้ว' หรือ 'ยกเลิกแล้ว'</strong> ก็สามารถแก้ไขกลับมาเปิดใหม่ได้</li>
-          <li>เลือกปรับเป็น: รอดำเนินการ, รอจัดซื้อ/หา, รอตรวจสอบ, เสร็จสิ้น, ส่งกลับแก้ไข หรือ ยกเลิก</li>
-          <li>มีช่องระบุ <strong>'หมายเหตุการเปลี่ยนสถานะ'</strong> เพื่อบันทึกประวัติการแก้ไข</li>
-          <li>แจ้งเตือนการเปลี่ยนแปลงสถานะผ่าน LINE Notify อัตโนมัติ</li>
+          <li>ผู้ดูแลระบบมีสิทธิ์ในการปรับเปลี่ยนสถานะใบงานได้ <strong>'ทุกสถานะ'</strong></li>
+          <li>ครอบคลุมถึงใบงานที่ <strong>'เสร็จสิ้นแล้ว'</strong> หรือ <strong>'ยกเลิกแล้ว'</strong> ก็สามารถแก้ไขได้</li>
+          <li>ปรับเปลี่ยนเป็น: รอดำเนินการ, รอจัดซื้อ/หา, รอตรวจสอบ, เสร็จสิ้น, ส่งกลับแก้ไข หรือ ยกเลิก</li>
+          <li>มีช่องให้ระบุ <strong>'หมายเหตุการเปลี่ยนสถานะ'</strong> เพื่อเก็บบันทึกประวัติ</li>
+          <li>หากปรับเป็น 'เสร็จสิ้น' ระบบจะบันทึกชื่อแอดมินและเวลาเสร็จสิ้นให้อัตโนมัติ</li>
         </ul>
       </div>
     </div>
   </div>
 </div>
 
-<!-- SLIDE 9: Search, Filter, Sort -->
+<!-- SLIDE 9: Filter & Sort By -->
 <div class="slide">
   <div class="slide-header">
     <div class="header-left">
-      <div class="category-tag">NAVIGATION & PRODUCTIVITY</div>
-      <div class="slide-title">ฟีเจอร์การค้นหา ตัวกรอง และการจัดเรียง (Filter & Sort By)</div>
+      <div class="category-tag">SEARCH & NAVIGATION</div>
+      <div class="slide-title">ฟีเจอร์การค้นหา ตัวกรอง และการเรียงลำดับ (Filter & Sort By)</div>
     </div>
     <div class="slide-page-num">09 / 12</div>
   </div>
   <div class="content-area">
     <div class="grid-3">
       <div class="card" style="border-top: 4px solid #1d4ed8;">
-        <h3 class="card-title" style="color: #1d4ed8; font-size: 13.5px;">1. การจัดเรียง (Sort By)</h3>
+        <h3 class="card-title" style="color: #1d4ed8; font-size: 13.5px;">Sort By: เรียงลำดับตาม</h3>
+        <div class="card-subtitle" style="color: #1d4ed8;">Default: เลขที่ใบงาน มาก → น้อย</div>
         <p style="font-size: 10.5px; color: #475569; line-height: 1.45;">
-          • <strong>ค่าเริ่มต้น (Default):</strong> เรียงตาม <strong>เลขที่ใบงาน (มาก → น้อย)</strong><br>
-          • ใช้ Natural Numeric Sort ทำให้เรียงเลขเช่น 6095, 6090 ถูกต้อง ไม่เพี้ยน<br>
-          • ตัวเลือกเสริม: เลขที่ใบงาน (น้อย → มาก), วันที่แจ้ง (ใหม่/เก่า), วันที่ต้องการใช้ (เร็วสุด), วันที่สร้าง
+          • ค่าเริ่มต้นระบบจัดเรียงตาม <strong>'เลขที่ใบงาน (มาก → น้อย)'</strong> ทันทีที่เปิดหน้า<br>
+          • ใช้ระบบ Natural Sort ถูกต้องทั้งเลขล้วน (เช่น 6095, 6090) และแบบมีอักษรนำ (FM-6095)<br>
+          • สามารถเลือกเรียงตาม: วันที่แจ้ง (ใหม่/เก่า), วันที่ต้องการใช้ หรือ วันที่สร้างได้
         </p>
       </div>
 
       <div class="card" style="border-top: 4px solid #0f172a;">
-        <h3 class="card-title" style="color: #0f172a; font-size: 13.5px;">2. ช่องค้นหา (Search Box)</h3>
+        <h3 class="card-title" style="color: #0f172a; font-size: 13.5px;">Search Box: ช่องค้นหาอัจฉริยะ</h3>
+        <div class="card-subtitle" style="color: #0f172a;">Real-time Multi-field Search</div>
         <p style="font-size: 10.5px; color: #475569; line-height: 1.45;">
-          • ค้นหาแบบ Real-time คลุมทุกฟิลด์สำคัญ<br>
-          • ค้นหาด้วย: เลขที่ใบงาน (เช่น 6090), ชื่องาน, สถานที่ดำเนินการ<br>
-          • ค้นหาตาม: ชื่อผู้แจ้ง, แผนกผู้แจ้ง, ชื่อช่าง, หน่วยงานช่าง, ประเภทงาน<br>
-          • มีปุ่ม (X) ในช่องเพื่อเคลียร์คำค้นหาอย่างรวดเร็ว
+          • ค้นหาได้ทั้ง เลขที่ใบงาน (เช่น 6090), ชื่องาน, สถานที่ดำเนินการ<br>
+          • ค้นหาตาม ชื่อผู้แจ้ง, แผนก/ฝ่ายของผู้แจ้ง<br>
+          • ค้นหาตาม ชื่อช่างผู้ดำเนินการ, สังกัดช่าง, ประเภทงาน และหมายเหตุ<br>
+          • มีปุ่ม (X) ในช่องเพื่อล้างคำค้นหาได้อย่างสะดวกรวดเร็ว
         </p>
       </div>
 
       <div class="card" style="border-top: 4px solid #10b981;">
-        <h3 class="card-title" style="color: #047857; font-size: 13.5px;">3. ตัวกรอง & ปุ่มลัด (Filters)</h3>
+        <h3 class="card-title" style="color: #047857; font-size: 13.5px;">Quick Filters & View Modes</h3>
+        <div class="card-subtitle" style="color: #047857;">Category Filter & My Tasks</div>
         <p style="font-size: 10.5px; color: #475569; line-height: 1.45;">
-          • <strong>ตัวกรองประเภทงาน:</strong> กรองดูเฉพาะ ระบบไฟฟ้า, ระบบประปา, แอร์, อาคาร ฯลฯ<br>
-          • <strong>ปุ่มลัด 'งานของฉัน':</strong> กรองดูเฉพาะงานที่ตนเองรับผิดชอบใน 1 คลิก<br>
-          • <strong>แท็บสถานะ:</strong> แสดง Badge นับจำนวนงานทุกสถานะ<br>
-          • <strong>ปุ่ม 'ล้างตัวกรอง':</strong> รีเซ็ตทุกอย่างกลับสู่ค่าเริ่มต้น
+          • ตัวกรองประเภทงาน: เลือกดูเฉพาะ ไฟฟ้า, ประปา, แอร์, อาคาร ฯลฯ<br>
+          • ปุ่มลัด <strong>'งานของฉัน'</strong>: กดเพื่อกรองดูเฉพาะงานที่ตนเองรับผิดชอบได้ทันทีในคลิกเดียว<br>
+          • แท็บสถานะ: แสดง Badge นับจำนวนใบงานในแต่ละสถานะ Real-time<br>
+          • ปุ่ม <strong>'ล้างตัวกรอง'</strong>: แสดงขึ้นเมื่อมีการใช้งานตัวกรอง กดเพื่อรีเซ็ตกลับค่าเริ่มต้น
         </p>
       </div>
     </div>
   </div>
 </div>
 
-<!-- SLIDE 10: Print & Reports -->
+<!-- SLIDE 10: SFM Print & Reports -->
 <div class="slide">
   <div class="slide-header">
     <div class="header-left">
@@ -684,33 +705,38 @@
   <div class="content-area">
     <div class="grid-2">
       <div class="card">
-        <h3 class="card-title" style="color: #1d4ed8;">🖨️ การพิมพ์เอกสารใบงานเดี่ยว (Print SFM-xxxx)</h3>
+        <h3 class="card-title" style="color: #1d4ed8;">🖨️ การพิมพ์ใบงาน SFM (Print Single Work Order)</h3>
+        <p style="font-size: 11px; color: #475569; line-height: 1.45; margin-bottom: 2mm;">
+          สำหรับแนบเอกสารราชการหรือส่งเบิกจ่าย:
+        </p>
         <ul class="check-list">
-          <li><strong>พิมพ์เฉพาะเอกสาร:</strong> ปุ่ม 'พิมพ์' ในหน้ารายละเอียดใบงานจะตัดเมนูและกรอบหน้าต่างที่ไม่เกี่ยวข้องออกทั้งหมด เหลือเฉพาะตัวแบบฟอร์ม อบก-จ.-01</li>
-          <li><strong>ตั้งชื่อไฟล์ PDF อัตโนมัติ:</strong> กำหนดชื่อไฟล์เป็น <strong>SFM-[เลขที่ใบงาน]</strong> เช่น <em>SFM-6090</em> โดยตรงเมื่อกด Save as PDF</li>
-          <li><strong>แสดงผลสะอาดตา:</strong> ช่องช่างผู้ดำเนินการที่ยังไม่มีผู้รับงาน จะแสดงเครื่องหมายขีด (-) โดยไม่มีวงเล็บค้าง</li>
+          <li>ปุ่ม 'พิมพ์' ด้านบน จะแสดงเฉพาะเอกสารแบบฟอร์ม อบก-จ.-01 เท่านั้น (ซ่อนแถบเมนูข้างและปุ่มต่างๆ ทั้งหมดอัตโนมัติ)</li>
+          <li>ตั้งชื่อไฟล์ PDF ให้อัตโนมัติเป็น: <strong>SFM-[เลขที่ใบงาน]</strong> เช่น SFM-6090</li>
+          <li>รวมข้อมูลหัวข้องาน, สถานที่, ผู้แจ้ง, ช่างผู้ดำเนินการ, ตารางรายการอุปกรณ์ที่ใช้ และช่องลงลายมือชื่อครบถ้วน</li>
+          <li>เอกสารที่ยังไม่มีช่างรับงาน จะแสดงขีด (-) สะอาดตา ไม่แสดงข้อความค้างในวงเล็บ</li>
         </ul>
       </div>
 
       <div class="card">
-        <h3 class="card-title" style="color: #047857;">📊 รายงานสรุปใบแจ้งซ่อม (PDF & Excel Export)</h3>
+        <h3 class="card-title" style="color: #047857;">📊 รายงานสรุปใบแจ้งงานซ่อม (PDF & Excel Export)</h3>
+        <p style="font-size: 11px; color: #475569; line-height: 1.45; margin-bottom: 2mm;">
+          สำหรับผู้บริหารและสรุปผลประจำเดือน:
+        </p>
         <ul class="check-list">
-          <li>เข้าเมนู <strong>'รายงาน'</strong> เลือก <strong>'รายงานสรุปใบงานและอุปกรณ์ที่ใช้ (FM)'</strong></li>
+          <li>เข้าเมนู 'รายงาน' เลือก 'รายงานสรุปใบงานและอุปกรณ์ที่ใช้ (FM)'</li>
           <li>เลือกช่วงเวลา: ดูทั้งหมด หรือเลือกเฉพาะรอบเดือนที่ต้องการได้</li>
-          <li><strong>การปรับปรุงสถานะใหม่ตามคำขอ:</strong>
-            <p style="font-size: 11px; color: #15803d; font-weight: 700; margin-top: 1mm;">
-              • ถ้าเสร็จสิ้นแล้ว → แสดง <code>เสร็จสิ้น (วันที่)</code> เช่น <em>เสร็จสิ้น (24/11/2569)</em><br>
-              • ถ้ารอจัดซื้อ → ย่อเป็น <code>รอจัดซื้อ/หา (ข้อความที่กรอก)</code> เช่น <em>รอจัดซื้อ/หา (หลอดไฟ LED)</em>
-            </p>
+          <li><strong>การปรับปรุงสถานะใหม่ตามคำขอ:</strong><br>
+            • กรณี 'เสร็จสิ้น': แสดงวันที่ในวงเล็บ เช่น <strong>เสร็จสิ้น (24/11/2569)</strong><br>
+            • กรณี 'รอจัดซื้อ': ย่อเป็น <strong>รอจัดซื้อ/หา (ข้อความที่กรอก)</strong> เช่น รอจัดซื้อ/หา (หลอดไฟ LED)
           </li>
-          <li>รองรับทั้งไฟล์ <strong>PDF (แนวนอน สวยงาม)</strong> และ <strong>Excel (มี 2 Sheet: สรุปใบงาน และ รายการอุปกรณ์ที่ใช้)</strong></li>
+          <li>รองรับทั้งไฟล์ PDF (ตารางแนวนอน สวยงาม) และ Excel (.xlsx มี 2 Sheet: สรุปใบงาน และ รายการอุปกรณ์ที่ใช้)</li>
         </ul>
       </div>
     </div>
   </div>
 </div>
 
-<!-- SLIDE 11: Permissions Matrix -->
+<!-- SLIDE 11: RACI Matrix -->
 <div class="slide">
   <div class="slide-header">
     <div class="header-left">
@@ -723,27 +749,27 @@
     <table class="matrix-table">
       <thead>
         <tr>
-          <th style="width: 42%;">ขั้นตอน / การดำเนินการ</th>
+          <th style="width: 38%;">ขั้นตอน / การดำเนินการ</th>
           <th style="width: 20%; text-align: center;">ผู้ควบคุมงาน (Admin)</th>
-          <th style="width: 19%; text-align: center;">ช่างผู้ปฏิบัติงาน (Tech)</th>
-          <th style="width: 19%; text-align: center;">เจ้าของบริเวณ (Requester)</th>
+          <th style="width: 20%; text-align: center;">ช่างผู้ปฏิบัติงาน (Tech)</th>
+          <th style="width: 22%; text-align: center;">เจ้าของบริเวณ (Requester)</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td><strong>1. สร้างใบแจ้งงาน FM ในระบบ / แนบรูปถ่ายหน้างาน</strong></td>
-          <td class="center text-yes">✔️ ผู้สร้างหลัก</td>
+          <td><strong>1. นำเข้าไฟล์ FM เดิม (ถือเป็นรับงานทันที)</strong></td>
+          <td class="center text-yes">✔️ ผู้นำเข้า/ผู้สร้าง</td>
           <td class="center text-no">—</td>
-          <td class="center" style="font-size: 10px; color: #475569;">แจ้งเรื่องให้ผู้ควบคุม</td>
+          <td class="center text-no">รับเรื่องจากระบบเดิมแล้ว</td>
         </tr>
         <tr>
           <td><strong>2. มอบหมายงาน / รับงานในภาพรวม</strong></td>
           <td class="center text-yes">✔️ ผู้มอบหมาย</td>
-          <td class="center text-yes">✔️ รับงานหน้างาน</td>
+          <td class="center text-yes">✔️ กดรับดำเนินการ</td>
           <td class="center text-no">—</td>
         </tr>
         <tr>
-          <td><strong>3. ปฏิบัติงาน / เบิกพัสดุ / แจ้งรอจัดซื้อ</strong></td>
+          <td><strong>3. ปฏิบัติงาน / จัดการพัสดุ (3 กรณี)</strong></td>
           <td class="center text-no">—</td>
           <td class="center text-yes">✔️ ปฏิบัติงานจริง</td>
           <td class="center text-no">—</td>
@@ -752,7 +778,7 @@
           <td><strong>4. การลงนามรับทราบผลการดำเนินงาน</strong></td>
           <td class="center text-no">—</td>
           <td class="center text-yes">✔️ ยื่นมือถือให้เซ็น</td>
-          <td class="center text-yes">✔️ ลงนามบนมือถือช่าง</td>
+          <td class="center text-yes">✔️ ลงนามตรวจรับบนมือถือช่าง</td>
         </tr>
         <tr>
           <td><strong>5. ตรวจสอบรายการอุปกรณ์ & อนุมัติตัดสต็อก</strong></td>
@@ -771,50 +797,49 @@
   </div>
 </div>
 
-<!-- SLIDE 12: Summary Slide -->
-<div class="slide dark" style="justify-content: center;">
+<!-- SLIDE 12: Best Practices & Summary -->
+<div class="slide dark" style="padding-top: 10mm;">
   <div class="slide-header">
     <div class="header-left">
       <div class="category-tag">SUMMARY & BEST PRACTICES</div>
-      <div class="slide-title">สรุปประโยชน์ของระบบ FM และแนวปฏิบัติที่ดี</div>
+      <div class="slide-title">สรุปประโยชน์ของระบบ FM และแนวปฏิบัติที่ดี (Best Practices)</div>
     </div>
     <div class="slide-page-num">12 / 12</div>
   </div>
-
   <div class="content-area">
     <div class="grid-4">
       <div class="card dark" style="border-top: 4px solid #1d4ed8;">
-        <h4 style="font-size: 13.5px; font-weight: 700; color: #60a5fa; margin-bottom: 2.5mm;">ควบคุมงานเป็นระบบ</h4>
-        <p style="font-size: 10.5px; color: #cbd5e1; line-height: 1.45;">
-          ผู้ควบคุมงานเป็นจุดศูนย์กลางในการเปิดงานและตรวจรับตัดสต็อก ทำให้งานไม่ตกหล่นและมีผู้รับผิดชอบชัดเจน
+        <div class="card-subtitle" style="color: #60a5fa;">KEY BENEFIT #1</div>
+        <h3 class="card-title" style="color: #ffffff; font-size: 13.5px;">ควบคุมงานเป็นระบบ</h3>
+        <p style="font-size: 10.5px; color: #94a3b8; line-height: 1.45;">
+          นำเข้าไฟล์ FM เดิมที่รับงานแล้วเข้าสู่ระบบ Stoxy ได้ทันที ลดความซ้ำซ้อน งานไม่ตกหล่น และมีผู้รับผิดชอบชัดเจน
         </p>
       </div>
 
       <div class="card dark" style="border-top: 4px solid #10b981;">
-        <h4 style="font-size: 13.5px; font-weight: 700; color: #34d399; margin-bottom: 2.5mm;">ตรวจรับหน้างานจริง</h4>
-        <p style="font-size: 10.5px; color: #cbd5e1; line-height: 1.45;">
-          ช่างนำมือถือไปให้เจ้าของพื้นที่ตรวจงานและเซ็นรับทราบทันที มีหลักฐานเป็นลายเซ็นดิจิทัลพร้อม Timestamp
+        <div class="card-subtitle" style="color: #34d399;">KEY BENEFIT #2</div>
+        <h3 class="card-title" style="color: #ffffff; font-size: 13.5px;">หลักฐานตรวจรับหน้างาน</h3>
+        <p style="font-size: 10.5px; color: #94a3b8; line-height: 1.45;">
+          ช่างนำมือถือไปให้เจ้าของพื้นที่ตรวจงานและเซ็นรับทราบทันที หรือเซ็นล่วงหน้าได้ รองรับทุกความเร่งด่วนหน้างาน
         </p>
       </div>
 
       <div class="card dark" style="border-top: 4px solid #f59e0b;">
-        <h4 style="font-size: 13.5px; font-weight: 700; color: #fbbf24; margin-bottom: 2.5mm;">สต็อกตรง 100%</h4>
-        <p style="font-size: 10.5px; color: #cbd5e1; line-height: 1.45;">
+        <div class="card-subtitle" style="color: #fbbf24;">KEY BENEFIT #3</div>
+        <h3 class="card-title" style="color: #ffffff; font-size: 13.5px;">สต็อกตรง 100% ไม่หาย</h3>
+        <p style="font-size: 10.5px; color: #94a3b8; line-height: 1.45;">
           พัสดุและอะไหล่ทุกชิ้นถูกผูกกับเลขที่ใบงาน FM และอนุมัติตัดสต็อกอัตโนมัติ ไม่ต้องคีย์เอกสารซ้ำ
         </p>
       </div>
 
       <div class="card dark" style="border-top: 4px solid #a855f7;">
-        <h4 style="font-size: 13.5px; font-weight: 700; color: #c084fc; margin-bottom: 2.5mm;">รายงานครบถ้วน</h4>
-        <p style="font-size: 10.5px; color: #cbd5e1; line-height: 1.45;">
+        <div class="card-subtitle" style="color: #c084fc;">KEY BENEFIT #4</div>
+        <h3 class="card-title" style="color: #ffffff; font-size: 13.5px;">รายงานตรวจสอบย้อนหลัง</h3>
+        <p style="font-size: 10.5px; color: #94a3b8; line-height: 1.45;">
           ผู้บริหารสามารถตรวจสอบประวัติการซ่อมบำรุงและต้นทุนพัสดุที่ใช้ย้อนหลังได้ตลอดเวลาผ่าน PDF/Excel
         </p>
       </div>
     </div>
-  </div>
-
-  <div style="margin-top: 4mm; text-align: center; color: #94a3b8; font-size: 11px;">
-    ระบบบริหารจัดการพัสดุและงานซ่อมบำรุง Stoxy (Facility Management) • คู่มือการใช้งานเวอร์ชัน 2.0
   </div>
 </div>
 
