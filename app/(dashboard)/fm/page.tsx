@@ -494,35 +494,10 @@ export default function FMWorkOrdersPage() {
         </div>
       )}
 
-      {/* Header bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-        <div>
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <Wrench className="w-5 h-5 text-[#1D4ED8]" />
-            ใบแจ้งงานซ่อม Facility Management (FM)
-          </h2>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-            ทั้งหมด {workOrders.length} ใบงาน
-          </p>
-        </div>
-
-        {isAdmin && (
-          <button
-            onClick={() => {
-              resetForm();
-              setShowCreateModal(true);
-            }}
-            className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-xl text-sm font-semibold active:scale-95 transition-all shadow-md shadow-blue-500/20"
-          >
-            <Plus className="w-4 h-4" /> สร้างใบงาน FM ใหม่
-          </button>
-        )}
-      </div>
-
       {/* Search and Filters */}
-      <div className="space-y-3 mb-5">
-        {/* Search row with Sort, Work Type & My Tasks controls */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+      <div className="space-y-2.5 mb-4">
+        {/* Search row with Sort, Work Type, My Tasks & Admin Create controls */}
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2">
           {/* Search Box */}
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
@@ -545,8 +520,8 @@ export default function FMWorkOrdersPage() {
             )}
           </div>
 
-          {/* Quick controls: Sort, Work Type & My Tasks */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 sm:pb-0 scrollbar-none">
+          {/* Quick controls: Sort, Work Type, My Tasks & Create */}
+          <div className="flex items-center gap-1.5 flex-wrap">
             {/* Compact Sort By Work Order Number Toggle */}
             <button
               type="button"
@@ -593,6 +568,21 @@ export default function FMWorkOrdersPage() {
               <User className="w-3.5 h-3.5 shrink-0" />
               <span>งานของฉัน</span>
             </button>
+
+            {/* Admin Create Button */}
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => {
+                  resetForm();
+                  setShowCreateModal(true);
+                }}
+                className="h-9 flex items-center justify-center gap-1.5 px-3.5 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-xl text-xs font-semibold active:scale-95 transition-all shadow-sm shadow-blue-500/20 shrink-0 ml-auto lg:ml-0"
+              >
+                <Plus className="w-3.5 h-3.5 shrink-0" />
+                <span>สร้างใบงาน FM ใหม่</span>
+              </button>
+            )}
           </div>
         </div>
 
