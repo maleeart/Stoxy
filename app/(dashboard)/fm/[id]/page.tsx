@@ -930,7 +930,7 @@ export default function FMWorkOrderDetailPage() {
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-mono text-base font-black text-gray-900 dark:text-white">
-                  ใบแจ้งงานซ่อม เลขที่ {workOrder.workOrderNumber}
+                  ใบแจ้งงานซ่อม {workOrder.workOrderNumber}
                 </span>
                 <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${cfg.badge}`}>
                   {workOrder.status === "completed"
@@ -959,15 +959,15 @@ export default function FMWorkOrderDetailPage() {
                       setShowAdminStatusModal(true);
                     }}
                     className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/40 dark:hover:bg-blue-900/60 text-[#1D4ED8] dark:text-blue-300 border border-blue-200 dark:border-blue-800 transition-all active:scale-95 shadow-sm"
-                    title="ผู้ดูแลระบบ: แก้ไขสถานะใบงาน"
+                    title="แก้ไขสถานะใบงาน"
                   >
                     <Edit3 className="w-3 h-3" />
-                    <span>แก้ไขสถานะ (Admin)</span>
+                    <span>แก้ไขสถานะ</span>
                   </button>
                 )}
               </div>
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                Facility Management System (แบบฟอร์ม อบก-จ.-01)
+                แบบฟอร์ม อบก-จ.-01
               </p>
             </div>
           </div>
@@ -1125,11 +1125,11 @@ export default function FMWorkOrderDetailPage() {
 
           {/* Technician & Assignor */}
           <div className="p-4 rounded-2xl bg-blue-50/40 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 space-y-2 text-xs">
-            <div className="flex items-center justify-between pb-1 border-b border-blue-200/60 dark:border-blue-800">
-              <p className="font-bold text-blue-900 dark:text-blue-300 flex items-center gap-1.5">
-                <Wrench className="w-3.5 h-3.5 text-[#1D4ED8]" /> ข้อมูลผู้ดำเนินการ & ผู้มอบหมาย
+            <div className="flex items-center justify-between gap-2 pb-1 border-b border-blue-200/60 dark:border-blue-800">
+              <p className="font-bold text-blue-900 dark:text-blue-300 flex items-center gap-1.5 whitespace-nowrap">
+                <Wrench className="w-3.5 h-3.5 text-[#1D4ED8] shrink-0" /> ข้อมูลผู้ดำเนินการ
               </p>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 shrink-0">
                 {!workOrder.assignedTechnicianName &&
                   workOrder.status !== "completed" &&
                   workOrder.status !== "cancelled" && (
@@ -1137,9 +1137,9 @@ export default function FMWorkOrderDetailPage() {
                       type="button"
                       onClick={() => claimWorkOrderMut.mutate()}
                       disabled={claimWorkOrderMut.isPending}
-                      className="px-2.5 py-1 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-lg text-[11px] font-bold shadow-xs transition-all flex items-center gap-1 disabled:opacity-50"
+                      className="px-2.5 py-1 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-lg text-[11px] font-bold shadow-xs transition-all flex items-center gap-1 disabled:opacity-50 whitespace-nowrap"
                     >
-                      ✋ รับเป็นผู้ดำเนินการ
+                      ✋ รับงาน
                     </button>
                   )}
                 {workOrder.assignedTechnicianName &&
@@ -1157,7 +1157,7 @@ export default function FMWorkOrderDetailPage() {
                         }
                       }}
                       disabled={clearPerformerMut.isPending}
-                      className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 dark:bg-rose-900/30 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-800 rounded-lg text-[11px] font-bold shadow-xs transition-all flex items-center gap-1 disabled:opacity-50"
+                      className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 dark:bg-rose-900/30 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-800 rounded-lg text-[11px] font-bold shadow-xs transition-all flex items-center gap-1 disabled:opacity-50 whitespace-nowrap"
                       title="ล้างข้อมูลผู้ดำเนินการ"
                     >
                       <X className="w-3 h-3" /> ล้างผู้ดำเนินการ
@@ -1173,7 +1173,7 @@ export default function FMWorkOrderDetailPage() {
               </span>
             </p>
             <p>
-              <span className="text-gray-400">สังกัด / หน่วยงานช่าง:</span>{" "}
+              <span className="text-gray-400">สังกัด:</span>{" "}
               <span className="text-gray-800 dark:text-gray-200">
                 {workOrder.assignedDepartment || "-"}
               </span>
@@ -1198,7 +1198,7 @@ export default function FMWorkOrderDetailPage() {
             </p>
             {workOrder.assignedDate && (
               <p>
-                <span className="text-gray-400">วันที่มอบหมาย / รับงาน:</span>{" "}
+                <span className="text-gray-400">วันที่รับงาน:</span>{" "}
                 <span className="text-gray-800 dark:text-gray-200">
                   {formatDate(workOrder.assignedDate)}
                 </span>
@@ -1210,52 +1210,43 @@ export default function FMWorkOrderDetailPage() {
         {/* Requester Acknowledgment Signature Section */}
         <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
           <div className="p-4 rounded-2xl bg-gradient-to-br from-gray-50 to-blue-50/30 dark:from-gray-700/30 dark:to-blue-950/20 border border-gray-100 dark:border-gray-700/60">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-200/60 dark:border-gray-700">
-              <div className="flex items-center gap-2.5">
+            <div className={`flex flex-wrap items-center justify-between gap-2.5 ${workOrder.requesterSignatureUrl ? "pb-3 border-b border-gray-200/60 dark:border-gray-700" : ""}`}>
+              <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-900/50 text-[#1D4ED8] dark:text-blue-300 flex items-center justify-center shrink-0">
                   <PenTool className="w-4 h-4" />
                 </div>
-                <div>
-                  <h4 className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white flex items-center gap-2">
-                    <span>การลงนามรับทราบของผู้แจ้งงาน</span>
-                    {workOrder.requesterSignatureUrl ? (
-                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> ลงนามแล้ว
-                      </span>
-                    ) : (
-                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
-                        รอลงนามรับทราบ
-                      </span>
-                    )}
-                  </h4>
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                    ลงนามรับทราบการดำเนินการ (สามารถลงนามล่วงหน้าขณะรอดำเนินการได้)
-                  </p>
-                </div>
+                <h4 className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white flex items-center gap-2 flex-wrap">
+                  <span className="whitespace-nowrap">ผู้แจ้งงานลงนาม</span>
+                  {workOrder.requesterSignatureUrl ? (
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 flex items-center gap-1 whitespace-nowrap">
+                      <CheckCircle2 className="w-3 h-3" /> ลงนามแล้ว
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 whitespace-nowrap">
+                      รอลงนาม
+                    </span>
+                  )}
+                </h4>
               </div>
 
-              <div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSignerName(workOrder.requesterSignedName || "");
-                    setSignerEmployeeId(workOrder.requesterEmployeeId || "");
-                    setShowSignModal(true);
-                  }}
-                  className="w-full sm:w-auto px-3.5 py-2 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95"
-                >
-                  <PenTool className="w-3.5 h-3.5" />
-                  <span>
-                    {workOrder.requesterSignatureUrl
-                      ? "ลงนามใหม่ / ปรับปรุงลายเซ็น"
-                      : "✍️ ลงนามรับทราบ (ผู้แจ้งงาน)"}
-                  </span>
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setSignerName(workOrder.requesterSignedName || "");
+                  setSignerEmployeeId(workOrder.requesterEmployeeId || "");
+                  setShowSignModal(true);
+                }}
+                className="px-3.5 py-2 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 whitespace-nowrap shrink-0"
+              >
+                <PenTool className="w-3.5 h-3.5" />
+                <span>
+                  {workOrder.requesterSignatureUrl ? "ลงนามใหม่" : "✍️ ลงนาม"}
+                </span>
+              </button>
             </div>
 
             {/* Signature Content */}
-            {workOrder.requesterSignatureUrl ? (
+            {workOrder.requesterSignatureUrl && (
               <div className="pt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                   <div className="p-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 shadow-xs max-w-[220px]">
@@ -1267,19 +1258,19 @@ export default function FMWorkOrderDetailPage() {
                   </div>
                   <div className="space-y-1 text-xs text-gray-600 dark:text-gray-300">
                     <p>
-                      <span className="text-gray-400">ชื่อผู้ลงนาม:</span>{" "}
+                      <span className="text-gray-400">ผู้ลงนาม:</span>{" "}
                       <strong className="text-gray-900 dark:text-white">
                         {workOrder.requesterSignedName || workOrder.requesterName}
                       </strong>
                     </p>
                     <p>
-                      <span className="text-gray-400">รหัสประจำตัว:</span>{" "}
+                      <span className="text-gray-400">รหัสพนักงาน:</span>{" "}
                       <span className="font-mono text-gray-800 dark:text-gray-200">
                         {workOrder.requesterEmployeeId || "-"}
                       </span>
                     </p>
                     <p>
-                      <span className="text-gray-400">วันที่และเวลาที่ลงนาม:</span>{" "}
+                      <span className="text-gray-400">วันเวลาที่ลงนาม:</span>{" "}
                       <span className="text-gray-800 dark:text-gray-200 font-medium">
                         {formatDateTime(workOrder.requesterSignedAt)}
                       </span>
@@ -1291,7 +1282,7 @@ export default function FMWorkOrderDetailPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      if (confirm("ต้องการลบลายเซ็นการรับทราบนี้หรือไม่?")) {
+                      if (confirm("ต้องการลบลายเซ็นนี้หรือไม่?")) {
                         clearSignatureMut.mutate();
                       }
                     }}
@@ -1302,24 +1293,18 @@ export default function FMWorkOrderDetailPage() {
                   </button>
                 )}
               </div>
-            ) : (
-              <div className="pt-3 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                <p className="italic">
-                  ยังไม่มีการลงนามรับทราบ · สามารถกดปุ่ม &quot;ลงนามรับทราบ (ผู้แจ้งงาน)&quot; ด้านบนเพื่อลงนามล่วงหน้า หรือเมื่อดำเนินการเสร็จสิ้น
-                </p>
-              </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* ── Section: รายการอุปกรณ์ที่ใช้/เบิกสำหรับใบงานนี้ ── */}
+      {/* ── Section: รายการอุปกรณ์ที่ใช้ ── */}
       <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm space-y-4 mb-20">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="font-bold text-base text-gray-900 dark:text-white flex items-center gap-2">
               <Wrench className="w-4 h-4 text-[#1D4ED8]" />
-              รายการอุปกรณ์ที่ใช้สำหรับใบงานนี้
+              รายการอุปกรณ์ที่ใช้
             </h3>
             <p className="text-xs text-gray-400 mt-0.5">
               {workingItems.length} รายการ (รวม{" "}
@@ -1341,7 +1326,7 @@ export default function FMWorkOrderDetailPage() {
           <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-2xl flex items-center gap-2.5 text-xs text-amber-800 dark:text-amber-200 shadow-xs">
             <RotateCcw className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
             <div>
-              <span className="font-bold">พัสดุในใบงานนี้ถูกคืนเข้าคลังสต็อกแล้ว</span>
+              <span className="font-bold">พัสดุในใบงานนี้ถูกคืนเข้าคลังแล้ว</span>
               {workOrder.stockReturnedAt && (
                 <span className="text-amber-700 dark:text-amber-300 ml-1.5">
                   ({formatDateTime(workOrder.stockReturnedAt)}
@@ -1354,16 +1339,11 @@ export default function FMWorkOrderDetailPage() {
 
         {/* Items Table / Cards */}
         {workingItems.length === 0 ? (
-          <div className="text-center py-12 bg-gray-50 dark:bg-gray-700/30 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
-            <Wrench className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+          <div className="text-center py-8 bg-gray-50 dark:bg-gray-700/30 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
+            <Wrench className="w-7 h-7 text-gray-300 dark:text-gray-600 mx-auto mb-1.5" />
             <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-              ยังไม่มีการระบุอุปกรณ์ที่ใช้
+              ไม่มีรายการอุปกรณ์
             </p>
-            {canEditItems && (
-              <p className="text-[11px] text-gray-400 mt-1">
-                กดปุ่ม "เลือกอุปกรณ์จากคลัง" ด้านบนเพื่อระบุรายการอุปกรณ์ที่จะเบิกใช้สำหรับงานนี้
-              </p>
-            )}
           </div>
         ) : (
           <div className="space-y-2.5">

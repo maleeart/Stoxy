@@ -45,36 +45,69 @@ export default function ReportsPage() {
 
   const [invSortBy, setInvSortBy] = useState<"code" | "name" | "quantity" | "status">("code");
   const [selectedAuditId, setSelectedAuditId] = useState<string>("");
+  const [selectedFMYear, setSelectedFMYear] = useState<string>("all");
   const [selectedFMMonth, setSelectedFMMonth] = useState<string>("all");
 
   const activeAudit = auditSessions.find(s => s.id === selectedAuditId) || auditSessions[0];
 
-  const fmMonthOptions = useMemo(() => {
-    const map = new Map<string, { label: string; count: number }>();
+  const fmYearOptions = useMemo(() => {
+    const map = new Map<number, number>();
     for (const w of fmWorkOrders) {
       const d = w.requestDate?.toDate ? w.requestDate.toDate() : null;
       if (d) {
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-        const label = d.toLocaleDateString("th-TH", { month: "long", year: "numeric" });
-        const ex = map.get(key);
-        if (ex) ex.count++;
-        else map.set(key, { label, count: 1 });
+        const y = d.getFullYear();
+        map.set(y, (map.get(y) ?? 0) + 1);
       }
     }
     return Array.from(map.entries())
-      .map(([key, val]) => ({ key, label: val.label, count: val.count }))
-      .sort((a, b) => b.key.localeCompare(a.key));
+      .map(([year, count]) => ({
+        key: String(year),
+        label: `ปี ${year + 543}`,
+        count,
+      }))
+      .sort((a, b) => Number(b.key) - Number(a.key));
   }, [fmWorkOrders]);
 
-  const filteredFMOrders = useMemo(() => {
-    if (selectedFMMonth === "all") return fmWorkOrders;
-    return fmWorkOrders.filter(w => {
+  const fmMonthOptions = useMemo(() => {
+    const map = new Map<number, { label: string; count: number }>();
+    for (const w of fmWorkOrders) {
       const d = w.requestDate?.toDate ? w.requestDate.toDate() : null;
-      if (!d) return false;
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      return key === selectedFMMonth;
+      if (d) {
+        if (selectedFMYear !== "all" && String(d.getFullYear()) !== selectedFMYear) continue;
+        const m = d.getMonth() + 1;
+        const label = d.toLocaleDateString("th-TH", { month: "long" });
+        const ex = map.get(m);
+        if (ex) ex.count++;
+        else map.set(m, { label, count: 1 });
+      }
+    }
+    return Array.from(map.entries())
+      .map(([m, val]) => ({ key: String(m), monthNum: m, label: val.label, count: val.count }))
+      .sort((a, b) => a.monthNum - b.monthNum);
+  }, [fmWorkOrders, selectedFMYear]);
+
+  const filteredFMOrders = useMemo(() => {
+    return fmWorkOrders.filter((w) => {
+      const d = w.requestDate?.toDate ? w.requestDate.toDate() : null;
+      if (selectedFMYear !== "all") {
+        if (!d || String(d.getFullYear()) !== selectedFMYear) return false;
+      }
+      if (selectedFMMonth !== "all") {
+        if (!d || String(d.getMonth() + 1) !== selectedFMMonth) return false;
+      }
+      return true;
     });
-  }, [fmWorkOrders, selectedFMMonth]);
+  }, [fmWorkOrders, selectedFMYear, selectedFMMonth]);
+
+  const fmPeriodLabel = useMemo(() => {
+    if (selectedFMYear === "all" && selectedFMMonth === "all") return undefined;
+    const monthLabel =
+      selectedFMMonth !== "all"
+        ? fmMonthOptions.find((m) => m.key === selectedFMMonth)?.label || `เดือน_${selectedFMMonth}`
+        : "";
+    const yearLabel = selectedFMYear !== "all" ? `ปี ${Number(selectedFMYear) + 543}` : "";
+    return [monthLabel, yearLabel].filter(Boolean).join(" ");
+  }, [selectedFMYear, selectedFMMonth, fmMonthOptions]);
 
   const reports = [
     {
@@ -189,31 +222,53 @@ export default function ReportsPage() {
         {
           label: "PDF",
           icon: <FileText className="w-4 h-4" />,
-          fn: () => exportFMReportPDF(filteredFMOrders, selectedFMMonth !== "all" ? selectedFMMonth : undefined),
+          fn: () => exportFMReportPDF(filteredFMOrders, fmPeriodLabel),
         },
         {
           label: "Excel",
           icon: <FileSpreadsheet className="w-4 h-4" />,
-          fn: () => exportFMReportExcel(filteredFMOrders, selectedFMMonth !== "all" ? selectedFMMonth : undefined),
+          fn: () => exportFMReportExcel(filteredFMOrders, fmPeriodLabel),
         },
       ],
       extra: (
-        <div className="mb-4">
-          <label className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">
-            เลือกเดือน / ช่วงเวลาของใบงาน
-          </label>
-          <select
-            value={selectedFMMonth}
-            onChange={(e) => setSelectedFMMonth(e.target.value)}
-            className="w-full text-xs font-semibold px-2 py-1.5 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-100 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-amber-500/20"
-          >
-            <option value="all">📅 ข้อมูลทั้งหมด ({fmWorkOrders.length} ใบงาน)</option>
-            {fmMonthOptions.map((opt) => (
-              <option key={opt.key} value={opt.key}>
-                🗓️ {opt.label} ({opt.count} ใบงาน)
-              </option>
-            ))}
-          </select>
+        <div className="mb-4 grid grid-cols-2 gap-2">
+          <div>
+            <label className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">
+              ปี (พ.ศ.)
+            </label>
+            <select
+              value={selectedFMYear}
+              onChange={(e) => {
+                setSelectedFMYear(e.target.value);
+                setSelectedFMMonth("all");
+              }}
+              className="w-full text-xs font-semibold px-2 py-1.5 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-100 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-amber-500/20"
+            >
+              <option value="all">ทุกปี ({fmWorkOrders.length})</option>
+              {fmYearOptions.map((opt) => (
+                <option key={opt.key} value={opt.key}>
+                  {opt.label} ({opt.count})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">
+              เดือน
+            </label>
+            <select
+              value={selectedFMMonth}
+              onChange={(e) => setSelectedFMMonth(e.target.value)}
+              className="w-full text-xs font-semibold px-2 py-1.5 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-100 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-amber-500/20"
+            >
+              <option value="all">ทุกเดือน</option>
+              {fmMonthOptions.map((opt) => (
+                <option key={opt.key} value={opt.key}>
+                  {opt.label} ({opt.count})
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       ),
     },

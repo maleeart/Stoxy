@@ -798,21 +798,17 @@ export async function exportFMReportPDF(workOrders: FMWorkOrder[], monthYearStr?
       if (data.section === "body" && data.column.index === 6) {
         const wo = workOrders[data.row.index];
         if (!wo) return;
-        const statusColors: Record<
-          string,
-          { fill: [number, number, number]; text: [number, number, number] }
-        > = {
-          pending: { fill: [254, 243, 199], text: [180, 83, 9] },        // Amber
-          waiting_parts: { fill: [255, 237, 213], text: [194, 65, 12] }, // Orange
-          pending_review: { fill: [243, 232, 255], text: [126, 34, 206] }, // Purple
-          completed: { fill: [209, 250, 229], text: [4, 120, 87] },      // Emerald
-          rejected: { fill: [255, 228, 230], text: [190, 18, 60] },      // Rose
-          cancelled: { fill: [243, 244, 246], text: [75, 85, 99] },      // Gray
+        const statusTextColors: Record<string, [number, number, number]> = {
+          pending: [180, 83, 9],        // Amber
+          waiting_parts: [234, 88, 12], // Orange
+          pending_review: [126, 34, 206], // Purple
+          completed: [5, 150, 105],     // Emerald
+          rejected: [225, 29, 72],      // Rose
+          cancelled: [107, 114, 128],   // Gray
         };
-        const c = statusColors[wo.status];
-        if (c) {
-          data.cell.styles.fillColor = c.fill;
-          data.cell.styles.textColor = c.text;
+        const textColor = statusTextColors[wo.status];
+        if (textColor) {
+          data.cell.styles.textColor = textColor;
         }
       }
     },
