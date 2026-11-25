@@ -16,6 +16,7 @@ import {
   resumeFMWorkOrderToPending,
   completeFMWorkOrderWithoutItems,
   claimFMWorkOrder,
+  clearSingleFMWorkOrderPerformer,
   adminUpdateFMWorkOrderStatus,
   saveFMWorkOrderRequesterSignature,
   clearFMWorkOrderRequesterSignature,
@@ -90,7 +91,6 @@ export default function FMWorkOrderDetailPage() {
   const [showItemPicker, setShowItemPicker] = useState(false);
   const [itemSearch, setItemSearch] = useState("");
   const [workingItems, setWorkingItems] = useState<FMWorkOrderItem[]>([]);
-  const [hasInitializedItems, setHasInitializedItems] = useState(false);
 
   // Rejection modal
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -106,11 +106,16 @@ export default function FMWorkOrderDetailPage() {
   const [targetStatus, setTargetStatus] = useState<FMWorkOrderStatus>("pending");
   const [statusChangeNote, setStatusChangeNote] = useState("");
 
-  // Sync loaded items once
-  if (workOrder && !hasInitializedItems) {
-    setWorkingItems(workOrder.items || []);
-    setHasInitializedItems(true);
-  }
+  // Sync loaded items whenever server items change
+  const serverItemsJson = JSON.stringify(workOrder?.items || []);
+  useEffect(() => {
+    if (workOrder) {
+      setWorkingItems(workOrder.items || []);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workOrder?.id, serverItemsJson]);
+
+  const hasUnsavedItemChanges = JSON.stringify(workingItems) !== serverItemsJson;
 
   // Mutations
   const submitItemsMut = useMutation({
@@ -132,20 +137,30 @@ export default function FMWorkOrderDetailPage() {
   });
 
   const updateItemsMut = useMutation({
-    mutationFn: () =>
+    mutationFn: (customItems?: FMWorkOrderItem[]) =>
       updateFMWorkOrderItems(
         id,
-        workingItems,
-        stoxyUser?.uid ?? "",
-        stoxyUser?.displayName || stoxyUser?.nickname || "ช่างผู้ดำเนินการ",
-        stoxyUser?.department
+        customItems ?? workingItems,
+        isAdmin ? undefined : stoxyUser?.uid,
+        isAdmin ? undefined : (stoxyUser?.displayName || stoxyUser?.nickname || "ช่างผู้ดำเนินการ"),
+        isAdmin ? undefined : stoxyUser?.department
       ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["fm_workorder", id] });
       qc.invalidateQueries({ queryKey: ["fm_workorders"] });
-      toast.success("บันทึกการแก้ไขรายการอุปกรณ์เรียบร้อยแล้ว");
+      toast.success("บันทึกรายการอุปกรณ์เรียบร้อยแล้ว");
     },
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาดในการบันทึก"),
+  });
+
+  const clearPerformerMut = useMutation({
+    mutationFn: () => clearSingleFMWorkOrderPerformer(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["fm_workorder", id] });
+      qc.invalidateQueries({ queryKey: ["fm_workorders"] });
+      toast.success("ล้างข้อมูลผู้ดำเนินการเรียบร้อยแล้ว");
+    },
+    onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาดในการล้างผู้ดำเนินการ"),
   });
 
   const approveMut = useMutation({
@@ -673,7 +688,12 @@ export default function FMWorkOrderDetailPage() {
   };
 
   const removeItem = (itemId: string) => {
-    setWorkingItems((prev) => prev.filter((i) => i.itemId !== itemId));
+    const nextItems = workingItems.filter((i) => i.itemId !== itemId);
+    setWorkingItems(nextItems);
+    const existedOnServer = (workOrder?.items || []).some((i) => i.itemId === itemId);
+    if (existedOnServer) {
+      updateItemsMut.mutate(nextItems);
+    }
   };
 
   const filteredInventory = inventory.filter((item) => {
@@ -1109,18 +1129,41 @@ export default function FMWorkOrderDetailPage() {
               <p className="font-bold text-blue-900 dark:text-blue-300 flex items-center gap-1.5">
                 <Wrench className="w-3.5 h-3.5 text-[#1D4ED8]" /> ข้อมูลผู้ดำเนินการ & ผู้มอบหมาย
               </p>
-              {!workOrder.assignedTechnicianName &&
-                workOrder.status !== "completed" &&
-                workOrder.status !== "cancelled" && (
-                  <button
-                    type="button"
-                    onClick={() => claimWorkOrderMut.mutate()}
-                    disabled={claimWorkOrderMut.isPending}
-                    className="px-2.5 py-1 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-lg text-[11px] font-bold shadow-xs transition-all flex items-center gap-1 disabled:opacity-50"
-                  >
-                    ✋ รับเป็นผู้ดำเนินการ
-                  </button>
-                )}
+              <div className="flex items-center gap-1.5">
+                {!workOrder.assignedTechnicianName &&
+                  workOrder.status !== "completed" &&
+                  workOrder.status !== "cancelled" && (
+                    <button
+                      type="button"
+                      onClick={() => claimWorkOrderMut.mutate()}
+                      disabled={claimWorkOrderMut.isPending}
+                      className="px-2.5 py-1 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-lg text-[11px] font-bold shadow-xs transition-all flex items-center gap-1 disabled:opacity-50"
+                    >
+                      ✋ รับเป็นผู้ดำเนินการ
+                    </button>
+                  )}
+                {workOrder.assignedTechnicianName &&
+                  (isAdmin || workOrder.status !== "completed") &&
+                  workOrder.status !== "cancelled" && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (
+                          confirm(
+                            `ต้องการล้างข้อมูลผู้ดำเนินการ (${workOrder.assignedTechnicianName}) ออกจากใบงานนี้หรือไม่?`
+                          )
+                        ) {
+                          clearPerformerMut.mutate();
+                        }
+                      }}
+                      disabled={clearPerformerMut.isPending}
+                      className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 dark:bg-rose-900/30 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-800 rounded-lg text-[11px] font-bold shadow-xs transition-all flex items-center gap-1 disabled:opacity-50"
+                      title="ล้างข้อมูลผู้ดำเนินการ"
+                    >
+                      <X className="w-3 h-3" /> ล้างผู้ดำเนินการ
+                    </button>
+                  )}
+              </div>
             </div>
 
             <p>
@@ -1499,6 +1542,22 @@ export default function FMWorkOrderDetailPage() {
 
                 {/* Primary / Completion actions */}
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
+                  {hasUnsavedItemChanges && (
+                    <button
+                      type="button"
+                      onClick={() => updateItemsMut.mutate(undefined)}
+                      disabled={updateItemsMut.isPending}
+                      className="w-full sm:w-auto px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-xs sm:text-sm font-bold shadow-md shadow-purple-500/20 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      <Save className="w-4 h-4 shrink-0" />
+                      <span>
+                        {updateItemsMut.isPending
+                          ? "กำลังบันทึก..."
+                          : "บันทึกรายการอุปกรณ์"}
+                      </span>
+                    </button>
+                  )}
+
                   {/* ปุ่มดำเนินการแล้ว (ไม่เบิกของ) -> ส่งไปสถานะ รอตรวจสอบ */}
                   <button
                     type="button"

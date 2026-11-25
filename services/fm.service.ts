@@ -652,6 +652,7 @@ export async function clearSingleFMWorkOrderPerformer(id: string): Promise<void>
     assignedTechnicianName: deleteField(),
     assignedTechnicianId: deleteField(),
     assignedDepartment: deleteField(),
+    assignedDate: deleteField(),
     updatedAt: Timestamp.now(),
   });
 }
