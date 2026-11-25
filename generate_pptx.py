@@ -13,12 +13,12 @@ def create_presentation(output_path):
     blank_layout = prs.slide_layouts[6]
 
     # Color Palette
-    PRIMARY = RGBColor(29, 78, 216)      # Royal Blue #1D4ED8
-    PRIMARY_DARK = RGBColor(15, 23, 42)  # Slate Navy #0F172A
+    PRIMARY = RGBColor(29, 78, 216)         # Royal Blue #1D4ED8
+    PRIMARY_DARK = RGBColor(15, 23, 42)     # Slate Navy #0F172A
     PRIMARY_LIGHT = RGBColor(239, 246, 255) # Light Blue #EFF6FF
-    ACCENT_AMBER = RGBColor(217, 119, 6) # Amber #D97706
-    ACCENT_GREEN = RGBColor(16, 185, 129)# Emerald #10B981
-    ACCENT_ROSE = RGBColor(225, 29, 72)  # Rose #E11D48
+    ACCENT_AMBER = RGBColor(217, 119, 6)    # Amber #D97706
+    ACCENT_GREEN = RGBColor(16, 185, 129)   # Emerald #10B981
+    ACCENT_ROSE = RGBColor(225, 29, 72)     # Rose #E11D48
     TEXT_DARK = RGBColor(15, 23, 42)
     TEXT_MUTED = RGBColor(100, 116, 139)
     TEXT_WHITE = RGBColor(255, 255, 255)
@@ -34,13 +34,11 @@ def create_presentation(output_path):
         return bg
 
     def add_header(slide, title, category, slide_num, total_slides=12):
-        # Top banner background accent line
         line = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.8), Inches(0.4), Inches(0.4), Inches(0.08))
         line.fill.solid()
         line.fill.fore_color.rgb = PRIMARY
         line.line.fill.background()
 
-        # Category tag
         cat_box = slide.shapes.add_textbox(Inches(0.8), Inches(0.52), Inches(8), Inches(0.35))
         tf_cat = cat_box.text_frame
         tf_cat.word_wrap = True
@@ -52,7 +50,6 @@ def create_presentation(output_path):
         p_cat.font.color.rgb = PRIMARY
         p_cat.font.name = "Tahoma"
 
-        # Title
         t_box = slide.shapes.add_textbox(Inches(0.8), Inches(0.85), Inches(10.5), Inches(0.6))
         tf = t_box.text_frame
         tf.word_wrap = True
@@ -64,7 +61,6 @@ def create_presentation(output_path):
         p.font.color.rgb = PRIMARY_DARK
         p.font.name = "Tahoma"
 
-        # Page number
         pn_box = slide.shapes.add_textbox(Inches(11.5), Inches(0.85), Inches(1), Inches(0.4))
         tf_pn = pn_box.text_frame
         p_pn = tf_pn.paragraphs[0]
@@ -91,81 +87,76 @@ def create_presentation(output_path):
     s1 = prs.slides.add_slide(blank_layout)
     set_slide_background(s1, PRIMARY_DARK)
 
-    # Accent decorative shape
     decor = s1.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(0.4), prs.slide_height)
     decor.fill.solid()
     decor.fill.fore_color.rgb = PRIMARY
     decor.line.fill.background()
 
-    # Sub-badge
-    b_badge = s1.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(1.2), Inches(1.5), Inches(3.2), Inches(0.45))
+    b_badge = s1.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(1.2), Inches(1.4), Inches(3.4), Inches(0.45))
     b_badge.fill.solid()
     b_badge.fill.fore_color.rgb = PRIMARY
     b_badge.line.fill.background()
     p_bb = b_badge.text_frame.paragraphs[0]
-    p_bb.text = "STOXY INVENTORY & FM SYSTEM"
+    p_bb.text = "STOXY FACILITY MANAGEMENT"
     p_bb.alignment = PP_ALIGN.CENTER
     p_bb.font.size = Pt(11)
     p_bb.font.bold = True
     p_bb.font.color.rgb = TEXT_WHITE
     p_bb.font.name = "Tahoma"
 
-    # Main Title
-    t1_box = s1.shapes.add_textbox(Inches(1.2), Inches(2.2), Inches(11), Inches(2.2))
+    t1_box = s1.shapes.add_textbox(Inches(1.2), Inches(2.1), Inches(11.2), Inches(2.3))
     tf1 = t1_box.text_frame
     tf1.word_wrap = True
     p1 = tf1.paragraphs[0]
-    p1.text = "คู่มือการใช้งานระบบใบแจ้งงานซ่อม (FM)\nและการจัดการเบิกจ่ายพัสดุในระบบ"
+    p1.text = "คู่มือการใช้งานระบบใบแจ้งงานซ่อม (FM)\nและขั้นตอนปฏิบัติงานหน้างานจริง"
     p1.font.size = Pt(36)
     p1.font.bold = True
     p1.font.color.rgb = TEXT_WHITE
     p1.font.name = "Tahoma"
-    p1.space_after = Pt(16)
+    p1.space_after = Pt(14)
 
     p1_sub = tf1.add_paragraph()
-    p1_sub.text = "ขั้นตอนปฏิบัติงานสำหรับ: ผู้แจ้งงาน | ช่างผู้ดำเนินการ (Main Users) | ผู้ดูแลระบบ (Admin Reviewers)"
-    p1_sub.font.size = Pt(16)
-    p1_sub.font.color.rgb = RGBColor(148, 163, 184) # Slate 400
+    p1_sub.text = "ผู้ควบคุมงาน (Admin) สร้างและอนุมัติ • ช่างปฏิบัติงานหน้างานและยื่นมือถือให้ลงนาม • เจ้าของบริเวณตรวจรับงาน"
+    p1_sub.font.size = Pt(15)
+    p1_sub.font.color.rgb = RGBColor(148, 163, 184)
     p1_sub.font.name = "Tahoma"
 
-    # 3 Summary Cards at bottom of slide 1
     roles_info = [
-        ("ผู้แจ้งงาน (Requester)", "เปิดใบงาน, แนบรูปประกอบ, ติดตามสถานะ, ลงนามรับทราบงานดิจิทัล", PRIMARY),
-        ("ช่างผู้ดำเนินการ (Technician)", "รับงานอัตโนมัติ, บันทึกขอเบิกอุปกรณ์, แจ้งรอจัดซื้อ, ปิดงานไม่เบิกของ", ACCENT_AMBER),
-        ("ผู้ตรวจสอบ (Admin/Manager)", "ตรวจตัดสต็อกอัตโนมัติ, ปรับปรุงรายการเบิก, แก้ไขใบงาน, Export รายงาน", ACCENT_GREEN)
+        ("ผู้ควบคุมงาน (Admin / Supervisor)", "สร้างใบงาน, มอบหมายงานให้ช่างในภาพรวม, ตรวจสอบรายการอุปกรณ์ และอนุมัติตัดสต็อกปิดงาน", PRIMARY),
+        ("ช่างผู้ปฏิบัติงาน (Technician)", "รับมอบหมายงาน, ไปซ่อมหน้างาน, เบิกพัสดุในระบบ, ยื่นมือถือให้ผู้แจ้งเซ็นรับทราบผลงาน", ACCENT_AMBER),
+        ("เจ้าของบริเวณ (Requester / Owner)", "ผู้แจ้งปัญหา, ตรวจดูงานที่ช่างทำเสร็จ และลงนามรับทราบผลงานผ่านมือถือของช่างที่หน้างาน", ACCENT_GREEN)
     ]
     for idx, (rtitle, rdesc, rcolor) in enumerate(roles_info):
-        cx = Inches(1.2 + idx * 3.7)
-        card = add_card(s1, cx, Inches(4.8), Inches(3.5), Inches(1.8), bg_color=RGBColor(30, 41, 59), border_color=rcolor)
-        tb = s1.shapes.add_textbox(cx + Inches(0.2), Inches(4.95), Inches(3.1), Inches(1.5))
+        cx = Inches(1.2 + idx * 3.75)
+        add_card(s1, cx, Inches(4.75), Inches(3.55), Inches(1.95), bg_color=RGBColor(30, 41, 59), border_color=rcolor)
+        tb = s1.shapes.add_textbox(cx + Inches(0.2), Inches(4.9), Inches(3.15), Inches(1.65))
         tf = tb.text_frame
         tf.word_wrap = True
         pt = tf.paragraphs[0]
         pt.text = rtitle
-        pt.font.size = Pt(13)
+        pt.font.size = Pt(12.5)
         pt.font.bold = True
         pt.font.color.rgb = TEXT_WHITE
         pt.font.name = "Tahoma"
         pt.space_after = Pt(6)
         pd = tf.add_paragraph()
         pd.text = rdesc
-        pd.font.size = Pt(10.5)
+        pd.font.size = Pt(10)
         pd.font.color.rgb = RGBColor(203, 213, 225)
         pd.font.name = "Tahoma"
 
     # =========================================================================
-    # SLIDE 2: ภาพรวมระบบ FM & การเชื่อมโยงคลังพัสดุ
+    # SLIDE 2: ความเข้าใจบทบาท & การทำงานร่วมกัน
     # =========================================================================
     s2 = prs.slides.add_slide(blank_layout)
     set_slide_background(s2, BG_LIGHT)
-    add_header(s2, "ภาพรวมระบบใบแจ้งงานซ่อม Facility Management (FM)", "Introduction & Architecture", 2)
+    add_header(s2, "บทบาทหน้าที่และการปฏิบัติงานร่วมกัน (Operational Alignment)", "Core Concepts", 2)
 
-    # 4 Highlights Boxes
     boxes = [
-        ("1. เชื่อมโยงตัดสต็อกแม่นยำ 100%", "เมื่อช่างระบุอุปกรณ์และแอดมินอนุมัติ ระบบจะตัดสต็อกในคลังให้อัตโนมัติ พร้อมบันทึกประวัติ Stock Movement ทันที ไม่ต้องคีย์ซ้ำซ้อน", PRIMARY),
-        ("2. สิทธิ์และความรับผิดชอบชัดเจน", "ผู้ดำเนินการจะผูกกับบัญชีผู้ใช้ขณะนั้นโดยตรง (Auto-Claim) ระบุตัวตนผู้ทำงานและหน่วยงานชัดเจน พร้อมมีระบบลงนามรับทราบจากผู้แจ้ง", ACCENT_GREEN),
-        ("3. รองรับทั้งเบิกของ & ไม่เบิกของ", "งานซ่อมทั่วไปที่ไม่มีการใช้วัสดุสามารถกด 'ดำเนินการแล้ว (ไม่เบิกของ)' ได้ทันที หรืองานที่ขาดอะไหล่สามารถระบุสถานะ 'รอจัดซื้อ/หา' ได้", ACCENT_AMBER),
-        ("4. ค้นหา รายงาน & สืบประวัติสมบูรณ์", "ระบบ Filter และ Sort By ค้นหาไว เรียงเลขที่ใบงานจากมากไปน้อยเป็นค่าเริ่มต้น พร้อมรายงานสรุป PDF/Excel ครบถ้วน", PRIMARY_DARK)
+        ("1. ผู้ควบคุมงาน (Admin) เป็นผู้เปิดใบงาน", "แอดมินหรือผู้ควบคุมงานทำหน้าที่รับแจ้งเหตุและสร้างใบงาน FM ในระบบ พร้อมแนบรูปและระบุผู้มอบหมายงาน เพื่อให้เกิดการควบคุมงานอย่างเป็นระบบ", PRIMARY),
+        ("2. มอบหมาย & ถือว่ารับงานทันทีในภาพรวม", "เมื่อผู้ควบคุมงานสร้างใบงานเสร็จ จะถือว่าช่างได้รับมอบหมายงานในภาพรวมแล้ว ช่างสามารถเข้าดูรายละเอียดและกดรับงานผูกชื่อตนเองในระบบ", PRIMARY_DARK),
+        ("3. ช่างลงพื้นที่ปฏิบัติงาน & จัดการอุปกรณ์", "ช่างลงพื้นที่จริง ดำเนินการซ่อม หากต้องใช้อะไหล่ให้เลือกเบิกจากสต็อกคลัง หากไม่ใช้ให้กดจบงานไม่เบิกของ หรือหากของหมดให้แจ้งรอจัดซื้อ", ACCENT_AMBER),
+        ("4. ยื่นมือถือหน้างานให้เจ้าของพื้นที่ลงนาม", "เมื่อซ่อมเสร็จ ช่างจะเปิดหน้าใบงานบนมือถือตนเอง แล้วยื่นให้เจ้าของบริเวณหรือผู้ทำการแทนเซ็นลายมือชื่อตรวจรับงานเสร็จสิ้นหน้างานทันที", ACCENT_GREEN)
     ]
     for idx, (btitle, bdesc, bcolor) in enumerate(boxes):
         col = idx % 2
@@ -174,7 +165,6 @@ def create_presentation(output_path):
         by = Inches(1.65 + row * 2.6)
         add_card(s2, bx, by, Inches(5.7), Inches(2.35))
         
-        # Color bar indicator on left of card
         bar = s2.shapes.add_shape(MSO_SHAPE.RECTANGLE, bx, by + Inches(0.2), Inches(0.12), Inches(1.95))
         bar.fill.solid()
         bar.fill.fore_color.rgb = bcolor
@@ -185,7 +175,7 @@ def create_presentation(output_path):
         tf.word_wrap = True
         p = tf.paragraphs[0]
         p.text = btitle
-        p.font.size = Pt(14)
+        p.font.size = Pt(13.5)
         p.font.bold = True
         p.font.color.rgb = bcolor
         p.font.name = "Tahoma"
@@ -197,29 +187,27 @@ def create_presentation(output_path):
         p2.font.name = "Tahoma"
 
     # =========================================================================
-    # SLIDE 3: ไทม์ไลน์ภาพรวม (End-to-End Workflow Timeline)
+    # SLIDE 3: ไทม์ไลน์กระบวนการทำงาน 5 ขั้นตอนหลัก
     # =========================================================================
     s3 = prs.slides.add_slide(blank_layout)
     set_slide_background(s3, BG_LIGHT)
-    add_header(s3, "ไทม์ไลน์ลำดับขั้นตอนการปฏิบัติงาน (End-to-End Lifecycle)", "Workflow Timeline", 3)
+    add_header(s3, "ไทม์ไลน์ลำดับขั้นตอนการปฏิบัติงานหน้างานจริง (Workflow Timeline)", "Field Workflow Timeline", 3)
 
     steps = [
-        ("ขั้นตอนที่ 1", "สร้างใบแจ้งงาน", "ผู้แจ้ง/แอดมิน กรอกข้อมูล หรืออัปโหลดไฟล์ OCR + รูปถ่ายหน้างาน (สูงสุด 3 รูป)", PRIMARY),
-        ("ขั้นตอนที่ 2", "มอบหมาย / รับงาน", "ช่างกดเข้ารับใบงาน ระบบดึงชื่อ-สังกัดของช่างผู้ใช้งานขณะนั้นลงในใบงานอัตโนมัติ", PRIMARY),
-        ("ขั้นตอนที่ 3", "ปฏิบัติงาน & เบิกของ", "เลือกอุปกรณ์จากคลังสต็อก หรือกด 'ดำเนินการแล้ว (ไม่เบิกของ)' หรือ 'รอจัดซื้อ/หา'", ACCENT_AMBER),
-        ("ขั้นตอนที่ 4", "ผู้แจ้งลงนาม", "ผู้แจ้งงานตรวจสอบและลงลายมือชื่อดิจิทัลรับทราบการดำเนินการ (ระบุชื่อ + รหัสพนักงาน)", ACCENT_GREEN),
-        ("ขั้นตอนที่ 5", "แอดมินอนุมัติ", "ผู้ดูแลระบบตรวจสอบรายการอุปกรณ์ ตัดสต็อกคลังอัตโนมัติ และปิดสถานะ 'เสร็จสิ้น'", ACCENT_GREEN),
-        ("ขั้นตอนที่ 6", "พิมพ์ & รายงาน", "พิมพ์แบบฟอร์ม SFM หรือ Export รายงานสรุปประจำเดือนเป็น PDF และ Excel", PRIMARY_DARK),
+        ("ขั้นตอนที่ 1", "ผู้ควบคุมงานสร้างใบงาน", "แอดมิน/ผู้ควบคุมงานเปิดใบงาน FM ในระบบ แนบรูปถ่ายจุดชำรุด ระบุผู้มอบหมายงาน", PRIMARY),
+        ("ขั้นตอนที่ 2", "มอบหมาย & รับงาน", "ถือว่ารับงานไปแล้วในภาพรวม ช่างกดเข้าดูรายละเอียดและรับดำเนินการผูกชื่อตนเอง", PRIMARY),
+        ("ขั้นตอนที่ 3", "ปฏิบัติงาน & จัดการพัสดุ", "ช่างไปหน้างาน: เบิกพัสดุจากคลังสต็อก หรือกดจบงานไม่เบิกของ หรือกดแจ้งรอจัดซื้อ", ACCENT_AMBER),
+        ("ขั้นตอนที่ 4", "ผู้แจ้งลงนามบนมือถือช่าง", "ช่างทำงานเสร็จ ยื่นมือถือตนเองให้เจ้าของบริเวณหรือผู้ทำการแทนเซ็นชื่อดิจิทัลรับทราบ", ACCENT_GREEN),
+        ("ขั้นตอนที่ 5", "ผู้ควบคุมงานอนุมัติปิดงาน", "ผู้ควบคุมงาน (คนเดียวกับข้อ 1) ตรวจสอบความเรียบร้อย กดยืนยันอนุมัติตัดสต็อกปิดงาน 'เสร็จสิ้น'", ACCENT_GREEN),
+        ("ขั้นตอนที่ 6", "พิมพ์ & สรุปรายงาน", "พิมพ์แบบฟอร์ม SFM พร้อมเซ็น หรือ Export รายงานสรุปประจำเดือน PDF/Excel", PRIMARY_DARK),
     ]
 
     for idx, (step_no, step_title, step_desc, step_col) in enumerate(steps):
         sx = Inches(0.8 + idx * 1.95)
         sy = Inches(1.8)
         
-        # Step Card
         add_card(s3, sx, sy, Inches(1.85), Inches(4.8))
         
-        # Step badge header
         s_badge = s3.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, sx + Inches(0.15), sy + Inches(0.2), Inches(1.55), Inches(0.45))
         s_badge.fill.solid()
         s_badge.fill.fore_color.rgb = step_col
@@ -227,7 +215,7 @@ def create_presentation(output_path):
         p_sb = s_badge.text_frame.paragraphs[0]
         p_sb.text = step_no
         p_sb.alignment = PP_ALIGN.CENTER
-        p_sb.font.size = Pt(11)
+        p_sb.font.size = Pt(10.5)
         p_sb.font.bold = True
         p_sb.font.color.rgb = TEXT_WHITE
         p_sb.font.name = "Tahoma"
@@ -237,7 +225,7 @@ def create_presentation(output_path):
         tf.word_wrap = True
         pt = tf.paragraphs[0]
         pt.text = step_title
-        pt.font.size = Pt(13)
+        pt.font.size = Pt(12)
         pt.font.bold = True
         pt.font.color.rgb = PRIMARY_DARK
         pt.font.name = "Tahoma"
@@ -245,117 +233,106 @@ def create_presentation(output_path):
 
         pd = tf.add_paragraph()
         pd.text = step_desc
-        pd.font.size = Pt(10.5)
+        pd.font.size = Pt(10)
         pd.font.color.rgb = TEXT_MUTED
         pd.font.name = "Tahoma"
 
     # =========================================================================
-    # SLIDE 4: ขั้นตอนฝั่งผู้แจ้งงาน (Requester / Staff)
+    # SLIDE 4: ขั้นตอนที่ 1 & 2 - ผู้ควบคุมงานสร้างใบงาน และการรับมอบหมาย
     # =========================================================================
     s4 = prs.slides.add_slide(blank_layout)
     set_slide_background(s4, BG_LIGHT)
-    add_header(s4, "คู่มือการใช้งาน: ฝั่งผู้แจ้งงาน (Requester)", "Role: Requester Guide", 4)
+    add_header(s4, "ขั้นตอนที่ 1 & 2: ผู้ควบคุมงานสร้างใบงาน และการรับงานของช่าง", "Step 1 & 2: Creation & Assignment", 4)
 
-    # Left: Steps
-    add_card(s4, Inches(0.8), Inches(1.65), Inches(6.8), Inches(5.2))
-    tb_req = s4.shapes.add_textbox(Inches(1.1), Inches(1.85), Inches(6.2), Inches(4.8))
-    tf_req = tb_req.text_frame
-    tf_req.word_wrap = True
-    
-    p = tf_req.paragraphs[0]
-    p.text = "ขั้นตอนการแจ้งงานและการลงนามรับทราบ"
-    p.font.size = Pt(15)
+    add_card(s4, Inches(0.8), Inches(1.65), Inches(5.7), Inches(5.2))
+    tb_c1 = s4.shapes.add_textbox(Inches(1.1), Inches(1.9), Inches(5.1), Inches(4.7))
+    tf_c1 = tb_c1.text_frame
+    tf_c1.word_wrap = True
+    p = tf_c1.paragraphs[0]
+    p.text = "1. ผู้ควบคุมงาน (Admin) สร้างใบงาน"
+    p.font.size = Pt(14)
     p.font.bold = True
     p.font.color.rgb = PRIMARY
     p.font.name = "Tahoma"
-    p.space_after = Pt(12)
+    p.space_after = Pt(10)
 
-    req_steps = [
-        ("1. สร้างใบแจ้งงานใหม่", "กดปุ่ม '+ สร้างใบงาน FM ใหม่' กรอกข้อมูลผู้แจ้ง, แผนก, สถานที่, และหัวข้องานที่ต้องการซ่อม"),
-        ("2. แนบรูปถ่ายหน้างาน (ไม่เกิน 3 รูป)", "ถ่ายรูปจุดที่ชำรุด เช่น รอยรั่ว สวิตช์เสีย ระบบจะบีบอัดรูปภาพให้อัตโนมัติ"),
-        ("3. ติดตามสถานะงานแบบ Real-time", "ตรวจสอบว่างานอยู่ในสถานะ: รอดำเนินการ, รอจัดซื้อ/หา, รอตรวจสอบ หรือ เสร็จสิ้น"),
-        ("4. การลงลายมือชื่อดิจิทัลรับทราบ", "เมื่อช่างเข้ามาดูงานหรือทำงานเสร็จ ผู้แจ้งสามารถเปิดหน้าใบงาน แล้วกดปุ่ม '✍️ ลงนามรับทราบ' วาดลายเซ็น ระบุชื่อ และรหัสพนักงาน (ลงนามไว้ก่อนหรือหลังช่างทำเสร็จได้)")
+    c1_items = [
+        "ผู้ควบคุมงานเข้าเมนู FM กด '+ สร้างใบงาน FM ใหม่'",
+        "กรอกข้อมูลผู้แจ้งงาน, แผนก/ฝ่าย, สถานที่, และหัวข้องานซ่อม",
+        "ระบุชื่อ 'ผู้มอบหมายงาน' (Supervisor/Admin)",
+        "แนบรูปถ่ายสภาพหน้างานจริง (สูงสุด 3 รูป มีระบบบีบอัดรูปอัตโนมัติ) เพื่อให้ช่างเห็นอาการล่วงหน้า",
+        "สามารถนำเข้าข้อมูลด้วย OCR สแกนเอกสารเดิมได้"
     ]
-    for title, desc in req_steps:
-        p_t = tf_req.add_paragraph()
-        p_t.text = f"• {title}"
-        p_t.font.bold = True
-        p_t.font.size = Pt(11.5)
-        p_t.font.color.rgb = PRIMARY_DARK
-        p_t.font.name = "Tahoma"
-        p_d = tf_req.add_paragraph()
-        p_d.text = f"   {desc}"
-        p_d.font.size = Pt(10.5)
-        p_d.font.color.rgb = TEXT_MUTED
-        p_d.font.name = "Tahoma"
-        p_d.space_after = Pt(8)
+    for it in c1_items:
+        pt = tf_c1.add_paragraph()
+        pt.text = f"• {it}"
+        pt.font.size = Pt(10.5)
+        pt.font.color.rgb = TEXT_DARK
+        pt.font.name = "Tahoma"
+        pt.space_after = Pt(6)
 
-    # Right: Realistic Scenario Box
-    add_card(s4, Inches(7.8), Inches(1.65), Inches(4.7), Inches(5.2), bg_color=PRIMARY_LIGHT, border_color=PRIMARY)
-    tb_scen1 = s4.shapes.add_textbox(Inches(8.1), Inches(1.85), Inches(4.1), Inches(4.8))
-    tf_scen1 = tb_scen1.text_frame
-    tf_scen1.word_wrap = True
-    ps_t = tf_scen1.paragraphs[0]
-    ps_t.text = "ตัวอย่างสถานการณ์จริง: ผู้แจ้งงาน"
-    ps_t.font.size = Pt(14)
-    ps_t.font.bold = True
-    ps_t.font.color.rgb = PRIMARY
-    ps_t.font.name = "Tahoma"
-    ps_t.space_after = Pt(10)
+    add_card(s4, Inches(6.8), Inches(1.65), Inches(5.7), Inches(5.2))
+    tb_c2 = s4.shapes.add_textbox(Inches(7.1), Inches(1.9), Inches(5.1), Inches(4.7))
+    tf_c2 = tb_c2.text_frame
+    tf_c2.word_wrap = True
+    p = tf_c2.paragraphs[0]
+    p.text = "2. การมอบหมาย & รับงานในภาพรวม"
+    p.font.size = Pt(14)
+    p.font.bold = True
+    p.font.color.rgb = PRIMARY_DARK
+    p.font.name = "Tahoma"
+    p.space_after = Pt(10)
 
-    scenario_text = (
-        "📍 สถานการณ์:\n"
-        "คุณกนกวรรณ (ฝ่ายบัญชี ชั้น 3) พบว่าเครื่องปรับอากาศมีน้ำหยดลงโต๊ะทำงาน\n\n"
-        "1. คุณกนกวรรณเข้าเมนู FM กด 'สร้างใบงานใหม่'\n"
-        "2. กรอกหัวข้อ: 'แอร์มีน้ำหยด แผนกบัญชี ชั้น 3'\n"
-        "3. แนบรูปถ่ายแอร์ที่มีน้ำหยด 2 รูป\n"
-        "4. เมื่อช่างเข้าตรวจสอบ คุณกนกวรรณกด 'ลงนามรับทราบ' วาดลายมือชื่อพร้อมใส่รหัสพนักงาน EMP-104\n"
-        "5. ระบบบันทึกลายเซ็น พร้อมแสดงวันที่และเวลาลงนามทันที"
-    )
-    ps_c = tf_scen1.add_paragraph()
-    ps_c.text = scenario_text
-    ps_c.font.size = Pt(11)
-    ps_c.font.color.rgb = PRIMARY_DARK
-    ps_c.font.name = "Tahoma"
+    c2_items = [
+        "เมื่อผู้ควบคุมงานสร้างใบงานเสร็จ จะถือว่า 'ช่างได้รับมอบหมายงานในภาพรวมแล้ว' ทันที",
+        "ช่างทีมซ่อมบำรุงเข้าดูงานใหม่ในแท็บ 'รอดำเนินการ'",
+        "ช่างผู้รับผิดชอบกดปุ่ม 'รับดำเนินการใบงานนี้'",
+        "ระบบจะดึงชื่อ นามสกุล และหน่วยงานสังกัดของช่างจากบัญชีที่ Login มาบันทึกลงใบงานอัตโนมัติ (ไม่ต้องพิมพ์เอง)",
+        "เอกสารที่เปิดไว้ก่อนหน้านี้จะเว้นว่างชื่อช่างไว้ เพื่อรอช่างเข้ามากดรับงานตามจริง"
+    ]
+    for it in c2_items:
+        pt = tf_c2.add_paragraph()
+        pt.text = f"• {it}"
+        pt.font.size = Pt(10.5)
+        pt.font.color.rgb = TEXT_DARK
+        pt.font.name = "Tahoma"
+        pt.space_after = Pt(6)
 
     # =========================================================================
-    # SLIDE 5: ฝั่งช่างผู้ดำเนินการ (Main Users / Technicians)
+    # SLIDE 5: ขั้นตอนที่ 3 - ช่างปฏิบัติงานหน้างาน & จัดการอุปกรณ์
     # =========================================================================
     s5 = prs.slides.add_slide(blank_layout)
     set_slide_background(s5, BG_LIGHT)
-    add_header(s5, "คู่มือการใช้งาน: ฝั่งช่างผู้ดำเนินการ (การรับงาน & เบิกของ)", "Role: Technician Guide", 5)
+    add_header(s5, "ขั้นตอนที่ 3: ช่างลงพื้นที่ปฏิบัติงาน & การจัดการพัสดุ", "Step 3: Field Execution", 5)
 
-    # 3 Work Flow Columns for Technician
     tech_columns = [
-        ("ขั้นตอนที่ 1: การรับงาน", "Auto Performer Claim", [
-            "เข้าเมนู FM กดปุ่มแท็บ 'รอดำเนินการ'",
-            "กดเปิดดูใบแจ้งงานที่ต้องการ",
-            "หากยังไม่มีผู้ดำเนินการ ระบบจะมีปุ่ม 'รับดำเนินการใบงานนี้'",
-            "เมื่อกดรับ ระบบจะดึงชื่อ นามสกุล และสังกัดของช่างจากบัญชีที่ Login อัตโนมัติ (ไม่ต้องพิมพ์เอง)",
-            "เอกสารใบงานเดิมก่อนหน้านี้จะถูกเว้นว่างไว้จนกว่าจะมีช่างเข้ามารับงาน"
-        ], PRIMARY),
-        ("ขั้นตอนที่ 2ก: เบิกใช้อุปกรณ์", "Requisition from Inventory", [
-            "ค้นหาอุปกรณ์ในคลังสต็อกที่แสดงในหน้าใบงาน",
-            "ดูจำนวนคงเหลือแบบ Real-time ก่อนเบิก",
-            "กดปุ่ม '+' เพื่อเพิ่มรายการอุปกรณ์ที่ต้องใช้",
-            "ระบุจำนวนและบันทึกหมายเหตุอุปกรณ์",
+        ("3ก. เบิกพัสดุจากคลัง", "Requisition from Stock", [
+            "ช่างตรวจสอบพบว่าต้องใช้อะไหล่",
+            "ดูตารางสต็อกอุปกรณ์คงเหลือ Real-time ในหน้าใบงาน",
+            "กดปุ่ม '+' เพื่อเพิ่มอุปกรณ์ ระบุจำนวนที่ต้องใช้จริง",
             "กดปุ่ม 'ส่งรายการอุปกรณ์รอตรวจสอบ'",
             "ใบงานจะเปลี่ยนสถานะเป็น 'รอตรวจสอบ' เพื่อรอแอดมินอนุมัติตัดสต็อก"
-        ], ACCENT_GREEN),
-        ("ขั้นตอนที่ 2ข: ไม่ใช้อุปกรณ์", "Complete Without Items", [
-            "กรณีเป็นงานบริการ ตรวจเช็ค หรือขันน็อต ที่ไม่มีการเบิกพัสดุใดๆ",
+        ], PRIMARY),
+        ("3ข. จบงานไม่เบิกของ", "Complete Without Items", [
+            "กรณีเป็นงานบริการ ตรวจเช็ค ทำความสะอาด ขันน็อต ปรับตั้งค่า",
+            "ไม่มีการเบิกพัสดุหรือใช้วัสดุสิ้นเปลืองใดๆ",
             "ไม่ต้องเลือกอุปกรณ์ในรายการ",
             "กดปุ่ม 'ดำเนินการแล้ว (ไม่เบิกของ)'",
-            "ระบบจะเปลี่ยนสถานะเป็น 'รอตรวจสอบ' ให้แอดมินปิดงานได้ทันที",
-            "ลดขั้นตอนการเปิดใบเบิกที่เกินความจำเป็น"
-        ], PRIMARY_DARK)
+            "ใบงานส่งไปรอผู้ควบคุมงานอนุมัติปิดงานได้ทันที รวดเร็ว ไม่สร้างภาระคลัง"
+        ], ACCENT_GREEN),
+        ("3ค. อะไหล่หมด / รอจัดซื้อ", "Waiting for Parts", [
+            "ตรวจหน้างานแล้วพบว่าไม่มีอะไหล่ในสต็อกคลัง",
+            "กดปุ่มสีส้ม 'รอของ (จัดซื้อ/หาอุปกรณ์)'",
+            "พิมพ์ระบุของที่ต้องสั่ง เช่น 'ลูกลอยชักโครก 1/2 นิ้ว'",
+            "สถานะย่อเป็น: รอจัดซื้อ/หา (ลูกลอยชักโครก 1/2 นิ้ว)",
+            "เมื่อของมาส่ง กด 'เปลี่ยนกลับเป็นรอดำเนินการ' เข้าทำต่อ"
+        ], ACCENT_AMBER)
     ]
 
     for idx, (col_title, col_sub, points, col_color) in enumerate(tech_columns):
         cx = Inches(0.8 + idx * 3.9)
         add_card(s5, cx, Inches(1.65), Inches(3.7), Inches(5.2))
         
-        # Top banner
         c_bar = s5.shapes.add_shape(MSO_SHAPE.RECTANGLE, cx, Inches(1.65), Inches(3.7), Inches(0.65))
         c_bar.fill.solid()
         c_bar.fill.fore_color.rgb = col_color
@@ -389,85 +366,86 @@ def create_presentation(output_path):
             p_pt.space_after = Pt(6)
 
     # =========================================================================
-    # SLIDE 6: ฝั่งช่าง: กรณีอุปกรณ์ไม่พอ / ต้องรอจัดซื้อ
+    # SLIDE 6: ขั้นตอนที่ 4 - การลงนามตรวจรับที่หน้างาน (ยื่นมือถือให้ผู้แจ้งเซ็น)
     # =========================================================================
     s6 = prs.slides.add_slide(blank_layout)
     set_slide_background(s6, BG_LIGHT)
-    add_header(s6, "คู่มือการใช้งาน: ฝั่งช่าง กรณีต้องรอจัดซื้อ / รอของ", "Role: Waiting Parts Handling", 6)
+    add_header(s6, "ขั้นตอนที่ 4: การลงนามตรวจรับหน้างาน (ยื่นมือถือให้ผู้แจ้งเซ็น)", "Step 4: On-Site Signature", 6)
 
-    add_card(s6, Inches(0.8), Inches(1.65), Inches(6.8), Inches(5.2))
-    tb_wp = s6.shapes.add_textbox(Inches(1.1), Inches(1.85), Inches(6.2), Inches(4.8))
-    tf_wp = tb_wp.text_frame
-    tf_wp.word_wrap = True
+    add_card(s6, Inches(0.8), Inches(1.65), Inches(6.5), Inches(5.2))
+    tb_sign = s6.shapes.add_textbox(Inches(1.1), Inches(1.85), Inches(5.9), Inches(4.8))
+    tf_sign = tb_sign.text_frame
+    tf_sign.word_wrap = True
     
-    p = tf_wp.paragraphs[0]
-    p.text = "ขั้นตอนการจัดการใบงานเมื่ออะไหล่หมดหรือต้องสั่งซื้อเพิ่ม"
-    p.font.size = Pt(15)
+    p = tf_sign.paragraphs[0]
+    p.text = "ขั้นตอนการลงนามรับทราบการดำเนินงานที่หน้างาน"
+    p.font.size = Pt(14)
     p.font.bold = True
-    p.font.color.rgb = ACCENT_AMBER
+    p.font.color.rgb = ACCENT_GREEN
     p.font.name = "Tahoma"
-    p.space_after = Pt(12)
+    p.space_after = Pt(10)
 
-    wp_steps = [
-        ("1. เมื่อตรวจสอบแล้วพบว่าไม่มีอะไหล่ในสต็อก", "ในหน้าใบงาน FM ให้กดปุ่มสีส้ม 'รอของ (จัดซื้อ/หาอุปกรณ์)'"),
-        ("2. กรอกระบุรายการที่ต้องการสั่งซื้อ", "ระบบจะเปิดหน้าต่างให้พิมพ์ระบุรายการ เช่น 'สายไฟ VAF 2x2.5 ยาว 50 เมตร' หรือ 'ลูกลอยชักโครก 1/2 นิ้ว'"),
-        ("3. สถานะใบงานจะเปลี่ยนเป็น 'รอจัดซื้อ/หา (ข้อความ)'", "บนหน้ารายการใบงานและรายงานสรุปจะย่อสถานะให้อ่านง่าย เช่น 'รอจัดซื้อ/หา (หลอดไฟ LED)'"),
-        ("4. การเปลี่ยนสถานะกลับเป็น 'รอดำเนินการ' เมื่องของมาถึง", "เมื่อพัสดุมาส่ง ช่างสามารถเข้าใบงานเดิมแล้วกดปุ่ม 'เปลี่ยนกลับเป็นรอดำเนินการ' เพื่อดำเนินการซ่อมต่อและเบิกของตามปกติ")
+    sign_steps = [
+        ("ช่างปฏิบัติงานให้แล้วเสร็จที่หน้างานจริง", "เมื่อซ่อมแซมเสร็จสิ้น ตรวจสอบความเรียบร้อยของพื้นที่และอุปกรณ์"),
+        ("ช่างเปิดหน้าใบงานบนมือถือตนเอง", "เปิดหน้าใบแจ้งงาน FM ในสมาร์ตโฟน แล้วกดปุ่ม '✍️ ลงนามรับทราบ'"),
+        ("ยื่นมือถือให้เจ้าของบริเวณ (ผู้แจ้งงาน)", "ส่งมือถือให้ผู้แจ้งงาน หรือผู้ทำการแทน ตรวจดูผลงาน"),
+        ("ผู้แจ้งลงลายมือชื่อดิจิทัลบนหน้าจอ", "วาดลายเซ็นบนช่อง Touchscreen พิมพ์ระบุชื่อ-นามสกุล และรหัสพนักงาน (ถ้ามี) แล้วกดบันทึก"),
+        ("ความยืดหยุ่นของระบบ", "ระบบอนุญาตให้ลงนามไว้ล่วงหน้าได้ตั้งแต่สถานะ 'รอดำเนินการ' (กรณีผู้แจ้งจะไม่อยู่หน้างานช่วงบ่าย) หรือลงนามทันทีเมื่อซ่อมเสร็จ")
     ]
-    for title, desc in wp_steps:
-        p_t = tf_wp.add_paragraph()
+    for title, desc in sign_steps:
+        p_t = tf_sign.add_paragraph()
         p_t.text = f"• {title}"
         p_t.font.bold = True
-        p_t.font.size = Pt(11.5)
+        p_t.font.size = Pt(11)
         p_t.font.color.rgb = PRIMARY_DARK
         p_t.font.name = "Tahoma"
-        p_d = tf_wp.add_paragraph()
+        p_d = tf_sign.add_paragraph()
         p_d.text = f"   {desc}"
-        p_d.font.size = Pt(10.5)
+        p_d.font.size = Pt(10)
         p_d.font.color.rgb = TEXT_MUTED
         p_d.font.name = "Tahoma"
-        p_d.space_after = Pt(10)
+        p_d.space_after = Pt(6)
 
-    # Right: Real Scenario Box
-    add_card(s6, Inches(7.8), Inches(1.65), Inches(4.7), Inches(5.2), bg_color=RGBColor(254, 243, 199), border_color=ACCENT_AMBER)
-    tb_scen2 = s6.shapes.add_textbox(Inches(8.1), Inches(1.85), Inches(4.1), Inches(4.8))
-    tf_scen2 = tb_scen2.text_frame
-    tf_scen2.word_wrap = True
-    ps_t = tf_scen2.paragraphs[0]
-    ps_t.text = "ตัวอย่างสถานการณ์จริง: การรอของ"
-    ps_t.font.size = Pt(14)
+    # Right: Realistic Scenario Box
+    add_card(s6, Inches(7.5), Inches(1.65), Inches(5.0), Inches(5.2), bg_color=PRIMARY_LIGHT, border_color=PRIMARY)
+    tb_scen = s6.shapes.add_textbox(Inches(7.8), Inches(1.85), Inches(4.4), Inches(4.8))
+    tf_scen = tb_scen.text_frame
+    tf_scen.word_wrap = True
+    ps_t = tf_scen.paragraphs[0]
+    ps_t.text = "📌 ตัวอย่างสถานการณ์จริง: การลงนามหน้างาน"
+    ps_t.font.size = Pt(13)
     ps_t.font.bold = True
-    ps_t.font.color.rgb = ACCENT_AMBER
+    ps_t.font.color.rgb = PRIMARY
     ps_t.font.name = "Tahoma"
-    ps_t.space_after = Pt(10)
+    ps_t.space_after = Pt(8)
 
-    scenario_text2 = (
-        "📍 สถานการณ์:\n"
-        "ช่างสมพงษ์ ได้รับมอบหมายงานซ่อมปั๊มน้ำอาคาร 2 พบว่าซีลยางและแมคคานิคอลซีลรั่วซึม ซึ่งไม่มีสำรองในคลัง\n\n"
-        "1. ช่างสมพงษ์กดปุ่ม 'รอของ (จัดซื้อ/หาอุปกรณ์)'\n"
-        "2. พิมพ์ระบุ: 'แมคคานิคอลซีล 25mm รุ่น CR-3'\n"
-        "3. ใบงานแสดงสถานะ: 'รอจัดซื้อ/หา (แมคคานิคอลซีล 25mm)' ทันที\n"
-        "4. ฝ่ายจัดซื้อและผู้แจ้งเห็นสถานะชัดเจนว่าติดรอของอะไร\n"
-        "5. เมื่ออะไหล่มาถึง ช่างสมพงษ์กดเปลี่ยนกลับเป็น 'รอดำเนินการ' เข้าติดตั้ง และปิดใบงาน"
+    scenario_text = (
+        "📍 สถานการณ์หน้างาน:\n"
+        "ใบงาน FM-6090: แอร์น้ำหยด แผนกบัญชี ชั้น 3\n\n"
+        "1. ช่างสมชาย เข้าไปล้างท่อน้ำทิ้งแอร์และเป่าฝุ่นจนแอร์ทำงานปกติ น้ำหยุดหยดเรียบร้อย\n"
+        "2. ช่างสมชายหยิบมือถือตนเอง เปิดใบงาน FM-6090 กดปุ่ม '✍️ ลงนามรับทราบ'\n"
+        "3. ยื่นมือถือให้คุณกนกวรรณ (เจ้าของโต๊ะ/ผู้แจ้งงาน) ตรวจดูความเรียบร้อย\n"
+        "4. คุณกนกวรรณเซ็นชื่อด้วยนิ้วมือบนจอมือถือของช่าง พิมพ์ชื่อ 'กนกวรรณ มีสุข' และรหัส 'EMP-084'\n"
+        "5. กดบันทึก ลายเซ็นจะถูกแนบลงในระบบทันที พร้อมให้ผู้ควบคุมงานตรวจสอบปิดงาน"
     )
-    ps_c = tf_scen2.add_paragraph()
-    ps_c.text = scenario_text2
-    ps_c.font.size = Pt(11)
+    ps_c = tf_scen.add_paragraph()
+    ps_c.text = scenario_text
+    ps_c.font.size = Pt(10.5)
     ps_c.font.color.rgb = PRIMARY_DARK
     ps_c.font.name = "Tahoma"
 
     # =========================================================================
-    # SLIDE 7: ฝั่งผู้ตรวจสอบ (แอดมิน / ผู้จัดการ)
+    # SLIDE 7: ขั้นตอนที่ 5 - ผู้ควบคุมงานตรวจสอบและอนุมัติตัดสต็อก
     # =========================================================================
     s7 = prs.slides.add_slide(blank_layout)
     set_slide_background(s7, BG_LIGHT)
-    add_header(s7, "คู่มือการใช้งาน: ฝั่งผู้ตรวจสอบ (Admin Review & Stock Approval)", "Role: Admin Reviewer", 7)
+    add_header(s7, "ขั้นตอนที่ 5: ผู้ควบคุมงานตรวจสอบ & อนุมัติตัดสต็อกปิดงาน", "Step 5: Review & Stock Approval", 7)
 
     admin_steps = [
-        ("1. การแจ้งเตือน & แถบ Banner สีส้ม", "เมื่อช่างส่งรายการอุปกรณ์ ระบบจะแสดงแถบ Banner ด้านบนทันทีว่า 'มีใบงานรอตรวจสอบและอนุมัติ X รายการ' พร้อมส่งแจ้งเตือนผ่าน LINE Notify", PRIMARY),
-        ("2. ตรวจสอบ & ปรับแต่งรายการอุปกรณ์", "แอดมินสามารถตรวจสอบรายการที่ช่างขอเบิก หากจำนวนไม่ถูกต้อง สามารถแก้ไขจำนวน หรือกดเพิ่ม/ลบรายการอุปกรณ์ก่อนอนุมัติได้โดยตรง", PRIMARY),
-        ("3. อนุมัติตัดสต็อกอัตโนมัติ (1-Click)", "เมื่อกดยืนยันอนุมัติ ระบบจะตัดยอดคงเหลือในคลังพัสดุทันที และบันทึกประวัติ Stock Movement ประเภท Requisition ให้เรียบร้อย", ACCENT_GREEN),
-        ("4. ปิดสถานะ 'เสร็จสิ้น' พร้อมลงวันที่", "ระบบเปลี่ยนสถานะใบงานเป็น 'เสร็จสิ้น' และบันทึก Timestamp วันที่เสร็จสิ้นอัตโนมัติ เพื่อนำไปแสดงในรายงาน", ACCENT_GREEN)
+        ("1. ผู้ควบคุมงาน (คนเดียวกับข้อ 1) ตรวจสอบงาน", "เมื่อช่างส่งรายการอุปกรณ์และผู้แจ้งลงนามแล้ว ผู้ควบคุมงานจะเห็นงานขึ้นในแท็บ 'รอตรวจสอบ' และมีแถบแจ้งเตือนสีส้มด้านบน", PRIMARY),
+        ("2. ตรวจสอบความถูกต้องของอุปกรณ์", "ผู้ควบคุมงานตรวจสอบอุปกรณ์ที่ช่างขอเบิก หากจำนวนไม่ตรงหรือหยิบผิดรุ่น สามารถแก้ไขจำนวน หรือกดเพิ่ม/ลบรายการอุปกรณ์ก่อนอนุมัติได้โดยตรง", PRIMARY),
+        ("3. กดยืนยันอนุมัติ (1-Click Approval)", "เมื่อข้อมูลถูกต้อง ผู้ควบคุมงานกดปุ่ม 'อนุมัติและตัดสต็อก' (หรืออนุมัติปิดงานไม่เบิกของ)", ACCENT_GREEN),
+        ("4. ผลลัพธ์อัตโนมัติ: ตัดสต็อก & บันทึกเสร็จสิ้น", "ระบบตัดลดยอดพัสดุในคลังทันที บันทึก Stock Movement และเปลี่ยนสถานะใบงานเป็น 'เสร็จสิ้น' พร้อมประทับ Timestamp วันที่เสร็จสิ้นอัตโนมัติ", ACCENT_GREEN)
     ]
     for idx, (atitle, adesc, acolor) in enumerate(admin_steps):
         col = idx % 2
@@ -476,7 +454,6 @@ def create_presentation(output_path):
         ay = Inches(1.65 + row * 2.6)
         add_card(s7, ax, ay, Inches(5.7), Inches(2.35))
         
-        # Color top strip
         strip = s7.shapes.add_shape(MSO_SHAPE.RECTANGLE, ax, ay, Inches(5.7), Inches(0.12))
         strip.fill.solid()
         strip.fill.fore_color.rgb = acolor
@@ -487,19 +464,19 @@ def create_presentation(output_path):
         tf.word_wrap = True
         p = tf.paragraphs[0]
         p.text = atitle
-        p.font.size = Pt(13.5)
+        p.font.size = Pt(13)
         p.font.bold = True
         p.font.color.rgb = acolor
         p.font.name = "Tahoma"
-        p.space_after = Pt(8)
+        p.space_after = Pt(6)
         p2 = tf.add_paragraph()
         p2.text = adesc
-        p2.font.size = Pt(11)
+        p2.font.size = Pt(10.5)
         p2.font.color.rgb = TEXT_MUTED
         p2.font.name = "Tahoma"
 
     # =========================================================================
-    # SLIDE 8: สิทธิ์พิเศษของผู้ดูแลระบบ (Admin Controls & Overrides)
+    # SLIDE 8: สิทธิ์พิเศษของผู้ดูแลระบบ (Admin Super Powers)
     # =========================================================================
     s8 = prs.slides.add_slide(blank_layout)
     set_slide_background(s8, BG_LIGHT)
@@ -511,11 +488,11 @@ def create_presentation(output_path):
     tf_p1.word_wrap = True
     p = tf_p1.paragraphs[0]
     p.text = "✏️ ปุ่ม 'แก้ไขใบงาน' (Admin Edit Details)"
-    p.font.size = Pt(15)
+    p.font.size = Pt(14)
     p.font.bold = True
     p.font.color.rgb = PRIMARY
     p.font.name = "Tahoma"
-    p.space_after = Pt(12)
+    p.space_after = Pt(10)
 
     p1_items = [
         "แก้ไขเลขที่ใบงาน, ประเภทงาน, วันที่แจ้ง, วันที่ใช้งาน",
@@ -539,11 +516,11 @@ def create_presentation(output_path):
     tf_p2.word_wrap = True
     p = tf_p2.paragraphs[0]
     p.text = "⚙️ ปุ่ม 'แก้ไขสถานะ' (Admin Status Override)"
-    p.font.size = Pt(15)
+    p.font.size = Pt(14)
     p.font.bold = True
     p.font.color.rgb = ACCENT_AMBER
     p.font.name = "Tahoma"
-    p.space_after = Pt(12)
+    p.space_after = Pt(10)
 
     p2_items = [
         "ผู้ดูแลระบบมีสิทธิ์ในการปรับเปลี่ยนสถานะใบงานได้ 'ทุกสถานะ'",
@@ -591,7 +568,6 @@ def create_presentation(output_path):
         fx = Inches(0.8 + idx * 3.9)
         add_card(s9, fx, Inches(1.65), Inches(3.7), Inches(5.2))
         
-        # Header Box
         h_box = s9.shapes.add_shape(MSO_SHAPE.RECTANGLE, fx, Inches(1.65), Inches(3.7), Inches(0.8))
         h_box.fill.solid()
         h_box.fill.fore_color.rgb = fcol
@@ -631,7 +607,6 @@ def create_presentation(output_path):
     set_slide_background(s10, BG_LIGHT)
     add_header(s10, "การพิมพ์เอกสารใบงาน & การออกรายงานสรุป (SFM & Reports)", "Reporting & Printing", 10)
 
-    # Left: SFM Printing
     add_card(s10, Inches(0.8), Inches(1.65), Inches(5.7), Inches(5.2))
     tb_pr = s10.shapes.add_textbox(Inches(1.1), Inches(1.9), Inches(5.1), Inches(4.7))
     tf_pr = tb_pr.text_frame
@@ -642,7 +617,7 @@ def create_presentation(output_path):
     p.font.bold = True
     p.font.color.rgb = PRIMARY
     p.font.name = "Tahoma"
-    p.space_after = Pt(12)
+    p.space_after = Pt(10)
 
     pr_items = [
         "ปุ่ม 'พิมพ์' ด้านบน จะแสดงเฉพาะเอกสารแบบฟอร์ม อบก-จ.-01 เท่านั้น (ซ่อนแถบเมนูข้างและปุ่มต่างๆ ทั้งหมดอัตโนมัติ)",
@@ -658,7 +633,6 @@ def create_presentation(output_path):
         pt.font.name = "Tahoma"
         pt.space_after = Pt(8)
 
-    # Right: Summary Reports (PDF / Excel)
     add_card(s10, Inches(6.8), Inches(1.65), Inches(5.7), Inches(5.2))
     tb_rep = s10.shapes.add_textbox(Inches(7.1), Inches(1.9), Inches(5.1), Inches(4.7))
     tf_rep = tb_rep.text_frame
@@ -669,7 +643,7 @@ def create_presentation(output_path):
     p.font.bold = True
     p.font.color.rgb = ACCENT_GREEN
     p.font.name = "Tahoma"
-    p.space_after = Pt(12)
+    p.space_after = Pt(10)
 
     rep_items = [
         "เข้าเมนู 'รายงาน' เลือก 'รายงานสรุปใบงานและอุปกรณ์ที่ใช้ (FM)'",
@@ -689,13 +663,12 @@ def create_presentation(output_path):
         pt.space_after = Pt(6)
 
     # =========================================================================
-    # SLIDE 11: ตารางสรุปสิทธิ์การใช้งาน (Role & Permission Matrix)
+    # SLIDE 11: ตารางสรุปหน้าที่และความรับผิดชอบ
     # =========================================================================
     s11 = prs.slides.add_slide(blank_layout)
     set_slide_background(s11, BG_LIGHT)
-    add_header(s11, "ตารางสรุปหน้าที่และความรับผิดชอบ (Role & Permission Matrix)", "Governance & Permissions", 11)
+    add_header(s11, "ตารางสรุปหน้าที่และความรับผิดชอบ (Role & Responsibility Matrix)", "Roles & Responsibilities", 11)
 
-    # Table
     table_shape = s11.shapes.add_table(7, 4, Inches(0.8), Inches(1.7), Inches(11.7), Inches(5.0))
     table = table_shape.table
     table.columns[0].width = Inches(3.9)
@@ -703,7 +676,7 @@ def create_presentation(output_path):
     table.columns[2].width = Inches(2.6)
     table.columns[3].width = Inches(2.6)
 
-    headers_matrix = ["ฟังก์ชัน / การดำเนินการ", "ผู้แจ้งงาน (Requester)", "ช่างผู้ดำเนินการ (Tech)", "ผู้ดูแลระบบ (Admin)"]
+    headers_matrix = ["ขั้นตอน / การดำเนินการ", "ผู้ควบคุมงาน (Admin)", "ช่างผู้ปฏิบัติงาน (Tech)", "เจ้าของบริเวณ (Requester)"]
     for c_idx, h_text in enumerate(headers_matrix):
         cell = table.cell(0, c_idx)
         cell.fill.solid()
@@ -718,12 +691,12 @@ def create_presentation(output_path):
         p.alignment = PP_ALIGN.CENTER if c_idx > 0 else PP_ALIGN.LEFT
 
     matrix_data = [
-        ("สร้างใบแจ้งงานซ่อม / อัปโหลดรูปภาพ", "✔️ สร้างได้", "✔️ สร้างได้", "✔️ สร้างได้"),
-        ("กดรับดำเนินการใบงาน (Auto Performer)", "—", "✔️ กดรับงานตนเอง", "✔️ กำหนดช่างได้"),
-        ("ระบุขอเบิกอุปกรณ์ / แจ้งรอจัดซื้อ / จบงานไม่เบิกของ", "—", "✔️ ทำรายการได้", "✔️ ทำรายการได้"),
-        ("ลงนามรับทราบการดำเนินการ (Digital Signature)", "✔️ ลงนามรับทราบ", "—", "✔️ ลงนามแทนได้"),
-        ("อนุมัติตัดสต็อกพัสดุในคลัง (Auto Deduct Stock)", "—", "—", "✔️ มีสิทธิ์อนุมัติเท่านั้น"),
-        ("แก้ไขข้อมูลใบงาน & ปรับสถานะ Overrides ทุกสถานะ", "—", "—", "✔️ สิทธิ์เฉพาะ Admin"),
+        ("1. สร้างใบแจ้งงาน FM ในระบบ / แนบรูป", "✔️ ผู้สร้างหลัก", "—", "แจ้งเรื่องให้ผู้ควบคุม"),
+        ("2. มอบหมายงาน / รับงานในภาพรวม", "✔️ ผู้มอบหมาย", "✔️ รับงานหน้างาน", "—"),
+        ("3. ปฏิบัติงาน / เบิกพัสดุ / แจ้งรอจัดซื้อ", "—", "✔️ ปฏิบัติงานจริง", "—"),
+        ("4. การลงนามรับทราบผลการดำเนินงาน", "—", "✔️ ยื่นมือถือให้เซ็น", "✔️ ลงนามตรวจรับบนมือถือช่าง"),
+        ("5. ตรวจสอบรายการอุปกรณ์ & อนุมัติตัดสต็อก", "✔️ ตรวจ & ตัดสต็อก", "—", "—"),
+        ("6. สิทธิ์แก้ไขใบงาน & ปรับสถานะทุกสถานะ", "✔️ สิทธิ์เฉพาะ Admin", "—", "—"),
     ]
 
     for r_idx, row_values in enumerate(matrix_data):
@@ -740,7 +713,7 @@ def create_presentation(output_path):
                 p.alignment = PP_ALIGN.CENTER
                 if "✔️" in val:
                     p.font.bold = True
-                    p.font.color.rgb = PRIMARY if "Admin" not in val else ACCENT_GREEN
+                    p.font.color.rgb = PRIMARY if "Admin" in headers_matrix[c_idx] else (ACCENT_AMBER if "Tech" in headers_matrix[c_idx] else ACCENT_GREEN)
                 else:
                     p.font.color.rgb = TEXT_MUTED
             else:
@@ -748,12 +721,11 @@ def create_presentation(output_path):
                 p.font.color.rgb = PRIMARY_DARK
 
     # =========================================================================
-    # SLIDE 12: สรุปประโยชน์และคำแนะนำ (Summary & Support)
+    # SLIDE 12: สรุปประโยชน์และคำแนะนำ
     # =========================================================================
     s12 = prs.slides.add_slide(blank_layout)
     set_slide_background(s12, PRIMARY_DARK)
     
-    # Header on dark
     cat_box = s12.shapes.add_textbox(Inches(0.8), Inches(0.6), Inches(8), Inches(0.35))
     tf_cat = cat_box.text_frame
     p_cat = tf_cat.paragraphs[0]
@@ -773,17 +745,16 @@ def create_presentation(output_path):
     p.font.name = "Tahoma"
 
     benefits = [
-        ("สต็อกตรง ไม่สูญหาย", "ทุกชิ้นพัสดุที่ใช้ในงานซ่อมถูกบันทึกและตัดสต็อกอย่างถูกต้อง มีหลักฐานอ้างอิงถึงใบงาน FM เสมอ", ACCENT_GREEN),
-        ("สื่อสารตรงกันทุกฝ่าย", "ผู้แจ้ง ช่าง และแอดมิน มองเห็นสถานะเดียวกันแบบ Real-time ลดการโทรตามงาน", PRIMARY),
-        ("ประหยัดเวลาการทำงาน", "ช่างไม่ต้องกรอกเอกสารกระดาษ สามารถเลือกอุปกรณ์และส่งตรวจผ่านมือถือหรือคอมพิวเตอร์ได้ทันที", ACCENT_AMBER),
-        ("รายงานและตรวจสอบย้อนหลัง", "ผู้บริหารสามารถตรวจสอบประวัติการซ่อมบำรุงและต้นทุนพัสดุที่ใช้ย้อนหลังได้ตลอดเวลา", RGBColor(168, 85, 247))
+        ("ควบคุมงานเป็นระบบ", "ผู้ควบคุมงานเป็นจุดศูนย์กลางในการเปิดงานและตรวจรับตัดสต็อก ทำให้งานไม่ตกหล่นและมีผู้รับผิดชอบชัดเจน", PRIMARY),
+        ("หลักฐานตรวจรับหน้างานจริง", "ช่างนำมือถือไปให้เจ้าของพื้นที่ตรวจงานและเซ็นรับทราบทันที มีหลักฐานเป็นลายเซ็นดิจิทัลพร้อม Timestamp", ACCENT_GREEN),
+        ("สต็อกตรง 100% ไม่สูญหาย", "พัสดุและอะไหล่ทุกชิ้นถูกผูกกับเลขที่ใบงาน FM และอนุมัติตัดสต็อกอัตโนมัติ ไม่ต้องคีย์เอกสารซ้ำ", ACCENT_AMBER),
+        ("รายงานและตรวจสอบย้อนหลัง", "ผู้บริหารสามารถตรวจสอบประวัติการซ่อมบำรุงและต้นทุนพัสดุที่ใช้ย้อนหลังได้ตลอดเวลาผ่าน PDF/Excel", RGBColor(168, 85, 247))
     ]
 
     for idx, (btitle, bdesc, bcol) in enumerate(benefits):
         bx = Inches(0.8 + idx * 2.95)
         add_card(s12, bx, Inches(1.85), Inches(2.8), Inches(4.8), bg_color=RGBColor(30, 41, 59), border_color=bcol)
         
-        # Indicator badge
         b_badge = s12.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, bx + Inches(0.2), Inches(2.1), Inches(2.4), Inches(0.45))
         b_badge.fill.solid()
         b_badge.fill.fore_color.rgb = bcol
