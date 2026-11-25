@@ -408,10 +408,11 @@ export async function adminUpdateFMWorkOrderStatus(
   const wo = snap.data() as FMWorkOrder;
 
   const now = Timestamp.now();
+  const items = wo.items || [];
   const hadDeductedStock =
     wo.status === "completed" &&
     !wo.completedWithoutItems &&
-    (wo.items?.length || 0) > 0 &&
+    items.length > 0 &&
     !wo.stockReturned;
 
   // Case A: Work order was completed with deducted stock, now changing to another status (e.g. cancelled, pending, etc.)
@@ -419,14 +420,14 @@ export async function adminUpdateFMWorkOrderStatus(
     if (returnStock) {
       // 1. Fetch current inventory items to calculate stock movements
       const itemSnaps = await Promise.all(
-        wo.items.map((i) => getDoc(doc(db, "inventory_items", i.itemId)))
+        items.map((i) => getDoc(doc(db, "inventory_items", i.itemId)))
       );
 
       const batch = writeBatch(db);
 
       // Re-increment quantity & quantityAvailable in inventory
-      for (let idx = 0; idx < wo.items.length; idx++) {
-        const itemData = wo.items[idx];
+      for (let idx = 0; idx < items.length; idx++) {
+        const itemData = items[idx];
         const itemRef = doc(db, "inventory_items", itemData.itemId);
         batch.update(itemRef, {
           quantityAvailable: increment(itemData.quantity),
@@ -447,20 +448,20 @@ export async function adminUpdateFMWorkOrderStatus(
 
       if (note && note.trim()) {
         updateData.notes = wo.notes
-          ? `${wo.notes}\n[Admin ปรับสถานะเป็น "${newStatus}" และคืนสต็อก ${wo.items.length} รายการ โดย ${adminName}]: ${note.trim()}`
-          : `[Admin ปรับสถานะเป็น "${newStatus}" และคืนสต็อก ${wo.items.length} รายการ โดย ${adminName}]: ${note.trim()}`;
+          ? `${wo.notes}\n[Admin ปรับสถานะเป็น "${newStatus}" และคืนสต็อก ${items.length} รายการ โดย ${adminName}]: ${note.trim()}`
+          : `[Admin ปรับสถานะเป็น "${newStatus}" และคืนสต็อก ${items.length} รายการ โดย ${adminName}]: ${note.trim()}`;
       } else {
         updateData.notes = wo.notes
-          ? `${wo.notes}\n[Admin ปรับสถานะเป็น "${newStatus}" และคืนสต็อก ${wo.items.length} รายการ โดย ${adminName}]`
-          : `[Admin ปรับสถานะเป็น "${newStatus}" และคืนสต็อก ${wo.items.length} รายการ โดย ${adminName}]`;
+          ? `${wo.notes}\n[Admin ปรับสถานะเป็น "${newStatus}" และคืนสต็อก ${items.length} รายการ โดย ${adminName}]`
+          : `[Admin ปรับสถานะเป็น "${newStatus}" และคืนสต็อก ${items.length} รายการ โดย ${adminName}]`;
       }
 
       batch.update(ref, updateData);
       await batch.commit();
 
       // Record stock movements (type: return)
-      for (let idx = 0; idx < wo.items.length; idx++) {
-        const itemData = wo.items[idx];
+      for (let idx = 0; idx < items.length; idx++) {
+        const itemData = items[idx];
         const itemSnap = itemSnaps[idx];
         const currentQty = itemSnap.exists()
           ? (itemSnap.data() as InventoryItem).quantityAvailable
@@ -484,7 +485,7 @@ export async function adminUpdateFMWorkOrderStatus(
       }
 
       notifyLine(
-        `🔄 ผู้ดูแลระบบปรับเปลี่ยนสถานะใบงาน FM-${wo.workOrderNumber}\nเรื่อง: ${wo.title}\nสถานะใหม่: ${newStatus}\nคืนสต็อกพัสดุ: ${wo.items.length} รายการ (${wo.items.reduce((s, i) => s + i.quantity, 0)} ชิ้น) เรียบร้อยแล้ว\nปรับโดย: ${adminName}${note ? `\nหมายเหตุ: ${note}` : ""}`
+        `🔄 ผู้ดูแลระบบปรับเปลี่ยนสถานะใบงาน FM-${wo.workOrderNumber}\nเรื่อง: ${wo.title}\nสถานะใหม่: ${newStatus}\nคืนสต็อกพัสดุ: ${items.length} รายการ (${items.reduce((s, i) => s + i.quantity, 0)} ชิ้น) เรียบร้อยแล้ว\nปรับโดย: ${adminName}${note ? `\nหมายเหตุ: ${note}` : ""}`
       );
       return;
     } else {
@@ -511,17 +512,17 @@ export async function adminUpdateFMWorkOrderStatus(
   const needsStockDeduction =
     newStatus === "completed" &&
     !wo.completedWithoutItems &&
-    (wo.items?.length || 0) > 0 &&
+    items.length > 0 &&
     (wo.stockReturned || wo.status !== "completed");
 
   if (needsStockDeduction) {
     const itemSnaps = await Promise.all(
-      wo.items.map((i) => getDoc(doc(db, "inventory_items", i.itemId)))
+      items.map((i) => getDoc(doc(db, "inventory_items", i.itemId)))
     );
 
     // Verify stock availability
-    for (let idx = 0; idx < wo.items.length; idx++) {
-      const itemData = wo.items[idx];
+    for (let idx = 0; idx < items.length; idx++) {
+      const itemData = items[idx];
       const snapItem = itemSnaps[idx];
       if (!snapItem.exists()) {
         throw new Error(`ไม่พบอุปกรณ์รหัส ${itemData.itemCode} ในระบบ`);
@@ -535,8 +536,8 @@ export async function adminUpdateFMWorkOrderStatus(
     }
 
     const batch = writeBatch(db);
-    for (let idx = 0; idx < wo.items.length; idx++) {
-      const itemData = wo.items[idx];
+    for (let idx = 0; idx < items.length; idx++) {
+      const itemData = items[idx];
       const itemRef = doc(db, "inventory_items", itemData.itemId);
       batch.update(itemRef, {
         quantityAvailable: increment(-itemData.quantity),
@@ -566,8 +567,8 @@ export async function adminUpdateFMWorkOrderStatus(
     batch.update(ref, updateData);
     await batch.commit();
 
-    for (let idx = 0; idx < wo.items.length; idx++) {
-      const itemData = wo.items[idx];
+    for (let idx = 0; idx < items.length; idx++) {
+      const itemData = items[idx];
       const inv = itemSnaps[idx].data() as InventoryItem;
       await recordStockMovement({
         itemId: itemData.itemId,
@@ -588,7 +589,7 @@ export async function adminUpdateFMWorkOrderStatus(
     }
 
     notifyLine(
-      `✅ ผู้ดูแลระบบอนุมัติและตัดสต็อกใบงาน FM-${wo.workOrderNumber}\nเรื่อง: ${wo.title}\nสถานะใหม่: เสร็จสิ้น\nปรับโดย: ${adminName}\nตัดสต็อก ${wo.items.length} รายการ`
+      `✅ ผู้ดูแลระบบอนุมัติและตัดสต็อกใบงาน FM-${wo.workOrderNumber}\nเรื่อง: ${wo.title}\nสถานะใหม่: เสร็จสิ้น\nปรับโดย: ${adminName}\nตัดสต็อก ${items.length} รายการ`
     );
     return;
   }
@@ -782,19 +783,20 @@ export async function deleteFMWorkOrder(
   const snap = await getDoc(ref);
   if (snap.exists()) {
     const wo = snap.data() as FMWorkOrder;
+    const items = wo.items || [];
     if (
       wo.status === "completed" &&
       !wo.completedWithoutItems &&
-      (wo.items?.length || 0) > 0 &&
+      items.length > 0 &&
       !wo.stockReturned
     ) {
       const itemSnaps = await Promise.all(
-        wo.items.map((i) => getDoc(doc(db, "inventory_items", i.itemId)))
+        items.map((i) => getDoc(doc(db, "inventory_items", i.itemId)))
       );
       const batch = writeBatch(db);
       const now = Timestamp.now();
-      for (let idx = 0; idx < wo.items.length; idx++) {
-        const itemData = wo.items[idx];
+      for (let idx = 0; idx < items.length; idx++) {
+        const itemData = items[idx];
         const itemRef = doc(db, "inventory_items", itemData.itemId);
         batch.update(itemRef, {
           quantityAvailable: increment(itemData.quantity),
@@ -805,8 +807,8 @@ export async function deleteFMWorkOrder(
       batch.delete(ref);
       await batch.commit();
 
-      for (let idx = 0; idx < wo.items.length; idx++) {
-        const itemData = wo.items[idx];
+      for (let idx = 0; idx < items.length; idx++) {
+        const itemData = items[idx];
         const itemSnap = itemSnaps[idx];
         const currentQty = itemSnap.exists()
           ? (itemSnap.data() as InventoryItem).quantityAvailable
