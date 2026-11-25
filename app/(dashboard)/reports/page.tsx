@@ -61,7 +61,9 @@ export default function ReportsPage() {
         else map.set(key, { label, count: 1 });
       }
     }
-    return Array.from(map.entries()).map(([key, val]) => ({ key, label: val.label, count: val.count }));
+    return Array.from(map.entries())
+      .map(([key, val]) => ({ key, label: val.label, count: val.count }))
+      .sort((a, b) => b.key.localeCompare(a.key));
   }, [fmWorkOrders]);
 
   const filteredFMOrders = useMemo(() => {
