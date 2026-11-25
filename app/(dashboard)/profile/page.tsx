@@ -6,9 +6,10 @@ import { AppShell } from "@/components/layout/AppShell";
 import { MobileHeader } from "@/components/layout/MobileHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { logout, updateStoxyUser } from "@/services/auth.service";
-import { LogOut, Building2, Shield, Mail, SmilePlus, Edit2, Check, X, User, Briefcase, Hash } from "lucide-react";
+import { LogOut, Building2, Shield, Mail, SmilePlus, Edit2, Check, X, User, Briefcase, Hash, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { TECHNICIAN_TEAMS } from "@/types";
 
 const ROLE_LABEL: Record<string, string> = {
   admin: "Admin",
@@ -38,6 +39,9 @@ export default function ProfilePage() {
   const [displayName, setDisplayName] = useState(stoxyUser?.displayName ?? "");
   const [editingEmpId, setEditingEmpId] = useState(false);
   const [empId, setEmpId] = useState(stoxyUser?.employeeId ?? "");
+  const [editingTeam, setEditingTeam] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState<string>(stoxyUser?.technicianTeam ?? "");
+  const [customTeam, setCustomTeam] = useState("");
   const [saving, setSaving] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -48,6 +52,22 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!editingNickname) setNickname(stoxyUser?.nickname ?? "");
   }, [stoxyUser?.nickname, editingNickname]);
+
+  useEffect(() => {
+    if (!editingTeam) {
+      const current = stoxyUser?.technicianTeam ?? "";
+      if (TECHNICIAN_TEAMS.includes(current as any)) {
+        setSelectedTeam(current);
+        setCustomTeam("");
+      } else if (current) {
+        setSelectedTeam("อื่นๆ");
+        setCustomTeam(current);
+      } else {
+        setSelectedTeam("");
+        setCustomTeam("");
+      }
+    }
+  }, [stoxyUser?.technicianTeam, editingTeam]);
 
   if (loading) return null;
   if (!stoxyUser) { router.replace("/login"); return null; }
@@ -95,6 +115,26 @@ export default function ProfilePage() {
       await refreshUser();
       toast.success("บันทึกแผนกแล้ว");
       setEditingDept(false);
+    } catch {
+      toast.error("เกิดข้อผิดพลาด");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function saveTeam() {
+    setSaving(true);
+    try {
+      let finalVal: string | undefined = undefined;
+      if (selectedTeam === "อื่นๆ") {
+        finalVal = customTeam.trim() || undefined;
+      } else if (selectedTeam) {
+        finalVal = selectedTeam;
+      }
+      await updateStoxyUser(stoxyUser!.uid, { technicianTeam: finalVal });
+      await refreshUser();
+      toast.success("บันทึกข้อมูลทีมช่างเรียบร้อยแล้ว");
+      setEditingTeam(false);
     } catch {
       toast.error("เกิดข้อผิดพลาด");
     } finally {
@@ -232,6 +272,110 @@ export default function ProfilePage() {
                 <p className="text-sm font-medium text-gray-900 dark:text-white">{stoxyUser.department || "ไม่ระบุ"}</p>
                 <button onClick={() => { setEditingDept(true); setDept(stoxyUser.department ?? ""); }}
                   className="p-1.5 rounded-lg hover:bg-gray-50 active:scale-95 transition-all">
+                  <Edit2 className="w-3.5 h-3.5 text-gray-400" />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ทีมช่าง / ประเภทงาน (editable) */}
+        <div className="flex items-start gap-3 px-5 py-4">
+          <Wrench className="w-4 h-4 text-gray-400 shrink-0 mt-1" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-gray-400 dark:text-gray-500 mb-1.5">ทีมช่าง / ประเภทงาน</p>
+            {editingTeam ? (
+              <div className="space-y-2.5">
+                <div className="grid grid-cols-2 gap-1.5">
+                  {TECHNICIAN_TEAMS.map((tm) => (
+                    <button
+                      key={tm}
+                      type="button"
+                      onClick={() => {
+                        setSelectedTeam(tm);
+                        setCustomTeam("");
+                      }}
+                      className={cn(
+                        "px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition-all text-left truncate",
+                        selectedTeam === tm
+                          ? "bg-[#1D4ED8] text-white border-[#1D4ED8] shadow-xs"
+                          : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-[#1D4ED8]/40"
+                      )}
+                    >
+                      {tm}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTeam("อื่นๆ")}
+                    className={cn(
+                      "px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition-all text-left truncate",
+                      selectedTeam === "อื่นๆ"
+                        ? "bg-[#1D4ED8] text-white border-[#1D4ED8] shadow-xs"
+                        : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-[#1D4ED8]/40"
+                    )}
+                  >
+                    อื่นๆ (ระบุเอง)
+                  </button>
+                </div>
+
+                {selectedTeam === "อื่นๆ" && (
+                  <input
+                    value={customTeam}
+                    onChange={(e) => setCustomTeam(e.target.value)}
+                    placeholder="กรอกชื่อทีม เช่น ทีมช่างอาคาร"
+                    autoFocus
+                    className="w-full text-xs border border-[#1D4ED8]/30 rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                )}
+
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    onClick={saveTeam}
+                    disabled={saving}
+                    className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold flex items-center gap-1 active:scale-95 transition-all shadow-xs"
+                  >
+                    <Check className="w-3.5 h-3.5" /> บันทึก
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingTeam(false);
+                      const current = stoxyUser.technicianTeam ?? "";
+                      if (TECHNICIAN_TEAMS.includes(current as any)) {
+                        setSelectedTeam(current);
+                        setCustomTeam("");
+                      } else if (current) {
+                        setSelectedTeam("อื่นๆ");
+                        setCustomTeam(current);
+                      } else {
+                        setSelectedTeam("");
+                        setCustomTeam("");
+                      }
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-semibold flex items-center gap-1 active:scale-95 transition-all"
+                  >
+                    <X className="w-3.5 h-3.5" /> ยกเลิก
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    {stoxyUser.technicianTeam ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-[#1D4ED8] dark:bg-blue-900/30 dark:text-blue-300 border border-blue-100 dark:border-blue-800">
+                        ⚡ {stoxyUser.technicianTeam}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400 text-xs">ยังไม่ได้ระบุทีม</span>
+                    )}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setEditingTeam(true)}
+                  className="p-1.5 rounded-lg hover:bg-gray-50 active:scale-95 transition-all"
+                  title="แก้ไขทีมช่าง"
+                >
                   <Edit2 className="w-3.5 h-3.5 text-gray-400" />
                 </button>
               </div>

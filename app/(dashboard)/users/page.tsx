@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Users, Shield, Check, X, Pencil, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import type { UserRole, StoxyUser, EmployeeType } from "@/types";
+import { TECHNICIAN_TEAMS, type UserRole, type StoxyUser, type EmployeeType } from "@/types";
 
 const roles: { value: UserRole; label: string; color: string }[] = [
   { value: "admin",      label: "Admin",         color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
@@ -26,18 +26,33 @@ function EditUserModal({ user, onClose }: { user: StoxyUser; onClose: () => void
   const [employeeType, setEmployeeType] = useState<EmployeeType>(user.employeeType ?? "employee");
   const [employeeId, setEmployeeId] = useState(user.employeeId ?? "");
   const [department, setDepartment] = useState(user.department ?? "");
+  const isPreset = user.technicianTeam && (TECHNICIAN_TEAMS as readonly string[]).includes(user.technicianTeam);
+  const [teamMode, setTeamMode] = useState<string>(
+    user.technicianTeam ? (isPreset ? user.technicianTeam : "อื่นๆ") : ""
+  );
+  const [customTeam, setCustomTeam] = useState<string>(
+    user.technicianTeam && !isPreset ? user.technicianTeam : ""
+  );
   const [loading, setLoading] = useState(false);
 
   async function save() {
     if (!displayName.trim()) { toast.error("กรุณากรอกชื่อ-สกุล"); return; }
     try {
       setLoading(true);
+      let finalTeam: string | undefined = undefined;
+      if (teamMode === "อื่นๆ") {
+        finalTeam = customTeam.trim() || undefined;
+      } else if (teamMode) {
+        finalTeam = teamMode;
+      }
+
       await updateStoxyUser(user.uid, {
         displayName: displayName.trim(),
         nickname: nickname.trim() || undefined,
         employeeType,
         employeeId: employeeId.trim() || undefined,
         department: department.trim(),
+        technicianTeam: finalTeam,
       });
       qc.invalidateQueries({ queryKey: ["users"] });
       toast.success("บันทึกข้อมูลสำเร็จ");
@@ -103,6 +118,30 @@ function EditUserModal({ user, onClose }: { user: StoxyUser; onClose: () => void
           <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 block">หน่วยงาน</label>
           <input value={department} onChange={e => setDepartment(e.target.value)} placeholder="เช่น หบอว-ธ."
             className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+        </div>
+
+        {/* ทีมช่าง / ประเภทงาน */}
+        <div>
+          <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 block">ทีมช่าง / ประเภทงาน</label>
+          <select
+            value={teamMode}
+            onChange={e => setTeamMode(e.target.value)}
+            className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+          >
+            <option value="">(ไม่ระบุทีม)</option>
+            {TECHNICIAN_TEAMS.map(tm => (
+              <option key={tm} value={tm}>{tm}</option>
+            ))}
+            <option value="อื่นๆ">อื่นๆ (กรอกเอง)</option>
+          </select>
+          {teamMode === "อื่นๆ" && (
+            <input
+              value={customTeam}
+              onChange={e => setCustomTeam(e.target.value)}
+              placeholder="ระบุชื่อทีม เช่น ทีมช่างอาคาร"
+              className="w-full mt-2 px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            />
+          )}
         </div>
 
         <button onClick={save} disabled={loading}
@@ -238,7 +277,14 @@ export default function UsersPage() {
                                   {isSelf && <span className="text-xs text-gray-400">· คุณ</span>}
                                 </div>
                                 <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                                {user.department && <p className="text-xs text-gray-400 truncate">{user.department}{user.employeeId ? ` · ${user.employeeId}` : ""}</p>}
+                                <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                                  {user.department && <span className="text-xs text-gray-400 truncate">{user.department}{user.employeeId ? ` · ${user.employeeId}` : ""}</span>}
+                                  {user.technicianTeam && (
+                                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-800">
+                                      ⚡ {user.technicianTeam}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">

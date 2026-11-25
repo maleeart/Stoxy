@@ -37,7 +37,7 @@ import { compressImages } from "@/lib/compress";
 import { Timestamp } from "firebase/firestore";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import type { FMWorkOrderItem, FMWorkOrderStatus, InventoryItem } from "@/types";
+import { TECHNICIAN_TEAMS, type FMWorkOrderItem, type FMWorkOrderStatus, type InventoryItem } from "@/types";
 
 const statusConfig: Record<FMWorkOrderStatus, { label: string; badge: string; bg: string }> = {
   pending: {
@@ -481,6 +481,8 @@ export default function FMWorkOrderDetailPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editWorkOrderNumber, setEditWorkOrderNumber] = useState("");
   const [editWorkType, setEditWorkType] = useState("");
+  const [editIsCustomWorkType, setEditIsCustomWorkType] = useState(false);
+  const [editCustomWorkTypeText, setEditCustomWorkTypeText] = useState("");
   const [editRequestDateStr, setEditRequestDateStr] = useState("");
   const [editUseDateStr, setEditUseDateStr] = useState("");
   const [editTitle, setEditTitle] = useState("");
@@ -507,7 +509,11 @@ export default function FMWorkOrderDetailPage() {
   const openEditModal = () => {
     if (!workOrder) return;
     setEditWorkOrderNumber(workOrder.workOrderNumber || "");
-    setEditWorkType(workOrder.workType || "ระบบไฟฟ้า");
+    const currentWt = workOrder.workType || "ทีมช่างไฟฟ้า";
+    setEditWorkType(currentWt);
+    const inPreset = (TECHNICIAN_TEAMS as readonly string[]).includes(currentWt);
+    setEditIsCustomWorkType(!inPreset);
+    setEditCustomWorkTypeText(!inPreset ? currentWt : "");
     const rDate = workOrder.requestDate ? toDate(workOrder.requestDate) : new Date();
     setEditRequestDateStr(rDate ? rDate.toISOString().slice(0, 10) : "");
     const uDate = workOrder.useDate ? toDate(workOrder.useDate) : null;
@@ -3081,18 +3087,37 @@ export default function FMWorkOrderDetailPage() {
                         ประเภทงาน
                       </label>
                       <select
-                        value={editWorkType}
-                        onChange={(e) => setEditWorkType(e.target.value)}
+                        value={editIsCustomWorkType ? "อื่นๆ" : editWorkType}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === "อื่นๆ") {
+                            setEditIsCustomWorkType(true);
+                            setEditWorkType(editCustomWorkTypeText.trim() || "อื่นๆ");
+                          } else {
+                            setEditIsCustomWorkType(false);
+                            setEditWorkType(val);
+                          }
+                        }}
                         className="w-full px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
                       >
-                        <option value="ระบบไฟฟ้า">ระบบไฟฟ้า</option>
-                        <option value="ระบบประปาและสุขาภิบาล">ระบบประปาและสุขาภิบาล</option>
-                        <option value="ระบบปรับอากาศ">ระบบปรับอากาศ</option>
-                        <option value="งานโยธาและโครงสร้าง">งานโยธาและโครงสร้าง</option>
-                        <option value="งานครุภัณฑ์และเฟอร์นิเจอร์">งานครุภัณฑ์และเฟอร์นิเจอร์</option>
-                        <option value="งานบริการทั่วไป">งานบริการทั่วไป</option>
-                        <option value="อื่นๆ">อื่นๆ</option>
+                        {TECHNICIAN_TEAMS.map((tm) => (
+                          <option key={tm} value={tm}>{tm}</option>
+                        ))}
+                        <option value="อื่นๆ">อื่นๆ (กรอกเอง)</option>
                       </select>
+
+                      {editIsCustomWorkType && (
+                        <input
+                          type="text"
+                          value={editCustomWorkTypeText}
+                          onChange={(e) => {
+                            setEditCustomWorkTypeText(e.target.value);
+                            setEditWorkType(e.target.value.trim() || "อื่นๆ");
+                          }}
+                          placeholder="ระบุชื่อทีม เช่น ทีมช่างอาคาร"
+                          className="w-full mt-2 px-3 py-1 text-xs border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                        />
+                      )}
                     </div>
                     <div>
                       <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">

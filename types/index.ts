@@ -9,6 +9,13 @@ export type UserRole = "admin" | "manager" | "supervisor" | "staff" | "viewer" |
 
 export type EmployeeType = "employee" | "contractor";
 
+export const TECHNICIAN_TEAMS = [
+  "ทีมช่างไฟฟ้า",
+  "ทีมช่างประปา",
+  "ทีมช่างปรับอากาศ",
+] as const;
+export type TechnicianTeam = (typeof TECHNICIAN_TEAMS)[number];
+
 export interface StoxyUser {
   uid: string;
   email: string;
@@ -20,6 +27,7 @@ export interface StoxyUser {
   employeeType?: EmployeeType;
   employeeId?: string;
   phone?: string;
+  technicianTeam?: string;
   isActive: boolean;
   profileCompleted?: boolean;
   accessRequested?: boolean;

@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { Timestamp } from "firebase/firestore";
-import type { FMWorkOrder, FMWorkOrderStatus } from "@/types";
+import { TECHNICIAN_TEAMS, type FMWorkOrder, type FMWorkOrderStatus } from "@/types";
 
 const statusConfig: Record<FMWorkOrderStatus, { label: string; badge: string; border: string }> = {
   pending: {
@@ -70,7 +70,9 @@ export default function FMWorkOrdersPage() {
 
   // Create Form State
   const [workOrderNumber, setWorkOrderNumber] = useState("");
-  const [workType, setWorkType] = useState("ระบบไฟฟ้า");
+  const [workType, setWorkType] = useState<string>("ทีมช่างไฟฟ้า");
+  const [isCustomWorkType, setIsCustomWorkType] = useState(false);
+  const [customWorkTypeText, setCustomWorkTypeText] = useState("");
   const [requestDateStr, setRequestDateStr] = useState(new Date().toISOString().slice(0, 10));
   const [useDateStr, setUseDateStr] = useState("");
   const [requesterName, setRequesterName] = useState("");
@@ -102,9 +104,22 @@ export default function FMWorkOrdersPage() {
     queryFn: getFMWorkOrders,
   });
 
+  useEffect(() => {
+    if (stoxyUser?.technicianTeam) {
+      setWorkType(stoxyUser.technicianTeam);
+      const isPreset = (TECHNICIAN_TEAMS as readonly string[]).includes(stoxyUser.technicianTeam);
+      setIsCustomWorkType(!isPreset);
+      if (!isPreset) setCustomWorkTypeText(stoxyUser.technicianTeam);
+    }
+  }, [stoxyUser?.technicianTeam]);
+
   const resetForm = () => {
+    const defaultTeam = stoxyUser?.technicianTeam || "ทีมช่างไฟฟ้า";
     setWorkOrderNumber("");
-    setWorkType("ระบบไฟฟ้า");
+    setWorkType(defaultTeam);
+    const isPreset = (TECHNICIAN_TEAMS as readonly string[]).includes(defaultTeam);
+    setIsCustomWorkType(!isPreset);
+    setCustomWorkTypeText(!isPreset ? defaultTeam : "");
     setRequestDateStr(new Date().toISOString().slice(0, 10));
     setUseDateStr("");
     setRequesterName("");
@@ -179,7 +194,12 @@ export default function FMWorkOrdersPage() {
       const parsed = await parseFMPdf(file);
 
       if (parsed.workOrderNumber) setWorkOrderNumber(parsed.workOrderNumber);
-      if (parsed.workType) setWorkType(parsed.workType);
+      if (parsed.workType) {
+        setWorkType(parsed.workType);
+        const inPreset = (TECHNICIAN_TEAMS as readonly string[]).includes(parsed.workType);
+        setIsCustomWorkType(!inPreset);
+        if (!inPreset) setCustomWorkTypeText(parsed.workType);
+      }
       if (parsed.requestDateStr) setRequestDateStr(parsed.requestDateStr);
       if (parsed.useDateStr) setUseDateStr(parsed.useDateStr);
       if (parsed.requesterName) setRequesterName(parsed.requesterName);
@@ -214,7 +234,12 @@ export default function FMWorkOrdersPage() {
     }
     const parsed = parseFMOcrText(ocrTextInput);
     if (parsed.workOrderNumber) setWorkOrderNumber(parsed.workOrderNumber);
-    if (parsed.workType) setWorkType(parsed.workType);
+    if (parsed.workType) {
+      setWorkType(parsed.workType);
+      const inPreset = (TECHNICIAN_TEAMS as readonly string[]).includes(parsed.workType);
+      setIsCustomWorkType(!inPreset);
+      if (!inPreset) setCustomWorkTypeText(parsed.workType);
+    }
     if (parsed.requestDateStr) setRequestDateStr(parsed.requestDateStr);
     if (parsed.useDateStr) setUseDateStr(parsed.useDateStr);
     if (parsed.requesterName) setRequesterName(parsed.requesterName);
@@ -345,13 +370,7 @@ export default function FMWorkOrdersPage() {
   );
 
   // Distinct work types from work orders
-  const defaultWorkTypes = [
-    "ระบบไฟฟ้า",
-    "ระบบประปา",
-    "ระบบปรับอากาศ",
-    "งานอาคารและสถานที่",
-    "งานทั่วไป",
-  ];
+  const defaultWorkTypes = Array.from(TECHNICIAN_TEAMS);
   const distinctWorkTypes = Array.from(
     new Set([
       ...defaultWorkTypes,
@@ -998,16 +1017,37 @@ export default function FMWorkOrdersPage() {
                       ประเภทงาน
                     </label>
                     <select
-                      value={workType}
-                      onChange={(e) => setWorkType(e.target.value)}
+                      value={isCustomWorkType ? "อื่นๆ" : workType}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === "อื่นๆ") {
+                          setIsCustomWorkType(true);
+                          setWorkType(customWorkTypeText.trim() || "อื่นๆ");
+                        } else {
+                          setIsCustomWorkType(false);
+                          setWorkType(val);
+                        }
+                      }}
                       className="w-full px-3.5 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
                     >
-                      <option value="ระบบไฟฟ้า">ระบบไฟฟ้า</option>
-                      <option value="ระบบประปา">ระบบประปา</option>
-                      <option value="ระบบปรับอากาศ">ระบบปรับอากาศ</option>
-                      <option value="งานซ่อมบำรุงอาคาร">งานซ่อมบำรุงอาคาร</option>
-                      <option value="งานทั่วไป">งานทั่วไป</option>
+                      {TECHNICIAN_TEAMS.map((tm) => (
+                        <option key={tm} value={tm}>{tm}</option>
+                      ))}
+                      <option value="อื่นๆ">อื่นๆ (กรอกเอง)</option>
                     </select>
+
+                    {isCustomWorkType && (
+                      <input
+                        type="text"
+                        value={customWorkTypeText}
+                        onChange={(e) => {
+                          setCustomWorkTypeText(e.target.value);
+                          setWorkType(e.target.value.trim() || "อื่นๆ");
+                        }}
+                        placeholder="ระบุชื่อทีม เช่น ทีมช่างอาคาร"
+                        className="w-full mt-2 px-3.5 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                      />
+                    )}
                   </div>
                 </div>
 
