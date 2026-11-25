@@ -520,31 +520,33 @@ export default function FMWorkOrdersPage() {
             )}
           </div>
 
-          {/* Quick controls: Sort, Work Type, My Tasks & Create */}
-          <div className="flex items-center gap-1.5 flex-wrap">
+          {/* 3 Controls on the same row: Sort, Work Type, My Tasks */}
+          <div className="grid grid-cols-3 lg:flex lg:items-center gap-1.5">
             {/* Compact Sort By Work Order Number Toggle */}
             <button
               type="button"
               onClick={() =>
                 setSortBy((prev) => (prev === "number_asc" ? "number_desc" : "number_asc"))
               }
-              className="h-9 flex items-center gap-1.5 px-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-200 shrink-0 shadow-xs transition-all active:scale-95"
+              className="h-9 flex items-center justify-center gap-1 px-2 sm:px-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl text-[11px] sm:text-xs font-semibold text-gray-700 dark:text-gray-200 min-w-0 shadow-xs transition-all active:scale-95"
               title="คลิกเพื่อสลับเรียงเลขใบงาน"
             >
               <ArrowUpDown className="w-3.5 h-3.5 text-[#1D4ED8] shrink-0" />
-              <span>{sortBy === "number_asc" ? "เลขใบงาน น้อย→มาก" : "เลขใบงาน มาก→น้อย"}</span>
+              <span className="truncate">
+                {sortBy === "number_asc" ? "เลข น้อย→มาก" : "เลข มาก→น้อย"}
+              </span>
             </button>
 
             {/* Work Type Filter Select */}
-            <div className="h-9 flex items-center gap-1.5 px-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shrink-0 shadow-xs">
+            <div className="h-9 flex items-center gap-1 px-2 sm:px-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl min-w-0 shadow-xs">
               <Filter className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400 shrink-0" />
               <select
                 value={workTypeFilter}
                 onChange={(e) => setWorkTypeFilter(e.target.value)}
-                className="text-xs font-semibold text-gray-700 dark:text-gray-200 bg-transparent border-none outline-none cursor-pointer pr-1 focus:ring-0"
+                className="w-full min-w-0 text-[11px] sm:text-xs font-semibold text-gray-700 dark:text-gray-200 bg-transparent border-none outline-none cursor-pointer focus:ring-0 truncate"
               >
                 <option value="all" className="text-gray-900 dark:text-gray-100">
-                  ทุกประเภทงาน
+                  ทุกประเภท
                 </option>
                 {distinctWorkTypes.map((type) => (
                   <option key={type} value={type} className="text-gray-900 dark:text-gray-100">
@@ -558,7 +560,7 @@ export default function FMWorkOrdersPage() {
             <button
               type="button"
               onClick={() => setOnlyMyTasks((prev) => !prev)}
-              className={`h-9 flex items-center gap-1.5 px-2.5 rounded-xl text-xs font-semibold border transition-all shrink-0 shadow-xs active:scale-95 ${
+              className={`h-9 flex items-center justify-center gap-1 px-2 sm:px-2.5 rounded-xl text-[11px] sm:text-xs font-semibold border transition-all min-w-0 shadow-xs active:scale-95 ${
                 onlyMyTasks
                   ? "bg-blue-50 dark:bg-blue-900/40 text-[#1D4ED8] dark:text-blue-300 border-blue-200 dark:border-blue-800"
                   : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -566,24 +568,24 @@ export default function FMWorkOrdersPage() {
               title="แสดงเฉพาะงานที่ฉันรับผิดชอบ"
             >
               <User className="w-3.5 h-3.5 shrink-0" />
-              <span>งานของฉัน</span>
+              <span className="truncate">งานของฉัน</span>
             </button>
-
-            {/* Admin Create Button */}
-            {isAdmin && (
-              <button
-                type="button"
-                onClick={() => {
-                  resetForm();
-                  setShowCreateModal(true);
-                }}
-                className="h-9 flex items-center justify-center gap-1.5 px-3.5 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-xl text-xs font-semibold active:scale-95 transition-all shadow-sm shadow-blue-500/20 shrink-0 ml-auto lg:ml-0"
-              >
-                <Plus className="w-3.5 h-3.5 shrink-0" />
-                <span>สร้างใบงาน FM ใหม่</span>
-              </button>
-            )}
           </div>
+
+          {/* Admin Create Button */}
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => {
+                resetForm();
+                setShowCreateModal(true);
+              }}
+              className="h-9 flex items-center justify-center gap-1.5 px-3.5 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-xl text-xs font-semibold active:scale-95 transition-all shadow-sm shadow-blue-500/20 shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5 shrink-0" />
+              <span>สร้างใบงาน FM ใหม่</span>
+            </button>
+          )}
         </div>
 
         {/* Status Filter Tabs & Reset */}
