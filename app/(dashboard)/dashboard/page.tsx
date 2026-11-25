@@ -91,11 +91,22 @@ function StaffHome() {
     return "สวัสดีตอนเย็น";
   };
 
-  const quickItems = [
+  const quickItems: Array<{
+    label: string;
+    desc: string;
+    icon: typeof Wrench;
+    href: string;
+    bg: string;
+    text: string;
+    iconBg: string;
+    badge?: number;
+    fullWidth?: boolean;
+  }> = [
     { label: "ยืม-คืน", desc: "ยืมและแจ้งคืนอุปกรณ์", icon: ArrowLeftRight, href: "/borrow", bg: "bg-blue-100 dark:bg-blue-900/40", text: "text-blue-700 dark:text-blue-300", iconBg: "bg-white/60 dark:bg-white/10" },
     { label: "เบิกของ", desc: "เบิกอุปกรณ์สำหรับงาน", icon: PackageOpen, href: "/requisition", bg: "bg-amber-100 dark:bg-amber-900/40", text: "text-amber-700 dark:text-amber-300", iconBg: "bg-white/60 dark:bg-white/10" },
     { label: "คลัง", desc: "ดูรายการอุปกรณ์ทั้งหมด", icon: Package, href: "/inventory", bg: "bg-emerald-100 dark:bg-emerald-900/40", text: "text-emerald-700 dark:text-emerald-300", iconBg: "bg-white/60 dark:bg-white/10" },
     { label: "ประวัติ", desc: "ประวัติการใช้งาน", icon: History, href: "/history", bg: "bg-purple-100 dark:bg-purple-900/40", text: "text-purple-700 dark:text-purple-300", iconBg: "bg-white/60 dark:bg-white/10" },
+    { label: "ใบแจ้งซ่อม (FM)", desc: "ดูและดำเนินการใบแจ้งซ่อม", icon: Wrench, href: "/fm", bg: "bg-orange-100 dark:bg-orange-900/40", text: "text-orange-700 dark:text-orange-300", iconBg: "bg-white/60 dark:bg-white/10", badge: activeFMCount, fullWidth: true },
   ];
 
   const now = new Date();
@@ -193,20 +204,35 @@ function StaffHome() {
           <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">เมนูด่วน</p>
           <div className="grid grid-cols-2 gap-3">
             {quickItems.map((item, i) => (
-              <Link key={item.href} href={item.href} prefetch>
+              <Link
+                key={item.href}
+                href={item.href}
+                prefetch
+                className={item.fullWidth ? "col-span-2" : undefined}
+              >
                 <motion.div
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.06 }}
-                  className={`${item.bg} ${item.text} rounded-3xl p-4 flex flex-col items-start gap-2 active:scale-95 transition-all overflow-hidden w-full shadow-sm`}
+                  className={`${item.bg} ${item.text} rounded-3xl p-4 flex ${item.fullWidth ? "flex-row items-center justify-between" : "flex-col items-start"} gap-2 active:scale-95 transition-all overflow-hidden w-full shadow-sm`}
                 >
-                  <div className={`w-9 h-9 rounded-2xl ${item.iconBg} flex items-center justify-center shrink-0`}>
-                    <item.icon className="w-4 h-4" />
+                  <div className={`flex ${item.fullWidth ? "items-center gap-3" : "flex-col items-start gap-2"} min-w-0 w-full`}>
+                    <div className={`w-9 h-9 rounded-2xl ${item.iconBg} flex items-center justify-center shrink-0`}>
+                      <item.icon className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-bold text-sm leading-tight truncate">{item.label}</p>
+                        {item.badge !== undefined && item.badge > 0 && (
+                          <span className="px-2 py-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full">
+                            {item.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs mt-0.5 leading-tight line-clamp-2 opacity-70">{item.desc}</p>
+                    </div>
                   </div>
-                  <div className="min-w-0 w-full">
-                    <p className="font-bold text-sm leading-tight truncate">{item.label}</p>
-                    <p className="text-xs mt-0.5 leading-tight line-clamp-2 opacity-70">{item.desc}</p>
-                  </div>
+                  {item.fullWidth && <ChevronRight className="w-4 h-4 opacity-60 shrink-0" />}
                 </motion.div>
               </Link>
             ))}
