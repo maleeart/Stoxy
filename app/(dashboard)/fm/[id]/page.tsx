@@ -99,6 +99,7 @@ export default function FMWorkOrderDetailPage() {
   // Waiting parts modal
   const [showWaitingPartsModal, setShowWaitingPartsModal] = useState(false);
   const [waitingPartsReason, setWaitingPartsReason] = useState("");
+  const [waitingPartsRepNumber, setWaitingPartsRepNumber] = useState("");
 
   // Admin status override modal
   const [showAdminStatusModal, setShowAdminStatusModal] = useState(false);
@@ -192,12 +193,13 @@ export default function FMWorkOrderDetailPage() {
   });
 
   const waitingPartsMut = useMutation({
-    mutationFn: (reason: string) =>
+    mutationFn: ({ reason, repNumber }: { reason: string; repNumber?: string }) =>
       setFMWorkOrderWaitingParts(
         id,
         stoxyUser?.uid ?? "",
         stoxyUser?.displayName || stoxyUser?.nickname || "ช่างผู้รับผิดชอบ",
-        reason
+        reason,
+        repNumber
       ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["fm_workorder", id] });
@@ -206,6 +208,7 @@ export default function FMWorkOrderDetailPage() {
       toast.success("บันทึกสถานะรอจัดซื้อ/หาอุปกรณ์แล้ว");
       setShowWaitingPartsModal(false);
       setWaitingPartsReason("");
+      setWaitingPartsRepNumber("");
     },
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
   });
@@ -436,6 +439,8 @@ export default function FMWorkOrderDetailPage() {
   const [editAssignedTechnicianName, setEditAssignedTechnicianName] = useState("");
   const [editAssignedDepartment, setEditAssignedDepartment] = useState("");
   const [editNotes, setEditNotes] = useState("");
+  const [editRepDocNumber, setEditRepDocNumber] = useState("");
+  const [editWaitingPartsReason, setEditWaitingPartsReason] = useState("");
 
   const [editExistingImages, setEditExistingImages] = useState<string[]>([]);
   const [editNewImageFiles, setEditNewImageFiles] = useState<File[]>([]);
@@ -463,6 +468,8 @@ export default function FMWorkOrderDetailPage() {
     setEditAssignedTechnicianName(workOrder.assignedTechnicianName || "");
     setEditAssignedDepartment(workOrder.assignedDepartment || "");
     setEditNotes(workOrder.notes || "");
+    setEditRepDocNumber(workOrder.repDocNumber || "");
+    setEditWaitingPartsReason(workOrder.waitingPartsReason || "");
 
     setEditExistingImages(workOrder.images || []);
     editNewImagePreviews.forEach((url) => {
@@ -563,6 +570,8 @@ export default function FMWorkOrderDetailPage() {
           assignorName: editAssignorName.trim(),
           assignedTechnicianName: editAssignedTechnicianName.trim(),
           assignedDepartment: editAssignedDepartment.trim(),
+          repDocNumber: editRepDocNumber.trim(),
+          waitingPartsReason: editWaitingPartsReason.trim(),
           notes: editNotes.trim(),
         },
         stoxyUser?.displayName || stoxyUser?.nickname || "ผู้ดูแลระบบ"
@@ -745,6 +754,11 @@ export default function FMWorkOrderDetailPage() {
                 {workOrder.waitingPartsReason
                   ? `รายการที่รอ: ${workOrder.waitingPartsReason}`
                   : "รออุปกรณ์เพื่อนำไปดำเนินการต่อ"}
+                {workOrder.repDocNumber && (
+                  <span className="font-semibold text-orange-950 dark:text-orange-100">
+                    {" "}(ใบเสนอแจ้งซ่อม: {workOrder.repDocNumber})
+                  </span>
+                )}
                 {workOrder.waitingPartsByName && ` · บันทึกโดย ${workOrder.waitingPartsByName}`}
               </p>
             </div>
@@ -893,7 +907,14 @@ export default function FMWorkOrderDetailPage() {
                         return dStr ? ` (${dStr})` : "";
                       })()}${workOrder.completedWithoutItems ? " (ไม่เบิกของ)" : ""}`
                     : workOrder.status === "waiting_parts"
-                    ? `รอจัดซื้อ/หา${workOrder.waitingPartsReason && workOrder.waitingPartsReason.trim() !== "รอจัดซื้อ/หาอุปกรณ์เพื่อดำเนินการ" ? ` (${workOrder.waitingPartsReason.trim()})` : ""}`
+                    ? `รอจัดซื้อ/หา${(() => {
+                        const r = workOrder.waitingPartsReason?.trim();
+                        const rep = workOrder.repDocNumber?.trim();
+                        const pts: string[] = [];
+                        if (r && r !== "รอจัดซื้อ/หาอุปกรณ์เพื่อดำเนินการ") pts.push(r);
+                        if (rep) pts.push(rep);
+                        return pts.length > 0 ? ` (${pts.join(" - ")})` : "";
+                      })()}`
                     : cfg.label}
                 </span>
                 {isAdmin && (
@@ -1284,40 +1305,53 @@ export default function FMWorkOrderDetailPage() {
                   key={item.itemId || idx}
                   className="p-3.5 bg-gray-50 dark:bg-gray-700/40 rounded-2xl border border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                 >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-mono text-xs font-bold text-[#1D4ED8] bg-blue-50 dark:bg-blue-900/40 px-2 py-0.5 rounded-lg">
-                        {item.itemCode}
-                      </span>
-                      <p className="font-semibold text-sm text-gray-900 dark:text-white truncate">
-                        {item.itemName}
-                      </p>
+                  <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
+                    <div className="w-12 h-12 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 flex items-center justify-center shrink-0 overflow-hidden shadow-xs mt-0.5 sm:mt-0">
+                      {inv?.images?.[0] ? (
+                        <img
+                          src={inv.images[0]}
+                          alt={item.itemName}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <Wrench className="w-5 h-5 text-gray-400" />
+                      )}
                     </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-mono text-xs font-bold text-[#1D4ED8] bg-blue-50 dark:bg-blue-900/40 px-2 py-0.5 rounded-lg">
+                          {item.itemCode}
+                        </span>
+                        <p className="font-semibold text-sm text-gray-900 dark:text-white truncate">
+                          {item.itemName}
+                        </p>
+                      </div>
 
-                    <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-                      <span>
-                        คงเหลือในคลัง:{" "}
-                        <strong
-                          className={isStockEnough ? "text-emerald-600" : "text-rose-600"}
-                        >
-                          {inv?.quantityAvailable ?? "-"} {item.unit || "ชิ้น"}
-                        </strong>
-                      </span>
-                      {inv?.locationName && <span>ที่เก็บ: {inv.locationName}</span>}
+                      <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                        <span>
+                          คงเหลือในคลัง:{" "}
+                          <strong
+                            className={isStockEnough ? "text-emerald-600" : "text-rose-600"}
+                          >
+                            {inv?.quantityAvailable ?? "-"} {item.unit || "ชิ้น"}
+                          </strong>
+                        </span>
+                        {inv?.locationName && <span>ที่เก็บ: {inv.locationName}</span>}
+                      </div>
+
+                      {canEditItems && (
+                        <input
+                          type="text"
+                          value={item.notes || ""}
+                          onChange={(e) => updateItemNotes(item.itemId, e.target.value)}
+                          placeholder="ระบุจุดติดตั้งหรือหมายเหตุ เช่น พัดลมตัวที่ 1 ด้านทิศเหนือ"
+                          className="mt-2 w-full text-xs px-2.5 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500/20"
+                        />
+                      )}
+                      {!canEditItems && item.notes && (
+                        <p className="mt-1 text-xs text-gray-500 italic">หมายเหตุ: {item.notes}</p>
+                      )}
                     </div>
-
-                    {canEditItems && (
-                      <input
-                        type="text"
-                        value={item.notes || ""}
-                        onChange={(e) => updateItemNotes(item.itemId, e.target.value)}
-                        placeholder="ระบุจุดติดตั้งหรือหมายเหตุ เช่น พัดลมตัวที่ 1 ด้านทิศเหนือ"
-                        className="mt-2 w-full text-xs px-2.5 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500/20"
-                      />
-                    )}
-                    {!canEditItems && item.notes && (
-                      <p className="mt-1 text-xs text-gray-500 italic">หมายเหตุ: {item.notes}</p>
-                    )}
                   </div>
 
                   <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
@@ -1588,7 +1622,14 @@ export default function FMWorkOrderDetailPage() {
                     return dStr ? ` (${dStr})` : "";
                   })()}`
                 : workOrder.status === "waiting_parts"
-                ? `รอจัดซื้อ/หา${workOrder.waitingPartsReason && workOrder.waitingPartsReason.trim() !== "รอจัดซื้อ/หาอุปกรณ์เพื่อดำเนินการ" ? ` (${workOrder.waitingPartsReason.trim()})` : ""}`
+                ? `รอจัดซื้อ/หา${(() => {
+                    const r = workOrder.waitingPartsReason?.trim();
+                    const rep = workOrder.repDocNumber?.trim();
+                    const pts: string[] = [];
+                    if (r && r !== "รอจัดซื้อ/หาอุปกรณ์เพื่อดำเนินการ") pts.push(r);
+                    if (rep) pts.push(rep);
+                    return pts.length > 0 ? ` (${pts.join(" - ")})` : "";
+                  })()}`
                 : statusConfig[workOrder.status]?.label || workOrder.status}
             </p>
           </div>
@@ -1894,6 +1935,19 @@ export default function FMWorkOrderDetailPage() {
                         key={item.id}
                         className="p-3 bg-gray-50 dark:bg-gray-700/50 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 rounded-2xl border border-gray-100 dark:border-gray-700 flex items-center justify-between gap-3 transition-colors"
                       >
+                        {/* Image Thumbnail */}
+                        <div className="w-12 h-12 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
+                          {item.images?.[0] ? (
+                            <img
+                              src={item.images[0]}
+                              alt={item.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <PackageSearch className="w-5 h-5 text-gray-400" />
+                          )}
+                        </div>
+
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5">
                             <span className="font-mono text-xs font-bold text-blue-600 dark:text-blue-300">
@@ -1974,13 +2028,29 @@ export default function FMWorkOrderDetailPage() {
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                  ระบุรายการอุปกรณ์ที่ต้องจัดซื้อ หรือรายละเอียด (ถ้ามี)
+                  หมายเลขใบเสนอแจ้งซ่อมในระบบ veri (REP)
+                </label>
+                <input
+                  type="text"
+                  value={waitingPartsRepNumber}
+                  onChange={(e) => setWaitingPartsRepNumber(e.target.value)}
+                  placeholder="เช่น REP-2569-045 (ตามแบบฟอร์มในระบบ veri)"
+                  className="w-full px-3.5 py-2 text-xs bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 font-mono font-medium"
+                />
+                <p className="text-[10.5px] text-gray-400 dark:text-gray-400 mt-1">
+                  * หมายเลขใบเสนอแจ้งซ่อมตามแบบฟอร์มใน veri เพื่อใช้อ้างอิงและเชื่อมโยง 2 ระบบในอนาคต
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                  ระบุรายการอุปกรณ์ที่ต้องจัดซื้อ หรือรายละเอียดเพิ่มเติม (ถ้ามี)
                 </label>
                 <textarea
                   value={waitingPartsReason}
                   onChange={(e) => setWaitingPartsReason(e.target.value)}
                   rows={3}
-                  placeholder="เช่น รอซื้อพัดลมติดผนัง 30 นิ้ว 4 ตัว, รออะไหล่เบรกเกอร์..."
+                  placeholder="เช่น รอซื้อพัดลมติดผนัง 30 นิ้ว 4 ตัว, มอเตอร์ประตูม้วน 1 HP..."
                   className="w-full px-3.5 py-2.5 text-xs bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 resize-none"
                 />
               </div>
@@ -1991,6 +2061,7 @@ export default function FMWorkOrderDetailPage() {
                   onClick={() => {
                     setShowWaitingPartsModal(false);
                     setWaitingPartsReason("");
+                    setWaitingPartsRepNumber("");
                   }}
                   className="px-4 py-2 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
                 >
@@ -1999,7 +2070,10 @@ export default function FMWorkOrderDetailPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    waitingPartsMut.mutate(waitingPartsReason.trim());
+                    waitingPartsMut.mutate({
+                      reason: waitingPartsReason.trim(),
+                      repNumber: waitingPartsRepNumber.trim(),
+                    });
                   }}
                   disabled={waitingPartsMut.isPending}
                   className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-orange-500/20 disabled:opacity-50"
@@ -2757,9 +2831,35 @@ export default function FMWorkOrderDetailPage() {
                     rows={2}
                     value={editNotes}
                     onChange={(e) => setEditNotes(e.target.value)}
-                    placeholder="บันทึกหมายเหตุเพิ่มเติม..."
-                    className="w-full px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 resize-none"
                   />
+                </div>
+
+                {/* Section: ข้อมูลอ้างอิงใบเสนอแจ้งซ่อม (REP) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                      หมายเลขใบเสนอแจ้งซ่อมในระบบ veri (REP)
+                    </label>
+                    <input
+                      type="text"
+                      value={editRepDocNumber}
+                      onChange={(e) => setEditRepDocNumber(e.target.value)}
+                      placeholder="เช่น REP-2569-045"
+                      className="w-full px-3 py-1.5 text-xs font-mono border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                      รายละเอียดรอจัดซื้อ/หาอุปกรณ์
+                    </label>
+                    <input
+                      type="text"
+                      value={editWaitingPartsReason}
+                      onChange={(e) => setEditWaitingPartsReason(e.target.value)}
+                      placeholder="เช่น รอซื้อพัดลมติดผนัง..."
+                      className="w-full px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20"
+                    />
+                  </div>
                 </div>
               </div>
 

@@ -713,8 +713,12 @@ export function getFMReportStatus(wo: FMWorkOrder): string {
 
   if (wo.status === "waiting_parts") {
     const reason = wo.waitingPartsReason?.trim();
-    if (reason && reason !== "รอจัดซื้อ/หาอุปกรณ์เพื่อดำเนินการ") {
-      return `รอจัดซื้อ/หา (${reason})`;
+    const rep = wo.repDocNumber?.trim();
+    const parts: string[] = [];
+    if (reason && reason !== "รอจัดซื้อ/หาอุปกรณ์เพื่อดำเนินการ") parts.push(reason);
+    if (rep) parts.push(rep);
+    if (parts.length > 0) {
+      return `รอจัดซื้อ/หา (${parts.join(" - ")})`;
     }
     return "รอจัดซื้อ/หา";
   }

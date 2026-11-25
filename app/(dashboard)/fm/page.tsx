@@ -770,7 +770,14 @@ export default function FMWorkOrdersPage() {
                               return dStr ? ` (${dStr})` : "";
                             })()}${wo.completedWithoutItems ? " (ไม่เบิกของ)" : ""}`
                           : wo.status === "waiting_parts"
-                          ? `รอจัดซื้อ/หา${wo.waitingPartsReason && wo.waitingPartsReason.trim() !== "รอจัดซื้อ/หาอุปกรณ์เพื่อดำเนินการ" ? ` (${wo.waitingPartsReason.trim()})` : ""}`
+                          ? `รอจัดซื้อ/หา${(() => {
+                              const r = wo.waitingPartsReason?.trim();
+                              const rep = wo.repDocNumber?.trim();
+                              const pts: string[] = [];
+                              if (r && r !== "รอจัดซื้อ/หาอุปกรณ์เพื่อดำเนินการ") pts.push(r);
+                              if (rep) pts.push(rep);
+                              return pts.length > 0 ? ` (${pts.join(" - ")})` : "";
+                            })()}`
                           : cfg.label}
                       </span>
                     </div>

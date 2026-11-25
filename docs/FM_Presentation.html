@@ -141,7 +141,7 @@
   }
 
   .card-title {
-    font-size: 14.5px;
+    font-size: 14px;
     font-weight: 700;
     margin-bottom: 2mm;
     display: flex;
@@ -150,7 +150,7 @@
   }
 
   .card-subtitle {
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -188,7 +188,7 @@
   }
 
   .timeline-step h4 {
-    font-size: 12.5px;
+    font-size: 12px;
     font-weight: 700;
     color: #0f172a;
     margin-bottom: 2mm;
@@ -196,7 +196,7 @@
   }
 
   .timeline-step p {
-    font-size: 10px;
+    font-size: 9.5px;
     color: #64748b;
     line-height: 1.45;
   }
@@ -206,7 +206,7 @@
     display: inline-block;
     padding: 3px 10px;
     border-radius: 6px;
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 600;
     margin-top: auto;
   }
@@ -235,40 +235,6 @@
     position: absolute;
     left: 0;
     top: -2px;
-  }
-
-  /* Scenario Box */
-  .scenario-box {
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    border-radius: 12px;
-    padding: 4mm 5mm;
-  }
-  .scenario-box.amber {
-    background: #fffbeb;
-    border-color: #fde68a;
-  }
-  .scenario-box.blue {
-    background: #eff6ff;
-    border-color: #bfdbfe;
-  }
-
-  .scenario-title {
-    font-size: 12.5px;
-    font-weight: 700;
-    margin-bottom: 2mm;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .scenario-box.green .scenario-title { color: #15803d; }
-  .scenario-box.amber .scenario-title { color: #b45309; }
-  .scenario-box.blue .scenario-title { color: #1d4ed8; }
-
-  .scenario-text {
-    font-size: 10px;
-    color: #1e293b;
-    line-height: 1.45;
   }
 
   /* Table styling */
@@ -318,7 +284,7 @@
     คู่มือการใช้งานระบบใบแจ้งงานซ่อม (FM)<br>และขั้นตอนการปฏิบัติงานหน้างานจริง
   </h1>
   <p style="font-size: 15px; color: #94a3b8; margin-bottom: 8mm; font-weight: 400;">
-    นำเข้าไฟล์ FM เดิม (ถือเป็นการรับงานทันที) • ช่างปฏิบัติงานและยื่นมือถือให้ลงนาม • ผู้ควบคุมงานอนุมัติตัดสต็อก
+    นำเข้าไฟล์ FM เดิม (ถือเป็นรับงานทันที) • ช่างปฏิบัติงานและยื่นมือถือให้ลงนาม • ผู้ควบคุมงานอนุมัติตัดสต็อก
   </p>
 
   <div style="display: flex; gap: 5mm; width: 252mm;">
@@ -365,14 +331,14 @@
       <div class="card" style="border-left: 5px solid #f59e0b;">
         <h3 class="card-title" style="color: #b45309;">3. ช่างลงพื้นที่ปฏิบัติงาน (แยก 3 กรณี)</h3>
         <p style="font-size: 11px; color: #475569; line-height: 1.5; margin-bottom: 2mm;">
-          ช่างเข้าแก้ปัญหาหน้างานจริงตาม 3 รูปแบบ: มีอะไหล่พร้อมเปลี่ยน / จบงานไม่เบิกของ / หรืออะไหล่หมดให้ระบุ 'รอจัดซื้อ/หา' เพื่อให้ทีมจัดซื้อทราบ
+          ช่างเข้าแก้ปัญหาหน้างานจริงตาม 3 รูปแบบ: กรณี A มีอะไหล่เบิกคลัง / กรณี B เสร็จโดยไม่เบิกของ (ซ่อมเสร็จ เซ็นชื่อ แล้วกดเสร็จไม่เบิก) / กรณี C รอซื้อ (ระบุเลขอ้างอิง REP จากระบบ veri)
         </p>
-        <div class="badge badge-amber">ครอบคลุมทุกกรณี: ปกติ • เซ็นล่วงหน้า • รอจัดซื้อ</div>
+        <div class="badge badge-amber">ครอบคลุมทุกกรณี: เบิกของ • ไม่เบิก • รอจัดซื้อ (REP)</div>
       </div>
       <div class="card" style="border-left: 5px solid #10b981;">
         <h3 class="card-title" style="color: #047857;">4. ยื่นมือถือให้เจ้าของบริเวณลงนามหน้างาน</h3>
         <p style="font-size: 11px; color: #475569; line-height: 1.5; margin-bottom: 2mm;">
-          เมื่อซ่อมเสร็จ ช่างจะเปิดหน้าใบงานบนมือถือตนเอง แล้วยื่นให้เจ้าของบริเวณหรือผู้ทำการแทนเซ็นลายมือชื่อตรวจรับงานเสร็จสิ้นหน้างาน (สามารถเซ็นรับทราบไว้ก่อนได้แม้ยังรอดำเนินการ)
+          เมื่อซ่อมเสร็จ ช่างจะเปิดหน้าใบงานบนมือถือตนเอง แล้วยื่นให้เจ้าของบริเวณหรือผู้ทำการแทนเซ็นลายมือชื่อตรวจรับงานเสร็จสิ้นหน้างาน (ระบุชื่อ + รหัสพนักงาน) ก่อนส่งอนุมัติปิดงาน
         </p>
         <div class="badge badge-green">หลักฐานตรวจรับหน้างานจริง • ดิจิทัล 100%</div>
       </div>
@@ -403,13 +369,13 @@
       </div>
       <div class="timeline-step" style="border-top-color: #f59e0b;">
         <div class="step-badge" style="background: #f59e0b;">ขั้นตอนที่ 3</div>
-        <h4>ปฏิบัติงาน & พัสดุ</h4>
-        <p>• ไปหน้างานซ่อมแซมจริง<br>• เบิกของ / จบงานไม่เบิกของ<br>• หรือระบุ 'รอจัดซื้อ/หา: (...)'</p>
+        <h4>ปฏิบัติงาน & จัดการพัสดุ</h4>
+        <p>• เบิกของ (มีรูปประกอบ) หรือ<br>• เสร็จโดยไม่เบิกของ หรือ<br>• รอซื้อ: <strong>ระบุเลข REP</strong></p>
       </div>
       <div class="timeline-step" style="border-top-color: #10b981;">
         <div class="step-badge" style="background: #10b981;">ขั้นตอนที่ 4</div>
         <h4>ผู้แจ้งลงนามบนมือถือช่าง</h4>
-        <p>• ยื่นมือถือให้เจ้าของบริเวณเซ็น<br>• เซ็นชื่อ + รหัสพนักงาน<br>• <strong>ยืดหยุ่น:</strong> เซ็นจบงาน หรือเซ็นล่วงหน้าขณะรอดำเนินการ</p>
+        <p>• ยื่นมือถือให้เจ้าของบริเวณเซ็น<br>• เซ็นชื่อดิจิทัล + รหัสพนักงาน<br>• ยืนยันการซ่อมเสร็จสิ้นหน้างาน</p>
       </div>
       <div class="timeline-step" style="border-top-color: #059669;">
         <div class="step-badge" style="background: #059669;">ขั้นตอนที่ 5</div>
@@ -419,7 +385,7 @@
       <div class="timeline-step" style="border-top-color: #0f172a;">
         <div class="step-badge" style="background: #0f172a;">ขั้นตอนที่ 6</div>
         <h4>พิมพ์ & สรุปรายงาน</h4>
-        <p>• พิมพ์แบบฟอร์ม SFM-xxxx<br>• Export รายงาน PDF/Excel<br>• แสดงวันที่เสร็จสิ้นในวงเล็บ<br>• ย่อสถานะ 'รอจัดซื้อ/หา'</p>
+        <p>• พิมพ์แบบฟอร์ม SFM-xxxx<br>• Export รายงาน PDF/Excel<br>• แสดงวันที่เสร็จสิ้นในวงเล็บ<br>• ย่อสถานะ 'รอจัดซื้อ/หา + REP'</p>
       </div>
     </div>
   </div>
@@ -480,38 +446,38 @@
   <div class="content-area">
     <div class="grid-3">
       <div class="card" style="border-top: 4px solid #1d4ed8;">
-        <h3 class="card-title" style="color: #1d4ed8; font-size: 13.5px;">กรณี A: ซ่อมเสร็จปกติ</h3>
-        <div class="card-subtitle" style="color: #1d4ed8;">มีอะไหล่พร้อม หรือ ไม่เบิกของ</div>
-        <p style="font-size: 10.5px; color: #334155; line-height: 1.45;">
+        <h3 class="card-title" style="color: #1d4ed8; font-size: 13.5px;">กรณี A: มีอะไหล่เบิกคลัง</h3>
+        <div class="card-subtitle" style="color: #1d4ed8;">มีอะไหล่พร้อมในคลังพัสดุ</div>
+        <p style="font-size: 10px; color: #334155; line-height: 1.45;">
           <strong>1.</strong> ช่างลงพื้นที่ตรวจสอบและซ่อมแซมหน้างานจนเสร็จเรียบร้อย<br><br>
-          <strong>2.</strong> บันทึกรายการอะไหล่ในแอพ (หรือกดปุ่ม <em>'ดำเนินการแล้ว ไม่เบิกของ'</em>)<br><br>
+          <strong>2.</strong> กดปุ่ม <em>'เลือกอุปกรณ์จากคลัง'</em> <strong>(มีรูปภาพประกอบทุกรายการชัดเจน)</strong> ระบุจำนวนที่ใช้จริง<br><br>
           <strong>3.</strong> ช่างยื่นมือถือให้เจ้าของบริเวณตรวจดูผลงาน และลงนามรับทราบ + รหัสพนักงาน<br><br>
           <strong>4.</strong> ช่างกด <strong>'ส่งรายการรอตรวจสอบ'</strong> เพื่อให้ผู้ควบคุมงานอนุมัติตัดสต็อก<br><br>
-          <span style="color: #1d4ed8; font-weight: bold;">📌 เหมาะกับ:</span> งานซ่อมทั่วไปที่มีอะไหล่ในคลัง หรือไม่ต้องใช้อะไหล่
+          <span style="color: #1d4ed8; font-weight: bold;">📌 เหมาะกับ:</span> งานซ่อมที่มีการเบิกใช้อะไหล่หรือวัสดุสิ้นเปลืองจากคลัง
         </p>
       </div>
 
       <div class="card" style="border-top: 4px solid #10b981;">
-        <h3 class="card-title" style="color: #047857; font-size: 13.5px;">กรณี B: เซ็นรับทราบล่วงหน้า</h3>
-        <div class="card-subtitle" style="color: #047857;">Pre-Signing ขณะ 'รอดำเนินการ'</div>
-        <p style="font-size: 10.5px; color: #334155; line-height: 1.45;">
-          <strong>1.</strong> ช่างซ่อมเสร็จ แต่เจ้าของบริเวณต้องรีบไปธุระ/หมดกะ หรือช่างยังไม่ได้เช็กรหัสอะไหล่<br><br>
-          <strong>2.</strong> ช่างยื่นมือถือให้เจ้าของบริเวณกด <strong>'✍️ ลงนามรับทราบ'</strong> ไว้ก่อนได้ทันที โดยใบงานยังอยู่สถานะ <em>'รอดำเนินการ'</em><br><br>
-          <strong>3.</strong> เจ้าของบริเวณเซ็นชื่อ + รหัสพนักงาน แล้วแยกย้ายได้ทันที<br><br>
-          <strong>4.</strong> ช่างกลับมาห้อง คีย์รายการอะไหล่ที่ใช้จริงทีหลัง แล้วกดส่งตรวจ (ลายเซ็นยังอยู่ครบ)<br><br>
-          <span style="color: #047857; font-weight: bold;">📌 เหมาะกับ:</span> งานเร่งด่วน หรือหน้างานไม่มีสัญญาณเน็ต/รีบตรวจรับ
+        <h3 class="card-title" style="color: #047857; font-size: 13.5px;">กรณี B: เสร็จโดยไม่เบิกของ</h3>
+        <div class="card-subtitle" style="color: #047857;">งานบริการ ไม่ใช้อะไหล่</div>
+        <p style="font-size: 10px; color: #334155; line-height: 1.45;">
+          <strong>1.</strong> ช่างลงพื้นที่ดำเนินการแก้ไขหน้างานจริง (เช่น ปรับตั้งค่า, ล้างแอร์/ทำความสะอาด, ตรวจเช็ค, ขันน็อต)<br><br>
+          <strong>2.</strong> ไม่มีการเบิกพัสดุหรือใช้วัสดุสิ้นเปลืองใดๆ ในคลัง<br><br>
+          <strong>3.</strong> ช่างเปิดใบงานบนมือถือ ยื่นให้เจ้าของบริเวณตรวจผลงานและเซ็นชื่อรับทราบ + รหัสพนักงาน<br><br>
+          <strong>4.</strong> เมื่อลงนามเสร็จ ช่างกดปุ่ม <strong>'ดำเนินการแล้ว (ไม่เบิกของ)'</strong><br><br>
+          <span style="color: #047857; font-weight: bold;">📌 เหมาะกับ:</span> งานบริการที่ไม่ต้องตัดสต็อกพัสดุ ส่งอนุมัติปิดงานได้ทันที
         </p>
       </div>
 
       <div class="card" style="border-top: 4px solid #f59e0b;">
-        <h3 class="card-title" style="color: #b45309; font-size: 13.5px;">กรณี C: รอจัดซื้อ / หาของ</h3>
+        <h3 class="card-title" style="color: #b45309; font-size: 13.5px;">กรณี C: รอซื้อ (ใส่เลข REP)</h3>
         <div class="card-subtitle" style="color: #b45309;">ไม่มีอะไหล่ในสต็อกคลัง</div>
-        <p style="font-size: 10.5px; color: #334155; line-height: 1.45;">
-          <strong>1.</strong> ช่างตรวจสอบพบว่าอะไหล่เสียหายและไม่มีในสต็อกคลัง<br><br>
-          <strong>2.</strong> กดปุ่มสีส้ม <strong>'รอของ (จัดซื้อ/หาอุปกรณ์)'</strong> พิมพ์ระบุชื่ออะไหล่ที่ต้องหา เช่น 'ลูกลอย 1/2 นิ้ว'<br><br>
-          <strong>3.</strong> สถานะเปลี่ยนเป็น <em>'รอจัดซื้อ/หา: (...)'</em> (เจ้าของบริเวณยังไม่ต้องลงนาม)<br><br>
-          <strong>4.</strong> เมื่อของมาถึง ช่างกด <em>'เปลี่ยนกลับเป็นรอดำเนินการ'</em> -> ติดตั้งจนเสร็จ -> ยื่นมือถือให้เซ็นชื่อ -> ส่งตรวจ<br><br>
-          <span style="color: #b45309; font-weight: bold;">📌 เหมาะกับ:</span> อะไหล่เฉพาะทางที่ต้องสั่งซื้อภายนอก
+        <p style="font-size: 10px; color: #334155; line-height: 1.45;">
+          <strong>1.</strong> ช่างตรวจสอบพบว่าไม่มีอะไหล่ในสต็อกคลัง<br><br>
+          <strong>2.</strong> กดปุ่มสีส้ม <strong>'รอของ (จัดซื้อ/หาอุปกรณ์)'</strong><br><br>
+          <strong>3.</strong> ใส่หมายเหตุ: ระบุ <strong>'หมายเลขใบเสนอแจ้งซ่อม REP-2569-XXX ตามแบบฟอร์มใน veri'</strong> และระบุของที่ต้องหา<br><br>
+          <strong>4.</strong> สถานะเปลี่ยนเป็น <em>'รอจัดซื้อ/หา: [ของ] (REP-2569-XXX)'</em> (เจ้าของบริเวณยังไม่ต้องลงนาม)<br><br>
+          <strong>5.</strong> เมื่อของมาส่ง ช่างกด <em>'เปลี่ยนกลับเป็นรอดำเนินการ'</em> -> ติดตั้งเสร็จ -> ยื่นมือถือให้เซ็นชื่อ -> ส่งตรวจ
         </p>
       </div>
     </div>
@@ -530,37 +496,38 @@
   <div class="content-area">
     <div class="grid-3">
       <div class="card" style="border-top: 4px solid #1d4ed8;">
-        <h3 class="card-title" style="color: #1d4ed8; font-size: 12.5px;">ตัวอย่างกรณี A: ซ่อมเสร็จ & เซ็นรับทันที</h3>
-        <div class="card-subtitle" style="color: #64748b; font-size: 9.5px;">FM-6090: ก๊อกน้ำอ่างล้างมือรั่ว (แผนกบัญชี)</div>
-        <p style="font-size: 10px; color: #334155; line-height: 1.45;">
+        <h3 class="card-title" style="color: #1d4ed8; font-size: 12.5px;">ตัวอย่างกรณี A: ซ่อมเสร็จ & เบิกของ</h3>
+        <div class="card-subtitle" style="color: #64748b; font-size: 9px;">FM-6090: ก๊อกน้ำอ่างล้างมือรั่ว (แผนกบัญชี)</div>
+        <p style="font-size: 9.8px; color: #334155; line-height: 1.45;">
           <strong>1.</strong> ช่างสมชายไปหน้างาน ตรวจพบก๊อกน้ำรั่ว ดำเนินการเปลี่ยนก๊อกน้ำใหม่จนเสร็จเรียบร้อย<br><br>
-          <strong>2.</strong> ช่างเปิดใบงานบนมือถือตนเอง กดเลือกอะไหล่ <em>'ก๊อกน้ำอ่าง 1/2 นิ้ว x 1 อัน'</em> จากสต็อก<br><br>
-          <strong>3.</strong> ช่างกดปุ่ม <strong>'✍️ ลงนามรับทราบ'</strong> แล้วยื่นมือถือให้คุณกนกวรรณ (ผู้แจ้ง) ตรวจดูน้ำไหลปกติ<br><br>
+          <strong>2.</strong> เปิดใบงานบนมือถือ กด <em>'เลือกอุปกรณ์จากคลัง'</em> ดูรูปภาพก๊อกน้ำชัดเจน เลือก <em>'ก๊อกน้ำอ่าง 1/2 นิ้ว x 1 อัน'</em><br><br>
+          <strong>3.</strong> ช่างกดปุ่ม <strong>'✍️ ลงนามรับทราบ'</strong> ยื่นมือถือให้คุณกนกวรรณ (ผู้แจ้ง) ตรวจดูน้ำไหลปกติ<br><br>
           <strong>4.</strong> คุณกนกวรรณเซ็นชื่อด้วยนิ้วมือบนมือถือช่าง พิมพ์ชื่อ <em>'กนกวรรณ มีสุข'</em> และรหัส <em>'EMP-084'</em><br><br>
-          <strong>5.</strong> ช่างกดส่งตรวจ -> แอดมินอนุมัติตัดสต็อกและปิดงาน
+          <strong>5.</strong> ช่างกดส่งตรวจ -> ผู้ควบคุมงานตรวจสอบและอนุมัติตัดสต็อกปิดงาน
         </p>
       </div>
 
       <div class="card" style="border-top: 4px solid #10b981;">
-        <h3 class="card-title" style="color: #047857; font-size: 12.5px;">ตัวอย่างกรณี B: เซ็นล่วงหน้า แล้วมาคีย์ของทีหลัง</h3>
-        <div class="card-subtitle" style="color: #64748b; font-size: 9.5px;">FM-6092: ซ่อมไฟส่องสว่างคลังสินค้า (16.50 น.)</div>
-        <p style="font-size: 10px; color: #334155; line-height: 1.45;">
-          <strong>1.</strong> ช่างเปลี่ยนหลอดไฟและบัลลาสต์เสร็จสิ้น แต่เป็นเวลาใกล้เลิกงาน เจ้าของคลังต้องรีบล็อคคลังกลับบ้าน<br><br>
-          <strong>2.</strong> ช่างยังไม่ได้ค้นรหัสอะไหล่ในแอพ จึงยื่นมือถือให้ผู้จัดการคลังกด <strong>'✍️ ลงนามรับทราบ'</strong> ไว้ก่อนทันทีขณะสถานะ <em>'รอดำเนินการ'</em><br><br>
-          <strong>3.</strong> ผู้จัดการคลังเซ็นชื่อดิจิทัลรับทราบผลงานที่หน้างาน แล้วแยกย้ายกลับบ้านได้เลย<br><br>
-          <strong>4.</strong> เช้าวันถัดมาช่างมาเปิดใบงาน คีย์รายการ <em>'หลอด LED T8 x 4 หลอด'</em> แล้วกดส่งตรวจ (ลายเซ็นเดิมยังอยู่ครบถ้วน)
+        <h3 class="card-title" style="color: #047857; font-size: 12.5px;">ตัวอย่างกรณี B: เสร็จโดยไม่เบิกของ</h3>
+        <div class="card-subtitle" style="color: #64748b; font-size: 9px;">FM-6092: แอร์มีกลิ่นอับ & ล้างฟิลเตอร์ (ห้องประชุม 2)</div>
+        <p style="font-size: 9.8px; color: #334155; line-height: 1.45;">
+          <strong>1.</strong> ช่างสมศักดิ์ เข้าไปถอดล้างแผ่นกรองอากาศ เป่าคอยล์เย็น ฉีดสเปรย์ฆ่าเชื้อจนแอร์ทำงานปกติ ลมเย็นสดชื่น<br><br>
+          <strong>2.</strong> งานนี้เป็นงานบริการ ตรวจเช็คและทำความสะอาด ไม่มีการเบิกพัสดุหรือใช้วัสดุสิ้นเปลืองใดๆ<br><br>
+          <strong>3.</strong> ช่างกดปุ่ม <strong>'✍️ ลงนามรับทราบ'</strong> ยื่นมือถือให้คุณวิภา (ธุรการผู้แจ้งงาน) ตรวจดูความเรียบร้อย<br><br>
+          <strong>4.</strong> คุณวิภาเซ็นชื่อบนมือถือช่าง พิมพ์ชื่อ <em>'วิภา วงศ์สวัสดิ์'</em> และรหัส <em>'EMP-102'</em> แล้วกดบันทึก<br><br>
+          <strong>5.</strong> ช่างกดปุ่มสีเขียว <strong>'ดำเนินการแล้ว (ไม่เบิกของ)'</strong> -> ส่งผู้ควบคุมงานอนุมัติปิดงานเสร็จสิ้นทันที
         </p>
       </div>
 
       <div class="card" style="border-top: 4px solid #f59e0b;">
-        <h3 class="card-title" style="color: #b45309; font-size: 12.5px;">ตัวอย่างกรณี C: รอจัดซื้อ แล้วมาติดตั้ง/เซ็นตอนจบ</h3>
-        <div class="card-subtitle" style="color: #64748b; font-size: 9.5px;">FM-6095: มอเตอร์ประตูม้วนไฟฟ้าเสีย (โรงอาหาร)</div>
-        <p style="font-size: 10px; color: #334155; line-height: 1.45;">
-          <strong>1.</strong> ช่างลงตรวจพบมอเตอร์ไหม้ และในคลังไม่มีมอเตอร์สำรอง<br><br>
-          <strong>2.</strong> ช่างกดปุ่ม <strong>'รอของ (จัดซื้อ/หาอุปกรณ์)'</strong> พิมพ์ระบุ <em>'มอเตอร์ประตูม้วน 1 HP'</em> (ยังไม่ต้องให้ผู้แจ้งเซ็น)<br><br>
-          <strong>3.</strong> ระบบแสดงสถานะย่อ <strong>'รอจัดซื้อ/หา: มอเตอร์ประตูม้วน 1 HP'</strong> เพื่อให้ฝ่ายจัดซื้อสั่งของ<br><br>
-          <strong>4.</strong> 3 วันต่อมาของมาส่ง ช่างกดปุ่ม <em>'เปลี่ยนกลับเป็นรอดำเนินการ'</em> นำมอเตอร์ไปติดตั้งจนประตูทำงานปกติ<br><br>
-          <strong>5.</strong> ช่างยื่นมือถือให้ผู้จัดการโรงอาหารเซ็นชื่อตรวจรับมอบงาน แล้วส่งผู้ควบคุมงานอนุมัติ
+        <h3 class="card-title" style="color: #b45309; font-size: 12.5px;">ตัวอย่างกรณี C: รอซื้อ ระบุเลข REP</h3>
+        <div class="card-subtitle" style="color: #64748b; font-size: 9px;">FM-6095: มอเตอร์ประตูม้วนไฟฟ้าเสีย (โรงอาหาร)</div>
+        <p style="font-size: 9.8px; color: #334155; line-height: 1.45;">
+          <strong>1.</strong> ช่างตรวจพบมอเตอร์ไหม้ คลังไม่มีสต็อก จึงเปิดแบบฟอร์มขอซื้อในระบบ veri ได้เลข <em>'REP-2569-045'</em><br><br>
+          <strong>2.</strong> ช่างกดปุ่ม <strong>'รอของ (จัดซื้อ/หาอุปกรณ์)'</strong> กรอกเลข REP <em>'REP-2569-045'</em> และระบุ <em>'มอเตอร์ประตูม้วน 1 HP'</em><br><br>
+          <strong>3.</strong> ระบบแสดงสถานะ <strong>'รอจัดซื้อ/หา: มอเตอร์ประตูม้วน 1 HP (REP-2569-045)'</strong> ในหน้าเว็บและรายงานสรุป<br><br>
+          <strong>4.</strong> เมื่อจัดซื้อส่งของมาถึง ช่างกดเปลี่ยนเป็นรอดำเนินการ นำมอเตอร์ไปติดตั้งจนประตูทำงานปกติ<br><br>
+          <strong>5.</strong> ช่างยื่นมือถือให้ผู้จัดการโรงอาหารเซ็นชื่อตรวจรับมอบงาน -> ส่งผู้ควบคุมงานอนุมัติตัดสต็อกปิดงาน
         </p>
       </div>
     </div>
@@ -625,6 +592,7 @@
           <li>แก้ไขเรื่อง/หัวข้อ, สถานที่, และรายละเอียดงาน</li>
           <li>แก้ไขชื่อผู้แจ้งงาน, แผนก, เบอร์โทร และอีเมล</li>
           <li>แก้ไขชื่อช่างผู้ดำเนินการ และหน่วยงานช่าง (หรือเว้นว่างเพื่อล้างค่า)</li>
+          <li><strong>แก้ไขข้อมูลอ้างอิง:</strong> หมายเลขใบเสนอแจ้งซ่อม REP ในระบบ veri และรายละเอียดรอซื้อ</li>
           <li><strong>จัดการรูปภาพประกอบ:</strong> ลบรูปเดิมออก หรืออัปโหลดรูปใหม่เพิ่มเติม (รวมสูงสุดไม่เกิน 3 รูป พร้อมระบบบีบอัดภาพอัตโนมัติ)</li>
           <li>บันทึกประวัติการแก้ไขและส่งแจ้งเตือนผ่าน LINE อัตโนมัติ</li>
         </ul>
@@ -680,13 +648,13 @@
       </div>
 
       <div class="card" style="border-top: 4px solid #10b981;">
-        <h3 class="card-title" style="color: #047857; font-size: 13.5px;">Quick Filters & View Modes</h3>
-        <div class="card-subtitle" style="color: #047857;">Category Filter & My Tasks</div>
+        <h3 class="card-title" style="color: #047857; font-size: 13.5px;">หน้ารายการอุปกรณ์พร้อมรูปภาพ</h3>
+        <div class="card-subtitle" style="color: #047857;">Visual Inventory Picker</div>
         <p style="font-size: 10.5px; color: #475569; line-height: 1.45;">
-          • ตัวกรองประเภทงาน: เลือกดูเฉพาะ ไฟฟ้า, ประปา, แอร์, อาคาร ฯลฯ<br>
-          • ปุ่มลัด <strong>'งานของฉัน'</strong>: กดเพื่อกรองดูเฉพาะงานที่ตนเองรับผิดชอบได้ทันทีในคลิกเดียว<br>
-          • แท็บสถานะ: แสดง Badge นับจำนวนใบงานในแต่ละสถานะ Real-time<br>
-          • ปุ่ม <strong>'ล้างตัวกรอง'</strong>: แสดงขึ้นเมื่อมีการใช้งานตัวกรอง กดเพื่อรีเซ็ตกลับค่าเริ่มต้น
+          • หน้า 'เลือกอุปกรณ์จากคลัง' <strong>แสดงรูปภาพประกอบทุกรายการชัดเจน</strong><br>
+          • ช่วยให้ช่างเห็นรูปทรง สี และหน้าตาอะไหล่ก่อนกดเลือก ป้องกันการเบิกผิดรุ่น<br>
+          • แสดงยอดคงเหลือในคลัง Real-time และตำแหน่งที่เก็บอุปกรณ์<br>
+          • ปุ่มลัด <strong>'งานของฉัน'</strong>: กดเพื่อกรองดูเฉพาะงานที่ตนเองรับผิดชอบได้ทันทีในคลิกเดียว
         </p>
       </div>
     </div>
@@ -727,7 +695,7 @@
           <li>เลือกช่วงเวลา: ดูทั้งหมด หรือเลือกเฉพาะรอบเดือนที่ต้องการได้</li>
           <li><strong>การปรับปรุงสถานะใหม่ตามคำขอ:</strong><br>
             • กรณี 'เสร็จสิ้น': แสดงวันที่ในวงเล็บ เช่น <strong>เสร็จสิ้น (24/11/2569)</strong><br>
-            • กรณี 'รอจัดซื้อ': ย่อเป็น <strong>รอจัดซื้อ/หา (ข้อความที่กรอก)</strong> เช่น รอจัดซื้อ/หา (หลอดไฟ LED)
+            • กรณี 'รอจัดซื้อ': ย่อเป็น <strong>รอจัดซื้อ/หา (ข้อความที่กรอก - REP-2569-XXX)</strong>
           </li>
           <li>รองรับทั้งไฟล์ PDF (ตารางแนวนอน สวยงาม) และ Excel (.xlsx มี 2 Sheet: สรุปใบงาน และ รายการอุปกรณ์ที่ใช้)</li>
         </ul>
@@ -820,15 +788,15 @@
         <div class="card-subtitle" style="color: #34d399;">KEY BENEFIT #2</div>
         <h3 class="card-title" style="color: #ffffff; font-size: 13.5px;">หลักฐานตรวจรับหน้างาน</h3>
         <p style="font-size: 10.5px; color: #94a3b8; line-height: 1.45;">
-          ช่างนำมือถือไปให้เจ้าของพื้นที่ตรวจงานและเซ็นรับทราบทันที หรือเซ็นล่วงหน้าได้ รองรับทุกความเร่งด่วนหน้างาน
+          ช่างนำมือถือไปให้เจ้าของพื้นที่ตรวจงานและเซ็นรับทราบทันที มีรูปภาพอุปกรณ์ให้ดูประกอบตอนเบิกพัสดุ
         </p>
       </div>
 
       <div class="card dark" style="border-top: 4px solid #f59e0b;">
         <div class="card-subtitle" style="color: #fbbf24;">KEY BENEFIT #3</div>
-        <h3 class="card-title" style="color: #ffffff; font-size: 13.5px;">สต็อกตรง 100% ไม่หาย</h3>
+        <h3 class="card-title" style="color: #ffffff; font-size: 13.5px;">เชื่อมโยงระบบจัดซื้อ (veri)</h3>
         <p style="font-size: 10.5px; color: #94a3b8; line-height: 1.45;">
-          พัสดุและอะไหล่ทุกชิ้นถูกผูกกับเลขที่ใบงาน FM และอนุมัติตัดสต็อกอัตโนมัติ ไม่ต้องคีย์เอกสารซ้ำ
+          รองรับการระบุเลขที่ใบเสนอแจ้งซ่อม REP-2569-XXX เพื่อเตรียมพร้อมการควบรวม 2 ระบบเข้าด้วยกันในอนาคต
         </p>
       </div>
 

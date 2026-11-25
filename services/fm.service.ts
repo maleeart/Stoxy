@@ -290,7 +290,8 @@ export async function setFMWorkOrderWaitingParts(
   id: string,
   userId: string,
   userName: string,
-  reason?: string
+  reason?: string,
+  repDocNumber?: string
 ): Promise<void> {
   const ref = doc(db, COL, id);
   const snap = await getDoc(ref);
@@ -301,6 +302,7 @@ export async function setFMWorkOrderWaitingParts(
   await updateDoc(ref, {
     status: "waiting_parts",
     waitingPartsReason: reason || "รอจัดซื้อ/หาอุปกรณ์เพื่อดำเนินการ",
+    repDocNumber: repDocNumber?.trim() || deleteField(),
     waitingPartsBy: userId,
     waitingPartsByName: userName,
     waitingPartsAt: now,
@@ -308,7 +310,7 @@ export async function setFMWorkOrderWaitingParts(
   });
 
   notifyLine(
-    `⏳ ใบงาน FM-${wo.workOrderNumber} เปลี่ยนสถานะเป็น "รอจัดซื้อ/หาอุปกรณ์"\nเรื่อง: ${wo.title}\nผู้แจ้ง: ${userName}${reason ? `\nรายละเอียด: ${reason}` : ""}`
+    `⏳ ใบงาน FM-${wo.workOrderNumber} เปลี่ยนสถานะเป็น "รอจัดซื้อ/หาอุปกรณ์"\nเรื่อง: ${wo.title}\nผู้แจ้ง: ${userName}${repDocNumber ? `\nเลขที่ REP: ${repDocNumber}` : ""}${reason ? `\nรายละเอียด: ${reason}` : ""}`
   );
 }
 
@@ -531,6 +533,8 @@ export async function adminUpdateFMWorkOrderDetails(
     assignorName?: string;
     assignedTechnicianName?: string;
     assignedDepartment?: string;
+    repDocNumber?: string;
+    waitingPartsReason?: string;
     notes?: string;
   },
   adminName: string
@@ -572,6 +576,8 @@ export async function adminUpdateFMWorkOrderDetails(
     updateData.assignedDepartment = data.assignedDepartment.trim() || deleteField();
   }
   if (data.notes !== undefined) updateData.notes = data.notes.trim() || deleteField();
+  if (data.repDocNumber !== undefined) updateData.repDocNumber = data.repDocNumber.trim() || deleteField();
+  if (data.waitingPartsReason !== undefined) updateData.waitingPartsReason = data.waitingPartsReason.trim() || deleteField();
 
   await updateDoc(ref, updateData);
 

@@ -400,6 +400,7 @@ export interface FMWorkOrder {
   status: FMWorkOrderStatus;
   completedWithoutItems?: boolean;
   waitingPartsReason?: string;
+  repDocNumber?: string;
   waitingPartsBy?: string;
   waitingPartsByName?: string;
   waitingPartsAt?: Timestamp;
