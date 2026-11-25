@@ -796,7 +796,7 @@ export async function exportFMReportPDF(workOrders: FMWorkOrder[], monthYearStr?
       dateStrFormatted,
       `${wo.title}\nสถานที่: ${wo.location}`,
       `${wo.requesterName}\n${wo.requesterDepartment}`,
-      wo.assignedTechnicianName || "-",
+      "ช่างไฟฟ้า",
       getFMReportStatus(wo),
       itemsText,
       compDetails,
@@ -925,7 +925,7 @@ export async function exportFMReportPDF(workOrders: FMWorkOrder[], monthYearStr?
       // Meta info
       doc.setFontSize(7.5);
       doc.setTextColor(100, 116, 139);
-      const tech = wo.assignedTechnicianName || "-";
+      const tech = "ช่างไฟฟ้า";
       const dt = wo.requestDate?.toDate ? wo.requestDate.toDate().toLocaleDateString("th-TH") : "-";
       doc.text(`สถานที่: ${wo.location}  |  ผู้ดำเนินการ: ${tech}  |  วันที่: ${dt}  |  สถานะ: ${getFMReportStatus(wo)}`, 16, curY + 11.5);
 
@@ -1021,7 +1021,7 @@ export function exportFMReportExcel(workOrders: FMWorkOrder[], monthYearStr?: st
       wo.requesterPhone || "",
       wo.coordinatorName || "",
       wo.coordinatorPhone || "",
-      wo.assignedTechnicianName || "",
+      "ช่างไฟฟ้า",
       wo.assignedDepartment || "",
       wo.assignorName || "",
       getFMReportStatus(wo),
@@ -1066,7 +1066,7 @@ export function exportFMReportExcel(workOrders: FMWorkOrder[], monthYearStr?: st
         it.quantity,
         it.unit || "ชิ้น",
         it.notes || "",
-        wo.assignedTechnicianName || "",
+        "ช่างไฟฟ้า",
         getFMReportStatus(wo),
         reqDate,
         wo.completionDetails || "",
@@ -1094,7 +1094,7 @@ export function exportFMReportExcel(workOrders: FMWorkOrder[], monthYearStr?: st
       `FM-${wo.workOrderNumber}`,
       wo.title,
       wo.location,
-      wo.assignedTechnicianName || "",
+      "ช่างไฟฟ้า",
       getFMReportStatus(wo),
       reqDate,
       wo.completionDetails || "-",
