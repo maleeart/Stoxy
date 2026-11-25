@@ -521,23 +521,23 @@ export default function FMWorkOrdersPage() {
 
       {/* Search and Filters */}
       <div className="space-y-3 mb-5">
-        {/* Search row with Sort By & Work Type controls */}
+        {/* Search row with Sort, Work Type & My Tasks controls */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           {/* Search Box */}
           <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="ค้นหาเลขที่ใบงาน (เช่น 6090), ชื่องาน, สถานที่, ผู้แจ้ง, ช่าง..."
-              className="w-full pl-10 pr-9 py-2.5 text-xs sm:text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 transition-all shadow-xs"
+              placeholder="ค้นหาเลขใบงาน, ชื่องาน, สถานที่, ผู้แจ้ง, ช่าง..."
+              className="w-full h-9 pl-9 pr-8 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 transition-all shadow-xs"
             />
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full transition-colors"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full transition-colors"
                 title="ล้างข้อความค้นหา"
               >
                 <X className="w-3.5 h-3.5" />
@@ -545,15 +545,15 @@ export default function FMWorkOrdersPage() {
             )}
           </div>
 
-          {/* Quick controls: Sort By & Work Type Filter */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-0.5 sm:pb-0 scrollbar-none">
+          {/* Quick controls: Sort, Work Type & My Tasks */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 sm:pb-0 scrollbar-none">
             {/* Compact Sort By Work Order Number Toggle */}
             <button
               type="button"
               onClick={() =>
                 setSortBy((prev) => (prev === "number_asc" ? "number_desc" : "number_asc"))
               }
-              className="flex items-center gap-1 px-2.5 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-2xl text-xs font-bold text-gray-700 dark:text-gray-200 shrink-0 shadow-xs transition-all active:scale-95"
+              className="h-9 flex items-center gap-1.5 px-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-200 shrink-0 shadow-xs transition-all active:scale-95"
               title="คลิกเพื่อสลับเรียงเลขใบงาน"
             >
               <ArrowUpDown className="w-3.5 h-3.5 text-[#1D4ED8] shrink-0" />
@@ -561,15 +561,12 @@ export default function FMWorkOrdersPage() {
             </button>
 
             {/* Work Type Filter Select */}
-            <div className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shrink-0 shadow-xs">
+            <div className="h-9 flex items-center gap-1.5 px-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shrink-0 shadow-xs">
               <Filter className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400 shrink-0" />
-              <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 shrink-0">
-                ประเภท:
-              </span>
               <select
                 value={workTypeFilter}
                 onChange={(e) => setWorkTypeFilter(e.target.value)}
-                className="text-xs font-semibold text-gray-800 dark:text-gray-200 bg-transparent border-none outline-none cursor-pointer pr-1 focus:ring-0"
+                className="text-xs font-semibold text-gray-700 dark:text-gray-200 bg-transparent border-none outline-none cursor-pointer pr-1 focus:ring-0"
               >
                 <option value="all" className="text-gray-900 dark:text-gray-100">
                   ทุกประเภทงาน
@@ -586,14 +583,14 @@ export default function FMWorkOrdersPage() {
             <button
               type="button"
               onClick={() => setOnlyMyTasks((prev) => !prev)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs border transition-all shrink-0 shadow-xs ${
+              className={`h-9 flex items-center gap-1.5 px-2.5 rounded-xl text-xs font-semibold border transition-all shrink-0 shadow-xs active:scale-95 ${
                 onlyMyTasks
-                  ? "bg-blue-50 dark:bg-blue-900/40 text-[#1D4ED8] dark:text-blue-300 border-blue-200 dark:border-blue-800 font-bold"
-                  : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium"
+                  ? "bg-blue-50 dark:bg-blue-900/40 text-[#1D4ED8] dark:text-blue-300 border-blue-200 dark:border-blue-800"
+                  : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
               }`}
               title="แสดงเฉพาะงานที่ฉันรับผิดชอบ"
             >
-              <User className="w-3.5 h-3.5" />
+              <User className="w-3.5 h-3.5 shrink-0" />
               <span>งานของฉัน</span>
             </button>
           </div>
