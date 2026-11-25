@@ -182,10 +182,17 @@ export default function FMWorkOrderDetailPage() {
   });
 
   const deleteMut = useMutation({
-    mutationFn: () => deleteFMWorkOrder(id),
+    mutationFn: () =>
+      deleteFMWorkOrder(
+        id,
+        stoxyUser?.uid ?? "",
+        stoxyUser?.displayName || stoxyUser?.nickname || "ผู้ดูแลระบบ"
+      ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["fm_workorders"] });
       qc.invalidateQueries({ queryKey: ["fm_active_count"] });
+      qc.invalidateQueries({ queryKey: ["inventory_items"] });
+      qc.invalidateQueries({ queryKey: ["stock_movements"] });
       toast.success("ลบใบแจ้งงาน FM สำเร็จ");
       router.push("/fm");
     },
@@ -258,6 +265,8 @@ export default function FMWorkOrderDetailPage() {
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาด"),
   });
 
+  const [returnStockOnStatusChange, setReturnStockOnStatusChange] = useState(true);
+
   const adminStatusMut = useMutation({
     mutationFn: () =>
       adminUpdateFMWorkOrderStatus(
@@ -265,17 +274,21 @@ export default function FMWorkOrderDetailPage() {
         targetStatus,
         stoxyUser?.uid ?? "",
         stoxyUser?.displayName || stoxyUser?.nickname || "ผู้ดูแลระบบ",
-        statusChangeNote
+        statusChangeNote,
+        returnStockOnStatusChange
       ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["fm_workorder", id] });
       qc.invalidateQueries({ queryKey: ["fm_workorders"] });
       qc.invalidateQueries({ queryKey: ["fm_active_count"] });
+      qc.invalidateQueries({ queryKey: ["inventory_items"] });
+      qc.invalidateQueries({ queryKey: ["stock_movements"] });
       toast.success(
         `เปลี่ยนสถานะเป็น "${statusConfig[targetStatus]?.label || targetStatus}" สำเร็จ`
       );
       setShowAdminStatusModal(false);
       setStatusChangeNote("");
+      setReturnStockOnStatusChange(true);
     },
     onError: (e: any) => toast.error(e.message ?? "เกิดข้อผิดพลาดในการเปลี่ยนสถานะ"),
   });
@@ -1281,6 +1294,21 @@ export default function FMWorkOrderDetailPage() {
           )}
         </div>
 
+        {workOrder.stockReturned && (
+          <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-2xl flex items-center gap-2.5 text-xs text-amber-800 dark:text-amber-200 shadow-xs">
+            <RotateCcw className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+            <div>
+              <span className="font-bold">พัสดุในใบงานนี้ถูกคืนเข้าคลังสต็อกแล้ว</span>
+              {workOrder.stockReturnedAt && (
+                <span className="text-amber-700 dark:text-amber-300 ml-1.5">
+                  ({formatDateTime(workOrder.stockReturnedAt)}
+                  {workOrder.stockReturnedByName ? ` โดย ${workOrder.stockReturnedByName}` : ""})
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Items Table / Cards */}
         {workingItems.length === 0 ? (
           <div className="text-center py-12 bg-gray-50 dark:bg-gray-700/30 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
@@ -2151,6 +2179,68 @@ export default function FMWorkOrderDetailPage() {
                   })}
                 </div>
               </div>
+
+              {/* Auto Stock Rollback or Re-deduction Alert */}
+              {workOrder.status === "completed" &&
+                !workOrder.completedWithoutItems &&
+                (workOrder.items?.length || 0) > 0 &&
+                !workOrder.stockReturned &&
+                targetStatus !== "completed" && (
+                  <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 space-y-2.5">
+                    <div className="flex items-start gap-2.5">
+                      <RotateCcw className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                      <div className="flex-1 text-xs">
+                        <p className="font-bold text-amber-900 dark:text-amber-200">
+                          การคืนพัสดุและอุปกรณ์เข้าคลังสต็อก
+                        </p>
+                        <p className="text-amber-700 dark:text-amber-300 text-[11px] mt-0.5">
+                          ใบงานนี้เคยตัดสต็อกอุปกรณ์ไปแล้ว {workOrder.items?.length} รายการ (รวม{" "}
+                          {workOrder.items?.reduce((s, i) => s + i.quantity, 0)} ชิ้น)
+                        </p>
+                      </div>
+                    </div>
+
+                    <label className="flex items-start gap-2.5 p-2.5 rounded-xl bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-700/60 cursor-pointer hover:bg-amber-100/40 dark:hover:bg-gray-700/60 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={returnStockOnStatusChange}
+                        onChange={(e) => setReturnStockOnStatusChange(e.target.checked)}
+                        className="w-4 h-4 mt-0.5 rounded text-[#1D4ED8] focus:ring-[#1D4ED8] border-gray-300"
+                      />
+                      <div className="text-xs">
+                        <span className="font-bold text-gray-900 dark:text-white">
+                          คืนพัสดุกลับเข้าคลังสต็อกอัตโนมัติ (แนะนำ)
+                        </span>
+                        <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                          ระบบจะเพิ่มยอดคงเหลือกลับเข้าคลัง และบันทึกประวัติความเคลื่อนไหว (Stock Movement - Return) โดยอัตโนมัติ
+                        </p>
+                      </div>
+                    </label>
+
+                    {!returnStockOnStatusChange && (
+                      <p className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 px-1">
+                        ⚠️ คำเตือน: หากไม่เลือกคืนสต็อก ยอดอุปกรณ์ในคลังจะไม่กลับคืนมา และต้องปรับยอดด้วยตนเอง
+                      </p>
+                    )}
+                  </div>
+                )}
+
+              {targetStatus === "completed" &&
+                !workOrder.completedWithoutItems &&
+                (workOrder.items?.length || 0) > 0 &&
+                (workOrder.stockReturned || workOrder.status !== "completed") && (
+                  <div className="p-3 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 flex items-start gap-2.5 text-xs text-blue-900 dark:text-blue-200">
+                    <CheckCircle2 className="w-4 h-4 text-[#1D4ED8] shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-bold">การตัดสต็อกอุปกรณ์</p>
+                      <p className="text-[11px] text-blue-700 dark:text-blue-300 mt-0.5">
+                        ระบบจะตรวจสอบยอดคงเหลือและตัดสต็อกพัสดุ {workOrder.items?.length} รายการ (
+                        {workOrder.items?.reduce((s, i) => s + i.quantity, 0)} ชิ้น)
+                        ออกจากคลังอัตโนมัติ พร้อมบันทึกประวัติการเบิก
+                      </p>
+                    </div>
+                  </div>
+                )}
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">

@@ -399,6 +399,10 @@ export interface FMWorkOrder {
   items?: FMWorkOrderItem[];
   status: FMWorkOrderStatus;
   completedWithoutItems?: boolean;
+  stockReturned?: boolean;
+  stockReturnedAt?: Timestamp;
+  stockReturnedBy?: string;
+  stockReturnedByName?: string;
   waitingPartsReason?: string;
   repDocNumber?: string;
   waitingPartsBy?: string;

@@ -399,7 +399,8 @@ export async function adminUpdateFMWorkOrderStatus(
   newStatus: FMWorkOrderStatus,
   adminId: string,
   adminName: string,
-  note?: string
+  note?: string,
+  returnStock: boolean = true
 ): Promise<void> {
   const ref = doc(db, COL, id);
   const snap = await getDoc(ref);
@@ -407,6 +408,192 @@ export async function adminUpdateFMWorkOrderStatus(
   const wo = snap.data() as FMWorkOrder;
 
   const now = Timestamp.now();
+  const hadDeductedStock =
+    wo.status === "completed" &&
+    !wo.completedWithoutItems &&
+    (wo.items?.length || 0) > 0 &&
+    !wo.stockReturned;
+
+  // Case A: Work order was completed with deducted stock, now changing to another status (e.g. cancelled, pending, etc.)
+  if (hadDeductedStock && newStatus !== "completed") {
+    if (returnStock) {
+      // 1. Fetch current inventory items to calculate stock movements
+      const itemSnaps = await Promise.all(
+        wo.items.map((i) => getDoc(doc(db, "inventory_items", i.itemId)))
+      );
+
+      const batch = writeBatch(db);
+
+      // Re-increment quantity & quantityAvailable in inventory
+      for (let idx = 0; idx < wo.items.length; idx++) {
+        const itemData = wo.items[idx];
+        const itemRef = doc(db, "inventory_items", itemData.itemId);
+        batch.update(itemRef, {
+          quantityAvailable: increment(itemData.quantity),
+          quantity: increment(itemData.quantity),
+          updatedAt: now,
+        });
+      }
+
+      // Update work order
+      const updateData: Record<string, any> = {
+        status: newStatus,
+        stockReturned: true,
+        stockReturnedAt: now,
+        stockReturnedBy: adminId,
+        stockReturnedByName: adminName,
+        updatedAt: now,
+      };
+
+      if (note && note.trim()) {
+        updateData.notes = wo.notes
+          ? `${wo.notes}\n[Admin ปรับสถานะเป็น "${newStatus}" และคืนสต็อก ${wo.items.length} รายการ โดย ${adminName}]: ${note.trim()}`
+          : `[Admin ปรับสถานะเป็น "${newStatus}" และคืนสต็อก ${wo.items.length} รายการ โดย ${adminName}]: ${note.trim()}`;
+      } else {
+        updateData.notes = wo.notes
+          ? `${wo.notes}\n[Admin ปรับสถานะเป็น "${newStatus}" และคืนสต็อก ${wo.items.length} รายการ โดย ${adminName}]`
+          : `[Admin ปรับสถานะเป็น "${newStatus}" และคืนสต็อก ${wo.items.length} รายการ โดย ${adminName}]`;
+      }
+
+      batch.update(ref, updateData);
+      await batch.commit();
+
+      // Record stock movements (type: return)
+      for (let idx = 0; idx < wo.items.length; idx++) {
+        const itemData = wo.items[idx];
+        const itemSnap = itemSnaps[idx];
+        const currentQty = itemSnap.exists()
+          ? (itemSnap.data() as InventoryItem).quantityAvailable
+          : 0;
+        await recordStockMovement({
+          itemId: itemData.itemId,
+          itemCode: itemData.itemCode,
+          itemName: itemData.itemName,
+          type: "return",
+          quantityBefore: currentQty,
+          quantityChange: itemData.quantity,
+          quantityAfter: currentQty + itemData.quantity,
+          unit: itemData.unit || "ชิ้น",
+          referenceId: id,
+          referenceType: "fm_workorder",
+          reason: `รับคืนพัสดุจากการยกเลิก/เปลี่ยนสถานะใบงาน FM ${wo.workOrderNumber}: ${wo.title} เป็น "${newStatus}" โดย ${adminName}${note ? ` [${note}]` : ""}`,
+          performedBy: adminId,
+          performedByName: adminName,
+          subjectName: wo.assignedTechnicianName || wo.submittedByName || wo.requesterName,
+        });
+      }
+
+      notifyLine(
+        `🔄 ผู้ดูแลระบบปรับเปลี่ยนสถานะใบงาน FM-${wo.workOrderNumber}\nเรื่อง: ${wo.title}\nสถานะใหม่: ${newStatus}\nคืนสต็อกพัสดุ: ${wo.items.length} รายการ (${wo.items.reduce((s, i) => s + i.quantity, 0)} ชิ้น) เรียบร้อยแล้ว\nปรับโดย: ${adminName}${note ? `\nหมายเหตุ: ${note}` : ""}`
+      );
+      return;
+    } else {
+      // Admin opted out of returning stock
+      const updateData: Record<string, any> = {
+        status: newStatus,
+        stockReturned: false,
+        updatedAt: now,
+      };
+      if (note && note.trim()) {
+        updateData.notes = wo.notes
+          ? `${wo.notes}\n[Admin ปรับสถานะเป็น "${newStatus}" (ไม่คืนสต็อก) โดย ${adminName}]: ${note.trim()}`
+          : `[Admin ปรับสถานะเป็น "${newStatus}" (ไม่คืนสต็อก) โดย ${adminName}]: ${note.trim()}`;
+      }
+      await updateDoc(ref, updateData);
+      notifyLine(
+        `⚙️ ผู้ดูแลระบบปรับเปลี่ยนสถานะใบงาน FM-${wo.workOrderNumber} (ไม่คืนสต็อก)\nเรื่อง: ${wo.title}\nสถานะใหม่: ${newStatus}\nปรับโดย: ${adminName}${note ? `\nหมายเหตุ: ${note}` : ""}`
+      );
+      return;
+    }
+  }
+
+  // Case B: Work order was previously NOT completed (or was returned before), and now admin sets it to "completed"
+  const needsStockDeduction =
+    newStatus === "completed" &&
+    !wo.completedWithoutItems &&
+    (wo.items?.length || 0) > 0 &&
+    (wo.stockReturned || wo.status !== "completed");
+
+  if (needsStockDeduction) {
+    const itemSnaps = await Promise.all(
+      wo.items.map((i) => getDoc(doc(db, "inventory_items", i.itemId)))
+    );
+
+    // Verify stock availability
+    for (let idx = 0; idx < wo.items.length; idx++) {
+      const itemData = wo.items[idx];
+      const snapItem = itemSnaps[idx];
+      if (!snapItem.exists()) {
+        throw new Error(`ไม่พบอุปกรณ์รหัส ${itemData.itemCode} ในระบบ`);
+      }
+      const inv = snapItem.data() as InventoryItem;
+      if (inv.quantityAvailable < itemData.quantity) {
+        throw new Error(
+          `อุปกรณ์ ${itemData.itemName} (${itemData.itemCode}) คงเหลือไม่พอตัดสต็อก (คงเหลือ ${inv.quantityAvailable}, ต้องการ ${itemData.quantity})`
+        );
+      }
+    }
+
+    const batch = writeBatch(db);
+    for (let idx = 0; idx < wo.items.length; idx++) {
+      const itemData = wo.items[idx];
+      const itemRef = doc(db, "inventory_items", itemData.itemId);
+      batch.update(itemRef, {
+        quantityAvailable: increment(-itemData.quantity),
+        quantity: increment(-itemData.quantity),
+        updatedAt: now,
+      });
+    }
+
+    const updateData: Record<string, any> = {
+      status: "completed",
+      approvedBy: adminId,
+      approvedByName: adminName,
+      approvedAt: now,
+      stockReturned: false,
+      stockReturnedAt: deleteField(),
+      stockReturnedBy: deleteField(),
+      stockReturnedByName: deleteField(),
+      updatedAt: now,
+    };
+
+    if (note && note.trim()) {
+      updateData.notes = wo.notes
+        ? `${wo.notes}\n[Admin ปรับสถานะเป็น "completed" และตัดสต็อก โดย ${adminName}]: ${note.trim()}`
+        : `[Admin ปรับสถานะเป็น "completed" และตัดสต็อก โดย ${adminName}]: ${note.trim()}`;
+    }
+
+    batch.update(ref, updateData);
+    await batch.commit();
+
+    for (let idx = 0; idx < wo.items.length; idx++) {
+      const itemData = wo.items[idx];
+      const inv = itemSnaps[idx].data() as InventoryItem;
+      await recordStockMovement({
+        itemId: itemData.itemId,
+        itemCode: itemData.itemCode,
+        itemName: itemData.itemName,
+        type: "requisition",
+        quantityBefore: inv.quantityAvailable,
+        quantityChange: -itemData.quantity,
+        quantityAfter: inv.quantityAvailable - itemData.quantity,
+        unit: itemData.unit || inv.unit || "ชิ้น",
+        referenceId: id,
+        referenceType: "fm_workorder",
+        reason: `เบิกใช้ในใบงาน FM ${wo.workOrderNumber}: ${wo.title}${itemData.notes ? ` (${itemData.notes})` : ""}`,
+        performedBy: adminId,
+        performedByName: adminName,
+        subjectName: wo.assignedTechnicianName || wo.submittedByName || wo.requesterName,
+      });
+    }
+
+    notifyLine(
+      `✅ ผู้ดูแลระบบอนุมัติและตัดสต็อกใบงาน FM-${wo.workOrderNumber}\nเรื่อง: ${wo.title}\nสถานะใหม่: เสร็จสิ้น\nปรับโดย: ${adminName}\nตัดสต็อก ${wo.items.length} รายการ`
+    );
+    return;
+  }
+
+  // Case C: Standard status transition without item stock impact
   const updateData: Record<string, any> = {
     status: newStatus,
     updatedAt: now,
@@ -586,8 +773,65 @@ export async function adminUpdateFMWorkOrderDetails(
   );
 }
 
-export async function deleteFMWorkOrder(id: string): Promise<void> {
-  await deleteDoc(doc(db, COL, id));
+export async function deleteFMWorkOrder(
+  id: string,
+  adminId?: string,
+  adminName?: string
+): Promise<void> {
+  const ref = doc(db, COL, id);
+  const snap = await getDoc(ref);
+  if (snap.exists()) {
+    const wo = snap.data() as FMWorkOrder;
+    if (
+      wo.status === "completed" &&
+      !wo.completedWithoutItems &&
+      (wo.items?.length || 0) > 0 &&
+      !wo.stockReturned
+    ) {
+      const itemSnaps = await Promise.all(
+        wo.items.map((i) => getDoc(doc(db, "inventory_items", i.itemId)))
+      );
+      const batch = writeBatch(db);
+      const now = Timestamp.now();
+      for (let idx = 0; idx < wo.items.length; idx++) {
+        const itemData = wo.items[idx];
+        const itemRef = doc(db, "inventory_items", itemData.itemId);
+        batch.update(itemRef, {
+          quantityAvailable: increment(itemData.quantity),
+          quantity: increment(itemData.quantity),
+          updatedAt: now,
+        });
+      }
+      batch.delete(ref);
+      await batch.commit();
+
+      for (let idx = 0; idx < wo.items.length; idx++) {
+        const itemData = wo.items[idx];
+        const itemSnap = itemSnaps[idx];
+        const currentQty = itemSnap.exists()
+          ? (itemSnap.data() as InventoryItem).quantityAvailable
+          : 0;
+        await recordStockMovement({
+          itemId: itemData.itemId,
+          itemCode: itemData.itemCode,
+          itemName: itemData.itemName,
+          type: "return",
+          quantityBefore: currentQty,
+          quantityChange: itemData.quantity,
+          quantityAfter: currentQty + itemData.quantity,
+          unit: itemData.unit || "ชิ้น",
+          referenceId: id,
+          referenceType: "fm_workorder",
+          reason: `รับคืนพัสดุอัตโนมัติจากการลบใบงาน FM ${wo.workOrderNumber}: ${wo.title} โดย ${adminName || adminId || "ผู้ดูแลระบบ"}`,
+          performedBy: adminId || "admin",
+          performedByName: adminName || "ผู้ดูแลระบบ",
+          subjectName: wo.assignedTechnicianName || wo.submittedByName || wo.requesterName,
+        });
+      }
+      return;
+    }
+  }
+  await deleteDoc(ref);
 }
 
 
