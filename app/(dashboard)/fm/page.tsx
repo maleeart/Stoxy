@@ -537,13 +537,24 @@ export default function FMWorkOrdersPage() {
               </span>
             </button>
 
-            {/* Work Type Filter Select */}
-            <div className="h-9 flex items-center gap-1 px-2 sm:px-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl min-w-0 shadow-xs">
-              <Filter className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400 shrink-0" />
+            {/* Work Type Filter Select (styled identically to adjacent buttons) */}
+            <div
+              className={`relative h-9 flex items-center justify-center gap-1 px-2 sm:px-2.5 rounded-xl text-[11px] sm:text-xs font-semibold border transition-all min-w-0 shadow-xs ${
+                workTypeFilter !== "all"
+                  ? "bg-blue-50 dark:bg-blue-900/40 text-[#1D4ED8] dark:text-blue-300 border-blue-200 dark:border-blue-800"
+                  : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+              }`}
+              title="กรองตามประเภทงาน"
+            >
+              <Filter className="w-3.5 h-3.5 shrink-0 opacity-80" />
+              <span className="truncate">
+                {workTypeFilter === "all" ? "ทุกประเภท" : workTypeFilter}
+              </span>
               <select
                 value={workTypeFilter}
                 onChange={(e) => setWorkTypeFilter(e.target.value)}
-                className="w-full min-w-0 text-[11px] sm:text-xs font-semibold text-gray-700 dark:text-gray-200 bg-transparent border-none outline-none cursor-pointer focus:ring-0 truncate"
+                aria-label="กรองตามประเภทงาน"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer text-base"
               >
                 <option value="all" className="text-gray-900 dark:text-gray-100">
                   ทุกประเภท
