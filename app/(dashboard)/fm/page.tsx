@@ -59,17 +59,11 @@ export default function FMWorkOrdersPage() {
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
   const qc = useQueryClient();
 
-  type SortOption =
-    | "number_desc"
-    | "number_asc"
-    | "requestDate_desc"
-    | "requestDate_asc"
-    | "useDate_asc"
-    | "createdAt_desc";
+  type SortOption = "number_asc" | "number_desc";
 
-  const [tab, setTab] = useState<"all" | FMWorkOrderStatus>("all");
+  const [tab, setTab] = useState<"all" | FMWorkOrderStatus>("pending");
   const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<SortOption>("number_desc");
+  const [sortBy, setSortBy] = useState<SortOption>("number_asc");
   const [workTypeFilter, setWorkTypeFilter] = useState<string>("all");
   const [onlyMyTasks, setOnlyMyTasks] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -407,57 +401,30 @@ export default function FMWorkOrdersPage() {
       return true;
     })
     .sort((a, b) => {
-      // Default: sort by work order number descending (จาก มาก ไป น้อย)
+      const numA = a.workOrderNumber || "";
+      const numB = b.workOrderNumber || "";
       if (sortBy === "number_desc") {
-        const numA = a.workOrderNumber || "";
-        const numB = b.workOrderNumber || "";
         return numB.localeCompare(numA, undefined, { numeric: true, sensitivity: "base" });
       }
-      if (sortBy === "number_asc") {
-        const numA = a.workOrderNumber || "";
-        const numB = b.workOrderNumber || "";
-        return numA.localeCompare(numB, undefined, { numeric: true, sensitivity: "base" });
-      }
-      if (sortBy === "requestDate_desc") {
-        const timeA = toDate(a.requestDate)?.getTime() || 0;
-        const timeB = toDate(b.requestDate)?.getTime() || 0;
-        return timeB - timeA;
-      }
-      if (sortBy === "requestDate_asc") {
-        const timeA = toDate(a.requestDate)?.getTime() || 0;
-        const timeB = toDate(b.requestDate)?.getTime() || 0;
-        return timeA - timeB;
-      }
-      if (sortBy === "useDate_asc") {
-        const timeA = toDate(a.useDate)?.getTime() ?? Number.MAX_SAFE_INTEGER;
-        const timeB = toDate(b.useDate)?.getTime() ?? Number.MAX_SAFE_INTEGER;
-        return timeA - timeB;
-      }
-      if (sortBy === "createdAt_desc") {
-        const timeA = toDate(a.createdAt)?.getTime() || 0;
-        const timeB = toDate(b.createdAt)?.getTime() || 0;
-        return timeB - timeA;
-      }
-      return 0;
+      return numA.localeCompare(numB, undefined, { numeric: true, sensitivity: "base" });
     });
 
   const hasActiveFilters =
     Boolean(search.trim()) ||
-    tab !== "all" ||
+    tab !== "pending" ||
     workTypeFilter !== "all" ||
     onlyMyTasks ||
-    sortBy !== "number_desc";
+    sortBy !== "number_asc";
 
   const resetAllFilters = () => {
     setSearch("");
-    setTab("all");
+    setTab("pending");
     setWorkTypeFilter("all");
     setOnlyMyTasks(false);
-    setSortBy("number_desc");
+    setSortBy("number_asc");
   };
 
   const statusTabs: [string, string, number][] = [
-    ["all", "ทั้งหมด", workOrders.length],
     ["pending", "รอดำเนินการ", workOrders.filter((w) => w.status === "pending").length],
     ["waiting_parts", "รอจัดซื้อ/หาอุปกรณ์", workOrders.filter((w) => w.status === "waiting_parts").length],
     ["pending_review", "รอตรวจสอบ", workOrders.filter((w) => w.status === "pending_review").length],
@@ -471,6 +438,7 @@ export default function FMWorkOrdersPage() {
   if (cancelledCount > 0) {
     statusTabs.push(["cancelled", "ยกเลิก", cancelledCount]);
   }
+  statusTabs.push(["all", "ทั้งหมด", workOrders.length]);
 
   return (
     <AppShell title="ใบแจ้งงานซ่อม (FM)">
@@ -579,37 +547,18 @@ export default function FMWorkOrdersPage() {
 
           {/* Quick controls: Sort By & Work Type Filter */}
           <div className="flex items-center gap-2 overflow-x-auto pb-0.5 sm:pb-0 scrollbar-none">
-            {/* Sort By Select */}
-            <div className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shrink-0 shadow-xs">
+            {/* Compact Sort By Work Order Number Toggle */}
+            <button
+              type="button"
+              onClick={() =>
+                setSortBy((prev) => (prev === "number_asc" ? "number_desc" : "number_asc"))
+              }
+              className="flex items-center gap-1 px-2.5 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-2xl text-xs font-bold text-gray-700 dark:text-gray-200 shrink-0 shadow-xs transition-all active:scale-95"
+              title="คลิกเพื่อสลับเรียงเลขใบงาน"
+            >
               <ArrowUpDown className="w-3.5 h-3.5 text-[#1D4ED8] shrink-0" />
-              <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 shrink-0">
-                เรียงตาม:
-              </span>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortOption)}
-                className="text-xs font-bold text-gray-800 dark:text-gray-200 bg-transparent border-none outline-none cursor-pointer pr-1 focus:ring-0"
-              >
-                <option value="number_desc" className="text-gray-900 dark:text-gray-100">
-                  เลขที่ใบงาน (มาก → น้อย)
-                </option>
-                <option value="number_asc" className="text-gray-900 dark:text-gray-100">
-                  เลขที่ใบงาน (น้อย → มาก)
-                </option>
-                <option value="requestDate_desc" className="text-gray-900 dark:text-gray-100">
-                  วันที่แจ้ง (ใหม่ล่าสุด)
-                </option>
-                <option value="requestDate_asc" className="text-gray-900 dark:text-gray-100">
-                  วันที่แจ้ง (เก่าสุด)
-                </option>
-                <option value="useDate_asc" className="text-gray-900 dark:text-gray-100">
-                  วันที่ต้องการใช้ (เร็วสุด)
-                </option>
-                <option value="createdAt_desc" className="text-gray-900 dark:text-gray-100">
-                  วันที่สร้างใบงาน (ล่าสุด)
-                </option>
-              </select>
-            </div>
+              <span>{sortBy === "number_asc" ? "เลขใบงาน น้อย→มาก" : "เลขใบงาน มาก→น้อย"}</span>
+            </button>
 
             {/* Work Type Filter Select */}
             <div className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shrink-0 shadow-xs">

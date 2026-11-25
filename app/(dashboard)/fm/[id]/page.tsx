@@ -1628,7 +1628,7 @@ export default function FMWorkOrderDetailPage() {
                 <div className="flex items-center gap-2 ml-auto w-full sm:w-auto">
                   <button
                     onClick={() => {
-                      updateItemsMut.mutate();
+                      updateItemsMut.mutate(undefined);
                     }}
                     disabled={updateItemsMut.isPending}
                     className="w-full sm:w-auto px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-xs sm:text-sm font-bold shadow-lg shadow-purple-500/20 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
@@ -1662,7 +1662,7 @@ export default function FMWorkOrderDetailPage() {
 
                 <button
                   onClick={() => {
-                    updateItemsMut.mutate();
+                    updateItemsMut.mutate(undefined);
                   }}
                   disabled={updateItemsMut.isPending}
                   className="w-full sm:w-auto px-6 py-2.5 bg-[#1D4ED8] hover:bg-blue-700 text-white rounded-2xl text-xs sm:text-sm font-bold shadow-lg shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
