@@ -649,10 +649,6 @@ export default function FMWorkOrdersPage() {
           <span className="text-[10px] text-gray-400">
             {sortBy === "number_desc" && "เรียงตาม: เลขที่ใบงาน (มาก → น้อย)"}
             {sortBy === "number_asc" && "เรียงตาม: เลขที่ใบงาน (น้อย → มาก)"}
-            {sortBy === "requestDate_desc" && "เรียงตาม: วันที่แจ้ง (ใหม่ล่าสุด)"}
-            {sortBy === "requestDate_asc" && "เรียงตาม: วันที่แจ้ง (เก่าสุด)"}
-            {sortBy === "useDate_asc" && "เรียงตาม: วันที่ต้องการใช้ (เร็วสุด)"}
-            {sortBy === "createdAt_desc" && "เรียงตาม: วันที่สร้าง (ล่าสุด)"}
           </span>
         </div>
       </div>
