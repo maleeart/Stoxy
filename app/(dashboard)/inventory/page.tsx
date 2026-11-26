@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useMemo } from "react";
 import {
@@ -30,7 +30,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useInventoryItems, useDeleteInventoryItem } from "@/hooks/useInventory";
 import { toast } from "sonner";
 import { AnimatePresence } from "framer-motion";
-import { statusConfig, formatDate, cn } from "@/lib/utils";
+import { formatDate, cn } from "@/lib/utils";
 import type { InventoryItem, ItemStatus } from "@/types";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -190,19 +190,6 @@ export default function InventoryPage() {
                 />
               </div>
             </div>
-          );
-        },
-      },
-      {
-        accessorKey: "status",
-        header: "สถานะ",
-        cell: ({ getValue }) => {
-          const s = getValue() as keyof typeof statusConfig;
-          const cfg = statusConfig[s] ?? { badge: "bg-gray-100 text-gray-600", label: s };
-          return (
-            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${cfg.badge}`}>
-              {cfg.label}
-            </span>
           );
         },
       },
@@ -397,8 +384,6 @@ export default function InventoryPage() {
         ) : (
           filtered.map((item, i) => {
             const pct = item.quantity > 0 ? (item.quantityAvailable / item.quantity) * 100 : 0;
-            const s = item.status as keyof typeof statusConfig;
-            const cfg = statusConfig[s] ?? { badge: "bg-gray-100 text-gray-600", label: s };
             return (
               <motion.div key={item.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}>
                 <Link href={`/inventory/${item.id}`}>
@@ -414,12 +399,9 @@ export default function InventoryPage() {
                       </div>
                       {/* Content */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2 mb-1">
-                          <div className="min-w-0">
-                            <p className="font-semibold text-gray-900 dark:text-white text-sm leading-snug line-clamp-1">{item.name}</p>
-                            {item.brand && <p className="text-xs text-gray-400">{item.brand}</p>}
-                          </div>
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${cfg.badge}`}>{cfg.label}</span>
+                        <div className="mb-1">
+                          <p className="font-semibold text-gray-900 dark:text-white text-sm leading-snug line-clamp-1">{item.name}</p>
+                          {item.brand && <p className="text-xs text-gray-400">{item.brand}</p>}
                         </div>
                         <div className="flex items-center gap-2 flex-wrap mb-2">
                           <span className="font-mono text-xs font-semibold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded">{item.code}</span>
