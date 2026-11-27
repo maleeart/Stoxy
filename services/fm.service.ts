@@ -299,18 +299,26 @@ export async function setFMWorkOrderWaitingParts(
   const wo = snap.data() as FMWorkOrder;
 
   const now = Timestamp.now();
+  const isAlreadyWaiting = wo.status === "waiting_parts";
+
   await updateDoc(ref, {
     status: "waiting_parts",
     waitingPartsReason: reason || "รอจัดซื้อ/หาอุปกรณ์เพื่อดำเนินการ",
     repDocNumber: repDocNumber?.trim() || deleteField(),
-    waitingPartsBy: userId,
-    waitingPartsByName: userName,
-    waitingPartsAt: now,
+    ...(!wo.waitingPartsBy
+      ? {
+          waitingPartsBy: userId,
+          waitingPartsByName: userName,
+          waitingPartsAt: now,
+        }
+      : {}),
     updatedAt: now,
   });
 
   notifyLine(
-    `⏳ ใบงาน FM-${wo.workOrderNumber} เปลี่ยนสถานะเป็น "รอจัดซื้อ/หาอุปกรณ์"\nเรื่อง: ${wo.title}\nผู้แจ้ง: ${userName}${repDocNumber ? `\nเลขที่ REP: ${repDocNumber}` : ""}${reason ? `\nรายละเอียด: ${reason}` : ""}`
+    isAlreadyWaiting
+      ? `✏️ ใบงาน FM-${wo.workOrderNumber} อัปเดตข้อมูล "รอจัดซื้อ/หาอุปกรณ์"\nเรื่อง: ${wo.title}\nผู้แก้ไข: ${userName}${repDocNumber ? `\nเลขที่ REP: ${repDocNumber}` : ""}${reason ? `\nรายละเอียด: ${reason}` : ""}`
+      : `⏳ ใบงาน FM-${wo.workOrderNumber} เปลี่ยนสถานะเป็น "รอจัดซื้อ/หาอุปกรณ์"\nเรื่อง: ${wo.title}\nผู้แจ้ง: ${userName}${repDocNumber ? `\nเลขที่ REP: ${repDocNumber}` : ""}${reason ? `\nรายละเอียด: ${reason}` : ""}`
   );
 }
 

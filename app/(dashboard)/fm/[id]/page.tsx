@@ -242,7 +242,12 @@ export default function FMWorkOrderDetailPage() {
       qc.invalidateQueries({ queryKey: ["fm_workorder", id] });
       qc.invalidateQueries({ queryKey: ["fm_workorders"] });
       qc.invalidateQueries({ queryKey: ["fm_active_count"] });
-      toast.success("บันทึกสถานะรอจัดซื้อ/หาอุปกรณ์แล้ว");
+      qc.invalidateQueries({ queryKey: ["fm_workorders_report"] });
+      toast.success(
+        workOrder?.status === "waiting_parts"
+          ? "แก้ไขข้อมูลรอของ / เลขที่ REP สำเร็จ"
+          : "บันทึกสถานะรอจัดซื้อ/หาอุปกรณ์แล้ว"
+      );
       setShowWaitingPartsModal(false);
       setWaitingPartsReason("");
       setWaitingPartsRepNumber("");
@@ -927,6 +932,18 @@ export default function FMWorkOrderDetailPage() {
           </div>
           <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
             <button
+              type="button"
+              onClick={() => {
+                setWaitingPartsReason(workOrder.waitingPartsReason || "");
+                setWaitingPartsRepNumber(workOrder.repDocNumber || "");
+                setShowWaitingPartsModal(true);
+              }}
+              className="w-full sm:w-auto px-3.5 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 flex items-center justify-center gap-1.5 text-center"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>{workOrder.repDocNumber ? "แก้ไขเลขที่ REP" : "เพิ่มเลขที่ใบ REP"}</span>
+            </button>
+            <button
               onClick={() => {
                 if (confirm("เปลี่ยนสถานะกลับเป็น 'รอดำเนินการ'?")) {
                   resumePendingMut.mutate();
@@ -1138,6 +1155,63 @@ export default function FMWorkOrderDetailPage() {
                 รายละเอียดงาน:
               </span>
               {workOrder.description}
+            </div>
+          )}
+
+          {/* ข้อมูลการรอจัดซื้อ / จัดหาอุปกรณ์ (สถานะรอของ) */}
+          {workOrder.status === "waiting_parts" && (
+            <div className="p-4 bg-orange-50/70 dark:bg-orange-950/20 rounded-2xl text-xs border border-orange-200/80 dark:border-orange-800/50 space-y-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-bold text-orange-950 dark:text-orange-200 flex items-center gap-1.5 text-xs sm:text-sm">
+                  <PackageSearch className="w-4 h-4 text-orange-600 shrink-0" />
+                  <span>ข้อมูลการรอจัดซื้อ / จัดหาอุปกรณ์ (REP)</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setWaitingPartsReason(workOrder.waitingPartsReason || "");
+                    setWaitingPartsRepNumber(workOrder.repDocNumber || "");
+                    setShowWaitingPartsModal(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-orange-700 dark:text-orange-200 bg-white dark:bg-gray-800 hover:bg-orange-100/60 dark:hover:bg-gray-700 border border-orange-300 dark:border-orange-700 rounded-xl shadow-xs transition-all active:scale-95"
+                >
+                  <Edit3 className="w-3.5 h-3.5 text-orange-600" />
+                  <span>{workOrder.repDocNumber ? "แก้ไขเลขที่ REP" : "เพิ่มเลขที่ใบ REP"}</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1 text-xs">
+                <div className="bg-white/90 dark:bg-gray-800/90 p-2.5 rounded-xl border border-orange-100 dark:border-orange-900/40">
+                  <span className="text-gray-500 dark:text-gray-400 block text-[11px] font-semibold mb-0.5">
+                    หมายเลขใบเสนอแจ้งซ่อมในระบบ veri (REP):
+                  </span>
+                  {workOrder.repDocNumber ? (
+                    <span className="font-mono text-sm font-black text-orange-700 dark:text-orange-300">
+                      {workOrder.repDocNumber}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-orange-600/80 dark:text-orange-400 italic">
+                      ยังไม่ได้ระบุ (คลิกปุ่ม &quot;เพิ่มเลขที่ใบ REP&quot;)
+                    </span>
+                  )}
+                </div>
+
+                <div className="bg-white/90 dark:bg-gray-800/90 p-2.5 rounded-xl border border-orange-100 dark:border-orange-900/40">
+                  <span className="text-gray-500 dark:text-gray-400 block text-[11px] font-semibold mb-0.5">
+                    รายการอุปกรณ์ที่รอ / รายละเอียด:
+                  </span>
+                  <span className="font-medium text-gray-800 dark:text-gray-200">
+                    {workOrder.waitingPartsReason || "รอจัดซื้อ/หาอุปกรณ์เพื่อดำเนินการ"}
+                  </span>
+                </div>
+              </div>
+
+              {workOrder.waitingPartsByName && (
+                <p className="text-[11px] text-orange-800/70 dark:text-orange-400/70 pt-1">
+                  บันทึกข้อมูลโดย: <span className="font-semibold">{workOrder.waitingPartsByName}</span>
+                  {workOrder.waitingPartsAt && ` เมื่อ ${formatDate(workOrder.waitingPartsAt)}`}
+                </p>
+              )}
             </div>
           )}
 
@@ -1890,7 +1964,11 @@ export default function FMWorkOrderDetailPage() {
                 {(workOrder.status === "pending" || workOrder.status === "rejected") && (
                   <button
                     type="button"
-                    onClick={() => setShowWaitingPartsModal(true)}
+                    onClick={() => {
+                      setWaitingPartsReason(workOrder.waitingPartsReason || "");
+                      setWaitingPartsRepNumber(workOrder.repDocNumber || "");
+                      setShowWaitingPartsModal(true);
+                    }}
                     className="w-full sm:w-auto px-4 py-2.5 bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/40 dark:hover:bg-orange-900/60 border border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-300 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 active:scale-95 shadow-sm"
                   >
                     <PackageSearch className="w-4 h-4 text-orange-500 shrink-0" />
@@ -1899,19 +1977,33 @@ export default function FMWorkOrderDetailPage() {
                 )}
 
                 {workOrder.status === "waiting_parts" && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (confirm("เปลี่ยนสถานะกลับเป็น 'รอดำเนินการ'?")) {
-                        resumePendingMut.mutate();
-                      }
-                    }}
-                    disabled={resumePendingMut.isPending}
-                    className="w-full sm:w-auto px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 active:scale-95"
-                  >
-                    <Clock className="w-4 h-4 shrink-0" />
-                    <span>เปลี่ยนเป็นรอดำเนินการ</span>
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setWaitingPartsReason(workOrder.waitingPartsReason || "");
+                        setWaitingPartsRepNumber(workOrder.repDocNumber || "");
+                        setShowWaitingPartsModal(true);
+                      }}
+                      className="w-full sm:w-auto px-4 py-2.5 bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/40 dark:hover:bg-orange-900/60 border border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-300 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 active:scale-95 shadow-sm"
+                    >
+                      <Edit3 className="w-4 h-4 text-orange-500 shrink-0" />
+                      <span>{workOrder.repDocNumber ? "แก้ไขเลขที่ REP / ข้อมูลรอของ" : "เพิ่มเลขที่ใบ REP"}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (confirm("เปลี่ยนสถานะกลับเป็น 'รอดำเนินการ'?")) {
+                          resumePendingMut.mutate();
+                        }
+                      }}
+                      disabled={resumePendingMut.isPending}
+                      className="w-full sm:w-auto px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 active:scale-95"
+                    >
+                      <Clock className="w-4 h-4 shrink-0" />
+                      <span>เปลี่ยนเป็นรอดำเนินการ</span>
+                    </button>
+                  </>
                 )}
 
                 {isAdmin && (
@@ -2530,10 +2622,14 @@ export default function FMWorkOrderDetailPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-base text-gray-900 dark:text-white">
-                    ระบุสถานะ: รอของ / จัดซื้ออุปกรณ์
+                    {workOrder.status === "waiting_parts"
+                      ? "แก้ไขข้อมูล: รอของ / จัดซื้ออุปกรณ์"
+                      : "ระบุสถานะ: รอของ / จัดซื้ออุปกรณ์"}
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    กรณีไม่มีของในคลังเพื่อนำไปดำเนินการ
+                    {workOrder.status === "waiting_parts"
+                      ? "ระบุหรือแก้ไขเลขที่ใบเสนอแจ้งซ่อม (REP) และรายละเอียดอุปกรณ์"
+                      : "กรณีไม่มีของในคลังเพื่อนำไปดำเนินการ"}
                   </p>
                 </div>
               </div>
@@ -2590,7 +2686,11 @@ export default function FMWorkOrderDetailPage() {
                   disabled={waitingPartsMut.isPending}
                   className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-orange-500/20 disabled:opacity-50"
                 >
-                  {waitingPartsMut.isPending ? "กำลังบันทึก..." : "ยืนยันเปลี่ยนเป็นรอของ"}
+                  {waitingPartsMut.isPending
+                    ? "กำลังบันทึก..."
+                    : workOrder.status === "waiting_parts"
+                    ? "บันทึกข้อมูล"
+                    : "ยืนยันเปลี่ยนเป็นรอของ"}
                 </button>
               </div>
             </motion.div>
