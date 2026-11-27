@@ -12,7 +12,7 @@ import {
   Sparkles, UploadCloud, FileUp, Loader2, Trash2, ExternalLink, Users, Download, ClipboardPaste,
   Image as ImageIcon, Camera, ArrowUpDown, Filter, RotateCcw,
 } from "lucide-react";
-import { formatDate, toDate } from "@/lib/utils";
+import { formatDate, toDate, cn } from "@/lib/utils";
 import { parseFMPdf, parseFMOcrText } from "@/services/fm-ocr.service";
 import { compressImages } from "@/lib/compress";
 import { toast } from "sonner";
@@ -59,11 +59,11 @@ export default function FMWorkOrdersPage() {
   const isAdmin = stoxyUser?.role === "admin" || stoxyUser?.role === "manager";
   const qc = useQueryClient();
 
-  type SortOption = "number_asc" | "number_desc";
+  type SortOption = "date_desc" | "date_asc" | "number_asc" | "number_desc";
 
   const [tab, setTab] = useState<"all" | FMWorkOrderStatus>("pending");
   const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<SortOption>("number_asc");
+  const [sortBy, setSortBy] = useState<SortOption>("date_desc");
   const [workTypeFilter, setWorkTypeFilter] = useState<string>("all");
   const [onlyMyTasks, setOnlyMyTasks] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -380,6 +380,18 @@ export default function FMWorkOrdersPage() {
     ])
   );
 
+  const getOrderDate = (w: FMWorkOrder) => {
+    const ts = w.assignedDate || w.requestDate || w.createdAt;
+    if (!ts) return 0;
+    const d = toDate(ts as any);
+    if (d && !isNaN(d.getTime())) return d.getTime();
+    if (typeof ts === "string") {
+      const parsed = new Date(ts).getTime();
+      if (!isNaN(parsed)) return parsed;
+    }
+    return 0;
+  };
+
   const filteredOrders = workOrders
     .filter((w) => {
       // 1. Status Filter
@@ -420,6 +432,24 @@ export default function FMWorkOrdersPage() {
       return true;
     })
     .sort((a, b) => {
+      if (sortBy === "date_desc") {
+        const timeA = getOrderDate(a);
+        const timeB = getOrderDate(b);
+        if (timeB !== timeA) return timeB - timeA;
+        return (b.workOrderNumber || "").localeCompare(a.workOrderNumber || "", undefined, {
+          numeric: true,
+          sensitivity: "base",
+        });
+      }
+      if (sortBy === "date_asc") {
+        const timeA = getOrderDate(a);
+        const timeB = getOrderDate(b);
+        if (timeA !== timeB) return timeA - timeB;
+        return (a.workOrderNumber || "").localeCompare(b.workOrderNumber || "", undefined, {
+          numeric: true,
+          sensitivity: "base",
+        });
+      }
       const numA = a.workOrderNumber || "";
       const numB = b.workOrderNumber || "";
       if (sortBy === "number_desc") {
@@ -433,14 +463,14 @@ export default function FMWorkOrdersPage() {
     tab !== "pending" ||
     workTypeFilter !== "all" ||
     onlyMyTasks ||
-    sortBy !== "number_asc";
+    sortBy !== "date_desc";
 
   const resetAllFilters = () => {
     setSearch("");
     setTab("pending");
     setWorkTypeFilter("all");
     setOnlyMyTasks(false);
-    setSortBy("number_asc");
+    setSortBy("date_desc");
   };
 
   const statusTabs: [string, string, number][] = [
@@ -541,20 +571,48 @@ export default function FMWorkOrdersPage() {
 
           {/* 3 Controls on the same row: Sort, Work Type, My Tasks */}
           <div className="grid grid-cols-3 lg:flex lg:items-center gap-1.5">
-            {/* Compact Sort By Work Order Number Toggle */}
-            <button
-              type="button"
-              onClick={() =>
-                setSortBy((prev) => (prev === "number_asc" ? "number_desc" : "number_asc"))
-              }
-              className="h-9 flex items-center justify-center gap-1 px-2 sm:px-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl text-[11px] sm:text-xs font-semibold text-gray-700 dark:text-gray-200 min-w-0 shadow-xs transition-all active:scale-95"
-              title="คลิกเพื่อสลับเรียงเลขใบงาน"
+            {/* Sort Select (styled identically to adjacent buttons) */}
+            <div
+              className={`relative h-9 flex items-center justify-center gap-1 px-2 sm:px-2.5 rounded-xl text-[11px] sm:text-xs font-semibold border transition-all min-w-0 shadow-xs ${
+                sortBy !== "date_desc"
+                  ? "bg-blue-50 dark:bg-blue-900/40 text-[#1D4ED8] dark:text-blue-300 border-blue-200 dark:border-blue-800"
+                  : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+              }`}
+              title="เลือกการเรียงลำดับใบงาน"
             >
               <ArrowUpDown className="w-3.5 h-3.5 text-[#1D4ED8] shrink-0" />
-              <span className="truncate">
-                {sortBy === "number_asc" ? "เลข น้อย→มาก" : "เลข มาก→น้อย"}
+              <span className="truncate sm:hidden">
+                {sortBy === "date_desc" && "วันที่ มาก→น้อย"}
+                {sortBy === "date_asc" && "วันที่ น้อย→มาก"}
+                {sortBy === "number_asc" && "เลข น้อย→มาก"}
+                {sortBy === "number_desc" && "เลข มาก→น้อย"}
               </span>
-            </button>
+              <span className="truncate hidden sm:inline">
+                {sortBy === "date_desc" && "วันที่รับงาน มาก→น้อย"}
+                {sortBy === "date_asc" && "วันที่รับงาน น้อย→มาก"}
+                {sortBy === "number_asc" && "เลขใบงาน น้อย→มาก"}
+                {sortBy === "number_desc" && "เลขใบงาน มาก→น้อย"}
+              </span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                aria-label="เรียงลำดับใบงาน"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer text-base"
+              >
+                <option value="date_desc" className="text-gray-900 dark:text-gray-100">
+                  วันที่รับงาน (มากไปน้อย / ล่าสุด)
+                </option>
+                <option value="date_asc" className="text-gray-900 dark:text-gray-100">
+                  วันที่รับงาน (น้อยไปมาก / เก่าสุด)
+                </option>
+                <option value="number_asc" className="text-gray-900 dark:text-gray-100">
+                  เลขที่ใบงาน (น้อยไปมาก)
+                </option>
+                <option value="number_desc" className="text-gray-900 dark:text-gray-100">
+                  เลขที่ใบงาน (มากไปน้อย)
+                </option>
+              </select>
+            </div>
 
             {/* Work Type Filter Select (styled identically to adjacent buttons) */}
             <div
@@ -746,9 +804,18 @@ export default function FMWorkOrdersPage() {
                       </span>
                     </div>
 
-                    <div className="text-xs text-gray-400 flex items-center gap-1 shrink-0">
-                      <Calendar className="w-3.5 h-3.5" />
-                      {formatDate(wo.requestDate)}
+                    <div
+                      className="text-xs text-gray-400 flex items-center gap-1 shrink-0"
+                      title={
+                        wo.assignedDate
+                          ? `วันที่รับงาน: ${formatDate(wo.assignedDate)} (แจ้งงาน: ${formatDate(wo.requestDate)})`
+                          : `วันที่แจ้งงาน: ${formatDate(wo.requestDate)}`
+                      }
+                    >
+                      <Calendar className={cn("w-3.5 h-3.5", wo.assignedDate && "text-[#1D4ED8]")} />
+                      <span className={cn(wo.assignedDate && "font-medium text-gray-600 dark:text-gray-300")}>
+                        {formatDate(wo.assignedDate || wo.requestDate)}
+                      </span>
                     </div>
                   </div>
 
